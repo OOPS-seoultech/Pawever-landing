@@ -195,7 +195,7 @@ export default function Home() {
             <div className="flex flex-col items-center animate-fade-in">
               <div className="relative mb-6 rounded-3xl overflow-hidden shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 bg-white">
                 <img
-                  src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663308210539/VQNVcXFdMgLszrKX.png"
+                  src="public/memorial.png"
                   alt="Pawever 별자리 추모관 화면"
                   className="w-full h-auto max-w-xs"
                 />
