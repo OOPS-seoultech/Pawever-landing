@@ -292,13 +292,24 @@ export default function Home() {
             </div>
 
             <div className="border-t border-foreground/20 pt-6 w-full max-w-2xl">
-              <div className="flex flex-col sm:flex-row justify-center gap-6 text-sm text-foreground/60 mb-4">
-                <div>
-                  <span className="font-semibold text-foreground/80">이메일:</span> habitualmarketing@gmail.com
+              <div className="flex flex-col gap-1 text-xs text-foreground/60 mb-4 text-center">
+                <div className="flex flex-wrap justify-center gap-x-4 gap-y-1">
+                  <span><span className="font-semibold text-foreground/80">상호:</span> 습관적 마케팅</span>
+                  <span className="text-foreground/30">|</span>
+                  <span><span className="font-semibold text-foreground/80">대표:</span> 이종무</span>
+                  <span className="text-foreground/30">|</span>
+                  <span><span className="font-semibold text-foreground/80">사업자등록번호:</span> 860-49-00847</span>
                 </div>
-                <span className="text-foreground/30">|</span>
-                <div>
-                  <span className="font-semibold text-foreground/80">주소:</span> 부산 해운대구 재반로 166 2층 습관적마케팅
+                <div className="flex flex-wrap justify-center gap-x-4 gap-y-1">
+                  <span><span className="font-semibold text-foreground/80">주소:</span> 부산광역시 해운대구 재반로 166, 2층 S144호(재송동)</span>
+                </div>
+                <div className="flex flex-wrap justify-center gap-x-4 gap-y-1">
+                  <span><span className="font-semibold text-foreground/80">업태:</span> 서비스업, 도매 및 소매업, 정보통신업</span>
+                  <span className="text-foreground/30">|</span>
+                  <span><span className="font-semibold text-foreground/80">종목:</span> 광고대행업, 전자상거래 소매업, 응용 소프트웨어 개발 및 공급업</span>
+                </div>
+                <div className="flex flex-wrap justify-center gap-x-4 gap-y-1">
+                  <span><span className="font-semibold text-foreground/80">이메일:</span> habitualmarketing@gmail.com</span>
                 </div>
               </div>
               <p className="text-xs text-foreground/50">© 2026 Pawever. All rights reserved.</p>
