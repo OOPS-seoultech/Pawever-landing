@@ -21,7 +21,7 @@ export default function Home() {
   };
 
   const handleEmailClick = () => {
-    window.location.href = "/contact";
+    window.location.href = "mailto:pawever01@gmail.com";
     setShowEmailModal(false);
   };
 
@@ -195,7 +195,7 @@ export default function Home() {
             <div className="flex flex-col items-center animate-fade-in">
               <div className="relative mb-6 rounded-3xl overflow-hidden shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 bg-white">
                 <img
-                  src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663308210539/IbVSXjWpwAxTbOOI.png"
+                  src="/memorial.png"
                   alt="Pawever 별자리 추모관 화면"
                   className="w-full h-auto max-w-xs"
                 />
@@ -292,7 +292,27 @@ export default function Home() {
             </div>
 
             <div className="border-t border-foreground/20 pt-6 w-full max-w-2xl">
-              <p className="text-xs text-foreground/50">2026 Pawever. All rights reserved.</p>
+              <div className="flex flex-col gap-1 text-xs text-foreground/60 mb-4 text-center">
+                <div className="flex flex-wrap justify-center gap-x-4 gap-y-1">
+                  <span><span className="font-semibold text-foreground/80">상호:</span> 습관적 마케팅</span>
+                  <span className="text-foreground/30">|</span>
+                  <span><span className="font-semibold text-foreground/80">대표:</span> 이종무</span>
+                  <span className="text-foreground/30">|</span>
+                  <span><span className="font-semibold text-foreground/80">사업자등록번호:</span> 860-49-00847</span>
+                </div>
+                <div className="flex flex-wrap justify-center gap-x-4 gap-y-1">
+                  <span><span className="font-semibold text-foreground/80">주소:</span> 부산광역시 해운대구 재반로 166, 2층 S144호(재송동)</span>
+                </div>
+                <div className="flex flex-wrap justify-center gap-x-4 gap-y-1">
+                  <span><span className="font-semibold text-foreground/80">업태:</span> 서비스업, 도매 및 소매업, 정보통신업</span>
+                  <span className="text-foreground/30">|</span>
+                  <span><span className="font-semibold text-foreground/80">종목:</span> 광고대행업, 전자상거래 소매업, 응용 소프트웨어 개발 및 공급업</span>
+                </div>
+                <div className="flex flex-wrap justify-center gap-x-4 gap-y-1">
+                  <span><span className="font-semibold text-foreground/80">이메일:</span> habitualmarketing@gmail.com</span>
+                </div>
+              </div>
+              <p className="text-xs text-foreground/50">© 2026 Pawever. All rights reserved.</p>
             </div>
           </div>
         </div>
@@ -300,7 +320,7 @@ export default function Home() {
 
       {/* Floating Action Button */}
       <div className="fixed bottom-8 right-8 z-40">
-        <button onClick={() => setShowEmailModal(true)} className="w-14 h-14 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 flex items-center justify-center">
+        <button className="w-14 h-14 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 flex items-center justify-center">
           <MessageCircle className="w-6 h-6" />
         </button>
       </div>
@@ -320,8 +340,13 @@ export default function Home() {
             </div>
 
             <p className="text-foreground/70 mb-6">
-              담당자에게 문의 사항을 전달하시겠어요?
+              Pawever 서비스에 대한 문의가 있으신가요? 아래 버튼을 클릭하면 이메일로 문의하실 수 있습니다.
             </p>
+
+            <div className="bg-secondary/30 rounded-lg p-4 mb-6">
+              <p className="text-sm text-foreground/60 mb-2">문의 이메일:</p>
+              <p className="text-lg font-semibold text-primary">pawever01@gmail.com</p>
+            </div>
 
             <div className="flex gap-4">
               <Button
@@ -329,13 +354,13 @@ export default function Home() {
                 className="flex-1"
                 onClick={() => setShowEmailModal(false)}
               >
-                아니오
+                취소
               </Button>
               <Button
                 className="flex-1 bg-primary hover:bg-primary/90"
                 onClick={handleEmailClick}
               >
-                예
+                이메일로 문의
               </Button>
             </div>
           </div>

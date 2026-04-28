@@ -201,13 +201,6 @@ export default function TermsOfService() {
               </a>
               <span className="text-foreground/30">|</span>
               <a
-                href="/contact"
-                className="text-primary hover:text-primary/80 transition-colors"
-              >
-                문의하기
-              </a>
-              <span className="text-foreground/30">|</span>
-              <a
                 href="/"
                 className="text-primary hover:text-primary/80 transition-colors"
               >
