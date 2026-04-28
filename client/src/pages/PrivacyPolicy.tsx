@@ -52,162 +52,237 @@ export default function PrivacyPolicy() {
       </header>
 
       {/* Main Content */}
-      <main className="container max-w-3xl mx-auto px-4 py-16">
-        <div className="prose prose-sm max-w-none text-foreground/80 space-y-8">
-          {/* Title */}
-          <div className="mb-12">
-            <h2 className="text-4xl font-bold text-foreground mb-2">
-              Pawever 개인정보 처리방침
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              마지막 업데이트: 2026년 2월 24일
+      <main className="container py-12">
+        <div className="prose prose-sm max-w-4xl mx-auto space-y-8">
+          {/* Introduction */}
+          <section className="bg-accent/5 p-6 rounded-lg border border-accent/20">
+            <p className="text-foreground/80 leading-relaxed">
+              습관적마케팅(이하 "회사")은 반려동물 추모 및 케어 서비스 'Pawever'(이하 "서비스")를 제공함에 있어 이용자의 개인정보를 보호하고 이와 관련한 고충을 신속하고 성실하게 처리하기 위하여 다음과 같이 개인정보 처리방침을 수립·공개합니다.
             </p>
-          </div>
+          </section>
 
-          {/* 제1조 */}
+          {/* Section 1 */}
           <section>
-            <h3 className="text-2xl font-bold text-foreground mb-4">
-              제1조 (수집 정보 항목 및 수집 목적)
-            </h3>
-            <p className="text-foreground/70 leading-relaxed mb-4">
-              회사는 서비스 제공 및 개선을 위해 최소한의 개인정보를 수집합니다.
-            </p>
-            
-            <div className="overflow-x-auto mb-6">
-              <table className="w-full border-collapse text-sm">
-                <thead>
-                  <tr className="bg-secondary/30">
-                    <th className="border border-border px-4 py-2 text-left font-semibold">구분</th>
-                    <th className="border border-border px-4 py-2 text-left font-semibold">수집 항목</th>
-                    <th className="border border-border px-4 py-2 text-left font-semibold">이용 목적</th>
-                    <th className="border border-border px-4 py-2 text-left font-semibold">보유 및 이용 기간</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td className="border border-border px-4 py-2">필수</td>
-                    <td className="border border-border px-4 py-2">성명, 이메일 주소</td>
-                    <td className="border border-border px-4 py-2">회원 식별 및 가입 확인</td>
-                    <td className="border border-border px-4 py-2">탈퇴 시까지 (단, 법령상 의무 기간 보존)</td>
-                  </tr>
-                  <tr>
-                    <td className="border border-border px-4 py-2">선택</td>
-                    <td className="border border-border px-4 py-2">성별, 생년월일</td>
-                    <td className="border border-border px-4 py-2">인구통계학적 통계 분석, 서비스 개선</td>
-                    <td className="border border-border px-4 py-2">탈퇴 시 또는 동의 철회 시</td>
-                  </tr>
-                  <tr>
-                    <td className="border border-border px-4 py-2">서비스 데이터</td>
-                    <td className="border border-border px-4 py-2">반려동물 정보, 음성 기록, 일기</td>
-                    <td className="border border-border px-4 py-2">개인화 서비스 제공, 익명화 홍보 활용</td>
-                    <td className="border border-border px-4 py-2">탈퇴 시까지 (탈퇴 후 5일 내 파기)</td>
-                  </tr>
-                  <tr>
-                    <td className="border border-border px-4 py-2">자동 수집</td>
-                    <td className="border border-border px-4 py-2">IP, 접속 로그, 서비스 이용 기록</td>
-                    <td className="border border-border px-4 py-2">부정이용 방지, 서비스 최적화</td>
-                    <td className="border border-border px-4 py-2">3개월 (통신비밀보호법)</td>
-                  </tr>
-                </tbody>
-              </table>
+            <h2 className="text-2xl font-bold text-foreground mb-4 flex items-center gap-2">
+              <span className="w-1 h-8 bg-orange-400 rounded-full"></span>
+              제1조 (수집하는 개인정보 항목 및 목적)
+            </h2>
+            <div className="space-y-4 text-foreground/80">
+              <p>회사는 서비스 제공 및 고도화를 위해 다음 정보를 수집합니다.</p>
+              
+              <div className="bg-background border border-border rounded-lg overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-accent/10 border-b border-border">
+                      <th className="px-4 py-3 text-left font-semibold text-foreground">구분</th>
+                      <th className="px-4 py-3 text-left font-semibold text-foreground">수집 항목</th>
+                      <th className="px-4 py-3 text-left font-semibold text-foreground">이용 목적</th>
+                      <th className="px-4 py-3 text-left font-semibold text-foreground">보유 기간</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b border-border hover:bg-accent/5">
+                      <td className="px-4 py-3 font-semibold text-orange-500">필수</td>
+                      <td className="px-4 py-3">성명, 이메일 주소</td>
+                      <td className="px-4 py-3">회원 식별 및 가입 확인</td>
+                      <td className="px-4 py-3">탈퇴 시까지</td>
+                    </tr>
+                    <tr className="border-b border-border hover:bg-accent/5">
+                      <td className="px-4 py-3 font-semibold text-foreground/60">선택</td>
+                      <td className="px-4 py-3">성별, 생년월일</td>
+                      <td className="px-4 py-3">인구통계학적 통계 분석, 서비스 개선</td>
+                      <td className="px-4 py-3">탈퇴 시까지</td>
+                    </tr>
+                    <tr className="border-b border-border hover:bg-accent/5">
+                      <td className="px-4 py-3 font-semibold text-foreground/60">선택</td>
+                      <td className="px-4 py-3">신고 로그 (원고/피고 식별값, 채팅 스냅샷)</td>
+                      <td className="px-4 py-3">부정이용 방지 및 사실 확인</td>
+                      <td className="px-4 py-3">민원 처리 후 3년</td>
+                    </tr>
+                    <tr className="border-b border-border hover:bg-accent/5">
+                      <td className="px-4 py-3 font-semibold text-foreground/60">선택</td>
+                      <td className="px-4 py-3">서비스 데이터 (반려동물 정보, 음성 기록, 일기)</td>
+                      <td className="px-4 py-3">개인화 서비스, 익명화 홍보 활용</td>
+                      <td className="px-4 py-3">탈퇴 후 5일 이내 파기</td>
+                    </tr>
+                    <tr className="hover:bg-accent/5">
+                      <td className="px-4 py-3 font-semibold text-foreground/60">자동</td>
+                      <td className="px-4 py-3">IP, 접속 로그, 서비스 이용 기록</td>
+                      <td className="px-4 py-3">부정이용 방지, 서비스 최적화</td>
+                      <td className="px-4 py-3">3개월 (통신비밀보호법)</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </section>
 
-          {/* 제2조 */}
+          {/* Section 2 */}
           <section>
-            <h3 className="text-2xl font-bold text-foreground mb-4">
-              제2조 (가명정보 처리 및 신고 데이터 활용)
-            </h3>
-            <p className="text-foreground/70 leading-relaxed mb-4">
-              회사는 개인정보 보호법 제28조의2에 따라 서비스 내 신고 발생 시 수집된 성별, 연령 정보를 가명처리하여 통계적 분석 목적으로 활용할 수 있습니다.
-            </p>
-            <ul className="list-disc list-inside space-y-2 text-foreground/70">
-              <li><strong>분석 목적</strong>: 부정이용 방지 및 연령/성별에 따른 위반 행위 통계 산출</li>
-              <li><strong>안전 조치</strong>: 개인 식별이 불가능하도록 범주화(예: 20대 남성)하여 관리하며, 접근 권한을 대표 및 전담 개발자(2인)로 엄격히 제한합니다.</li>
-            </ul>
+            <h2 className="text-2xl font-bold text-foreground mb-4 flex items-center gap-2">
+              <span className="w-1 h-8 bg-orange-400 rounded-full"></span>
+              제2조 (정보주체의 권리 보장 및 통제권 강화)
+            </h2>
+            <div className="space-y-4 text-foreground/80">
+              <p>회사는 이용자의 개인정보 자기결정권을 존중하며 다음의 조치를 시행합니다.</p>
+              
+              <div className="space-y-3">
+                <div className="bg-background border border-border rounded-lg p-4">
+                  <h3 className="font-semibold text-foreground mb-2">열람 및 수정</h3>
+                  <p>이용자는 앱 내 [설정 &gt; 내 정보 관리] 메뉴를 통해 자신의 개인정보를 언제든지 열람하고 수정할 수 있습니다.</p>
+                </div>
+
+                <div className="bg-background border border-border rounded-lg p-4">
+                  <h3 className="font-semibold text-foreground mb-2">이용자 변경 시 보호</h3>
+                  <p>기기 변경이나 재설치 시 이전 사용자의 정보가 노출되지 않도록 명확한 로그아웃 기능을 제공하며, 캐시 데이터 삭제 방법을 안내합니다.</p>
+                </div>
+
+                <div className="bg-background border border-border rounded-lg p-4">
+                  <h3 className="font-semibold text-foreground mb-2">공개 범위 설정</h3>
+                  <p>서비스 내 게시물의 기본 설정은 최소한의 정보만 노출되도록 구성되어 있으며, 이용자는 개별 설정을 통해 공개 범위를 확장할 수 있습니다.</p>
+                </div>
+
+                <div className="bg-background border border-border rounded-lg p-4">
+                  <h3 className="font-semibold text-foreground mb-2">저장 최소화 및 암호화</h3>
+                  <p>민감한 정보는 서버에 안전하게 저장하며, 기기에 임시 저장되는 데이터는 최신 암호화 알고리즘을 적용하여 보호합니다.</p>
+                </div>
+
+                <div className="bg-background border border-border rounded-lg p-4">
+                  <h3 className="font-semibold text-foreground mb-2">앱 삭제 시 처리</h3>
+                  <p>앱 삭제 시 기기 내 저장된 임시 정보는 자동 삭제되나, 서버에 저장된 회원 정보는 별도의 '회원 탈퇴' 절차를 거쳐야 파기됩니다. 이용자는 언제든 '잊힐 권리'를 행사하여 가입 데이터의 삭제를 요청할 수 있습니다.</p>
+                </div>
+              </div>
+            </div>
           </section>
 
-          {/* 제3조 */}
+          {/* Section 3 */}
           <section>
-            <h3 className="text-2xl font-bold text-foreground mb-4">
-              제3조 (개인정보 처리 위탁)
-            </h3>
-            <p className="text-foreground/70 leading-relaxed mb-4">
-              회사는 서비스 품질 향상을 위해 다음과 같이 위탁하고 있습니다.
-            </p>
-            <ul className="list-disc list-inside space-y-2 text-foreground/70">
-              <li><strong>서버 관리</strong>: 네이버 클라우드 (NCP)</li>
-              <li><strong>메시지 발송</strong>: 채널톡, 솔라피 (Solapi)</li>
-            </ul>
+            <h2 className="text-2xl font-bold text-foreground mb-4 flex items-center gap-2">
+              <span className="w-1 h-8 bg-orange-400 rounded-full"></span>
+              제3조 (기기 접근 권한에 대한 고지)
+            </h2>
+            <div className="space-y-4 text-foreground/80">
+              <p>회사는 앱 기능 수행을 위해 카메라, 마이크, 사진첩 등의 접근 권한을 사용합니다.</p>
+              
+              <div className="space-y-3">
+                <div className="bg-background border border-border rounded-lg p-4">
+                  <h3 className="font-semibold text-foreground mb-2">선택적 권한</h3>
+                  <ul className="list-disc list-inside space-y-1 text-sm">
+                    <li>카메라: 사진 촬영</li>
+                    <li>마이크: 음성 녹음</li>
+                    <li>사진첩: 이미지 업로드</li>
+                  </ul>
+                </div>
+
+                <p className="text-sm">이용자는 최초 접근 시점에 동의 여부를 선택할 수 있으며, 기기 설정에서 언제든지 권한을 철회할 수 있습니다. 동의 거부 시에도 해당 기능 외의 기본 서비스 이용은 가능합니다.</p>
+              </div>
+            </div>
           </section>
 
-          {/* 제4조 */}
+          {/* Section 4 */}
           <section>
-            <h3 className="text-2xl font-bold text-foreground mb-4">
-              제4조 (보유 및 파기 기간)
-            </h3>
-            <ul className="list-disc list-inside space-y-2 text-foreground/70">
-              <li><strong>일반 이용 정보</strong>: 회원 탈퇴 시까지 보유하며, 탈퇴 신청 후 5일 이내에 재생 불가능한 방법으로 파기합니다.</li>
-              <li><strong>법령에 따른 예외 보관</strong>:
-                <ul className="list-disc list-inside ml-4 mt-2 space-y-1">
-                  <li>접속 로그 및 서비스 이용 기록: 3개월 (통신비밀보호법)</li>
-                  <li>결제 및 청약철회 관련 기록: 5년 (전자상거래법) - 이후 추가</li>
-                </ul>
-              </li>
-            </ul>
+            <h2 className="text-2xl font-bold text-foreground mb-4 flex items-center gap-2">
+              <span className="w-1 h-8 bg-orange-400 rounded-full"></span>
+              제4조 (가명정보 처리 및 신고 분석)
+            </h2>
+            <div className="space-y-4 text-foreground/80">
+              <p>회사는 개인정보 보호법 제28조의2에 따라 수집된 성별, 연령 정보를 가명처리하여 통계적으로 활용할 수 있습니다. 이는 개인 식별이 불가능하도록 범주화하여 관리하며, 접근 권한을 엄격히 제한합니다.</p>
+            </div>
           </section>
 
-          {/* 제5조 마케팅 */}
-          <section className="bg-primary/5 border border-primary/20 rounded-lg p-6">
-            <h3 className="text-2xl font-bold text-foreground mb-4">
-              제5조 (마케팅 정보 수신 동의 - 선택 사항)
-            </h3>
-            <p className="text-foreground/70 leading-relaxed mb-4">
-              회사는 이용자의 사전 동의를 얻어 이벤트 및 혜택 정보를 전송할 수 있습니다.
-            </p>
-            <ul className="list-disc list-inside space-y-2 text-foreground/70">
-              <li><strong>동의 철회</strong>: 이용자는 언제든지 [설정 &gt; 알림] 메뉴를 통해 수신 여부를 변경할 수 있습니다.</li>
-              <li><strong>야간 발송 제한</strong>: 오후 9시부터 익일 오전 8시까지 광고 발송을 제한합니다.</li>
-            </ul>
+          {/* Section 5 */}
+          <section>
+            <h2 className="text-2xl font-bold text-foreground mb-4 flex items-center gap-2">
+              <span className="w-1 h-8 bg-orange-400 rounded-full"></span>
+              제5조 (보유 및 파기)
+            </h2>
+            <div className="space-y-4 text-foreground/80">
+              <p>일반 데이터는 탈퇴 신청 후 5일 이내에 파기합니다. 단, 접속 로그는 통신비밀보호법에 따라 3개월간 보존합니다.</p>
+            </div>
           </section>
 
-          {/* 제6조 */}
+          {/* Section 6 */}
           <section>
-            <h3 className="text-2xl font-bold text-foreground mb-4">
-              제6조 (정보 주체의 권리 및 고충 처리)
-            </h3>
-            <p className="text-foreground/70 leading-relaxed mb-4">
-              회원은 개인정보의 열람, 수정, 삭제를 요구할 수 있으며 회사는 내용 확인 후 판단 하에 이를 즉시 처리합니다.
-            </p>
-            
-            <div className="bg-secondary/30 rounded-lg p-6 mt-6">
-              <h4 className="font-semibold text-foreground mb-3">개인정보 보호 책임자</h4>
-              <div className="space-y-2 text-foreground/70">
-                <p><strong>이름</strong>: 이종무</p>
-                <p><strong>이메일</strong>: habitualmarketing@gmail.com</p>
-                <p><strong>전화</strong>: 010-9004-6802</p>
+            <h2 className="text-2xl font-bold text-foreground mb-4 flex items-center gap-2">
+              <span className="w-1 h-8 bg-orange-400 rounded-full"></span>
+              제6조 (개인정보 처리 위탁)
+            </h2>
+            <div className="space-y-4 text-foreground/80">
+              <p>서비스 품질을 위해 다음과 같이 위탁합니다.</p>
+              
+              <div className="bg-background border border-border rounded-lg p-4 space-y-2">
+                <div>
+                  <h3 className="font-semibold text-foreground">서버 관리</h3>
+                  <p className="text-sm">네이버 클라우드 (NCP)</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">메시지 발송</h3>
+                  <p className="text-sm">채널톡, 솔라피 (Solapi)</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Section 7 */}
+          <section>
+            <h2 className="text-2xl font-bold text-foreground mb-4 flex items-center gap-2">
+              <span className="w-1 h-8 bg-orange-400 rounded-full"></span>
+              제7조 (마케팅 정보 수신 동의)
+            </h2>
+            <div className="space-y-4 text-foreground/80">
+              <p>이용자의 선택적 동의를 전제로 이벤트 정보를 전송하며, 야간(21:00~08:00) 발송은 제한됩니다.</p>
+              
+              <div className="bg-background border border-border rounded-lg p-4 space-y-2">
+                <h3 className="font-semibold text-foreground">동의 철회</h3>
+                <p className="text-sm">이용자는 언제든지 [설정 &gt; 알림] 메뉴를 통해 마케팅 정보 수신 여부를 변경할 수 있습니다.</p>
+              </div>
+            </div>
+          </section>
+
+          {/* Section 8 */}
+          <section>
+            <h2 className="text-2xl font-bold text-foreground mb-4 flex items-center gap-2">
+              <span className="w-1 h-8 bg-orange-400 rounded-full"></span>
+              제8조 (책임자 및 고충 처리)
+            </h2>
+            <div className="space-y-4 text-foreground/80">
+              <div className="bg-accent/10 border border-accent/20 rounded-lg p-4 space-y-3">
+                <div>
+                  <h3 className="font-semibold text-foreground">개인정보 보호 책임자</h3>
+                  <p className="text-sm">이종무</p>
+                  <p className="text-sm">전화: 0507-1314-6802</p>
+                  <p className="text-sm"></p>
+                </div>
+              </div>
+              
+              <p className="text-sm">이용자는 개인정보 침해에 관한 신고 또는 상담이 필요한 경우 개인정보 보호 책임자에게 연락할 수 있습니다. 회사는 이용자의 문의에 대해 신속하고 성실하게 처리하겠습니다.</p>
+              
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-6">
+                <h3 className="font-semibold text-foreground mb-2">서비스 관리 업체</h3>
+                <p className="text-sm text-foreground/80">본 서비스 'Pawever'는 습관적마케팅에 의해 관리되고 있습니다. 서비스 이용에 대한 모든 문의 및 요청은 아래의 연락처로 연락주시기 바랍니다.</p>
+                <p className="text-sm text-foreground/80 mt-2">회사명: 습관적마케팅</p>
+                <p className="text-sm text-foreground/80">대표: 이종무</p>
+                <p className="text-sm text-foreground/80">전화: 0507-1314-6802</p>
               </div>
             </div>
           </section>
 
           {/* Footer Links */}
-          <div className="border-t border-border pt-8 mt-12">
-            <div className="flex flex-col sm:flex-row gap-6 justify-center text-sm">
-              <a
-                href="/terms"
-                className="text-primary hover:text-primary/80 transition-colors"
-              >
-                서비스 이용약관
-              </a>
-              <span className="text-foreground/30">|</span>
-              <a
-                href="/"
-                className="text-primary hover:text-primary/80 transition-colors"
-              >
+          <section className="pt-8 border-t border-border">
+            <div className="flex flex-wrap gap-4 text-sm">
+              <a href="/" className="text-orange-500 hover:text-orange-600 font-medium">
                 홈으로
               </a>
+              <span className="text-border">|</span>
+              <a href="/terms" className="text-orange-500 hover:text-orange-600 font-medium">
+                이용약관
+              </a>
+              <span className="text-border">|</span>
+              <a href="/contact" className="text-orange-500 hover:text-orange-600 font-medium">
+                문의하기
+              </a>
             </div>
-          </div>
+          </section>
         </div>
       </main>
 
@@ -215,7 +290,8 @@ export default function PrivacyPolicy() {
       {showScrollTop && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-8 right-8 z-50 w-12 h-12 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center"
+          className="fixed bottom-8 right-8 bg-orange-400 hover:bg-orange-500 text-white rounded-full p-3 shadow-lg transition-all duration-300 animate-fade-in"
+          aria-label="맨 위로 이동"
         >
           <ChevronUp className="w-6 h-6" />
         </button>
