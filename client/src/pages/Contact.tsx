@@ -14,7 +14,10 @@ export default function Contact() {
     const body = encodeURIComponent(
       `안녕하세요,\n\nPawever 서비스에 대해 문의드립니다.\n\n[아래 정보를 입력해주세요]\n- 이름: \n- 이메일: \n- 문의 내용: \n\n감사합니다.`
     );
-    window.location.href = `mailto:pawever01@gmail.com?subject=${subject}&body=${body}`;
+    window.open(
+      `https://mail.google.com/mail/?view=cm&fs=1&to=pawever01@gmail.com&su=${subject}&body=${body}`,
+      "_blank"
+    );
   };
 
   return (
