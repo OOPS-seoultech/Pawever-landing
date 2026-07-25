@@ -1,4 +1,7 @@
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import { QuestionScreen } from "./GoodsSurveyForm";
 import {
   getQuestionOptions,
   getQuestionTitle,
@@ -70,5 +73,25 @@ describe("노션 설문 원문", () => {
       expect(copyOf(`q22_${index}`).title).toBe(q22Title);
       expect(copyOf(`q28_${index}`).title).toBe(q28Title);
     }
+  });
+
+  it("분할 매트릭스 화면에 현재 평가할 행을 직접 표시한다", () => {
+    const q22 = renderToStaticMarkup(
+      createElement(QuestionScreen, {
+        question: question("q22_1"),
+        answers: {},
+        onAnswer: () => undefined,
+      })
+    );
+    const q28 = renderToStaticMarkup(
+      createElement(QuestionScreen, {
+        question: question("q28_5"),
+        answers: {},
+        onAnswer: () => undefined,
+      })
+    );
+
+    expect(q22).toContain("건강하고 특별한 변화가 없던 때");
+    expect(q28).toContain("추억 보존과 이별 후 마음 돌봄");
   });
 });

@@ -519,15 +519,19 @@
 }
 
 .gsf-matrix-context span {
+  display: block;
   color: var(--gsf-accent-dark);
   font-size: 11px;
   font-weight: 850;
 }
 
-.gsf-matrix-context p {
-  margin: 3px 0 0;
-  color: var(--gsf-ink-soft);
-  font-size: 11px;
+.gsf-matrix-context strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--gsf-ink);
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 1.45;
 }
 
 .gsf-bottom-actions {
