@@ -255,7 +255,7 @@ function ConsentChoice({
   );
 }
 
-function QuestionScreen({
+export function QuestionScreen({
   question,
   answers,
   onAnswer,
@@ -303,17 +303,17 @@ function QuestionScreen({
         <small>{question.section}</small>
       </div>
 
+      <h1 id="survey-question-title">{getQuestionTitle(question, answers)}</h1>
+      {question.helper && <p className="gsf-helper">{question.helper}</p>}
+
       {question.matrix && (
         <div className="gsf-matrix-context">
           <span>
-            항목 {question.matrix.index}/{question.matrix.total}
+            평가 항목 {question.matrix.index}/{question.matrix.total}
           </span>
-          <p>{question.matrix.title}</p>
+          <strong>{question.matrix.row}</strong>
         </div>
       )}
-
-      <h1 id="survey-question-title">{getQuestionTitle(question, answers)}</h1>
-      {question.helper && <p className="gsf-helper">{question.helper}</p>}
 
       <div
         className="gsf-options"
