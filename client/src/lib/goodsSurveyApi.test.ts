@@ -8,6 +8,8 @@ import {
 describe("내부 설문 API", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+    vi.resetModules();
   });
 
   it("같은 출처의 /api 경로로 익명 초안을 만들고 편집 토큰을 받는다", async () => {
@@ -90,5 +92,36 @@ describe("내부 설문 API", () => {
       surveyActiveMs: 120_000,
       questionActiveMs: { q1: 3_000 },
     });
+  });
+
+  it("배포 환경에서는 설정한 API origin으로 직접 요청한다", async () => {
+    vi.stubEnv("VITE_API_BASE_URL", "https://api.pawever.kr/");
+    vi.resetModules();
+    const { getSurveyCampaign } = await import("./goodsSurveyApi");
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          success: true,
+          data: {
+            campaignId: "goods-2026-07",
+            capacity: 100,
+            allocated: 27,
+            remaining: 73,
+            startsAt: "2026-07-23T00:00:00Z",
+            endsAt: "2026-08-05T00:00:00Z",
+            open: true,
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      )
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await getSurveyCampaign();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.pawever.kr/api/public/goods-survey/campaign",
+      expect.any(Object)
+    );
   });
 });

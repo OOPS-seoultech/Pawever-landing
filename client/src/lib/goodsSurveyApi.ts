@@ -96,8 +96,17 @@ export class GoodsSurveyApiError extends Error {
   }
 }
 
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? "")
+  .trim()
+  .replace(/\/+$/, "");
+
+const resolveApiUrl = (path: string) =>
+  apiBaseUrl
+    ? `${apiBaseUrl}${path.startsWith("/") ? path : `/${path}`}`
+    : path;
+
 const apiRequest = async <T>(path: string, init?: RequestInit): Promise<T> => {
-  const response = await fetch(path, {
+  const response = await fetch(resolveApiUrl(path), {
     ...init,
     headers: {
       "Content-Type": "application/json",
