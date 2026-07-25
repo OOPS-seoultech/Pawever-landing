@@ -311,6 +311,7 @@ export default function GoodsSurvey() {
                   className={`gs-hero-image gs-hero-image--${index + 1}`}
                   eager
                 />
+                <span className="gs-hero-tag">{label}</span>
               </div>
             ))}
           </div>
