@@ -1,0 +1,116 @@
+.analytics-consent {
+  position: fixed;
+  z-index: 1000;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  width: min(calc(100% - 32px), 390px);
+  padding: 18px;
+  border: 1px solid rgba(68, 51, 42, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 253, 250, 0.98);
+  color: #2f2824;
+  box-shadow: 0 18px 50px rgba(53, 39, 30, 0.2);
+  font-family:
+    "Pretendard",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  backdrop-filter: blur(14px);
+}
+
+.analytics-consent strong {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 15px;
+}
+
+.analytics-consent p {
+  margin: 0;
+  color: #6f625a;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.analytics-consent > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  margin-top: 14px;
+}
+
+.analytics-consent button {
+  min-height: 38px;
+  padding: 0 13px;
+  border: 1px solid #ded5ce;
+  border-radius: 10px;
+  background: #fff;
+  color: #4d423b;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.analytics-consent .analytics-consent__accept {
+  border-color: #f27e24;
+  background: #f27e24;
+  color: #fff;
+}
+
+.analytics-consent .analytics-consent__link {
+  min-height: auto;
+  margin-left: auto;
+  padding: 5px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #7d7068;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.analytics-preferences {
+  margin-top: 14px;
+  padding: 16px;
+  border: 1px solid #eadfd7;
+  border-radius: 14px;
+  background: #fffaf6;
+}
+
+.analytics-preferences p {
+  margin: 0 0 12px;
+  color: #66584f;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.analytics-preferences > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.analytics-preferences button {
+  min-height: 38px;
+  padding: 0 13px;
+  border: 1px solid #e2d4cb;
+  border-radius: 10px;
+  background: #fff;
+  color: #4d423b;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.analytics-preferences button:first-child {
+  border-color: #f27e24;
+  background: #f27e24;
+  color: #fff;
+}
+
+@media (max-width: 480px) {
+  .analytics-consent {
+    right: 12px;
+    bottom: calc(82px + env(safe-area-inset-bottom));
+    width: calc(100% - 24px);
+  }
+}

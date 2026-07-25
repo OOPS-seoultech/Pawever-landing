@@ -9,7 +9,19 @@ import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import AccountDeletion from "./pages/AccountDeletion";
 import Contact from "./pages/Contact";
+import GoodsSurvey from "./pages/GoodsSurvey";
+import GoodsSurveyForm from "./pages/GoodsSurveyForm";
+import AnalyticsConsent from "./components/AnalyticsConsent";
+import { useEffect } from "react";
+import { initializeAnalytics } from "./lib/analytics/analytics";
 
+function AnalyticsBootstrap() {
+  useEffect(() => {
+    initializeAnalytics();
+  }, []);
+
+  return <AnalyticsConsent />;
+}
 
 function Router() {
   return (
@@ -19,6 +31,8 @@ function Router() {
       <Route path="/privacy" component={PrivacyPolicy} />
       <Route path="/account-deletion" component={AccountDeletion} />
       <Route path="/contact" component={Contact} />
+      <Route path="/goods-survey/survey" component={GoodsSurveyForm} />
+      <Route path="/goods-survey" component={GoodsSurvey} />
       <Route path="/404" component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
@@ -40,6 +54,7 @@ function App() {
       >
         <TooltipProvider>
           <Toaster />
+          <AnalyticsBootstrap />
           <Router />
         </TooltipProvider>
       </ThemeProvider>
