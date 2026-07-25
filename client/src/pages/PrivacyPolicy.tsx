@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ChevronUp } from "lucide-react";
 import { useEffect, useState } from "react";
-import { AnalyticsPreferenceControls } from "@/components/AnalyticsConsent";
 
 /**
  * 개인정보 처리방침 페이지
@@ -155,9 +154,7 @@ export default function PrivacyPolicy() {
                       <td className="px-4 py-3">
                         반려견 사진·이름, 보호자 이름·연락처, 배송지
                       </td>
-                      <td className="px-4 py-3">
-                        굿즈 제작·발송 및 문의 대응
-                      </td>
+                      <td className="px-4 py-3">굿즈 제작·발송 및 문의 대응</td>
                       <td className="px-4 py-3">배송 완료 후 3개월</td>
                     </tr>
                     <tr className="hover:bg-accent/5">
@@ -185,19 +182,15 @@ export default function PrivacyPolicy() {
             </h2>
             <div className="space-y-4 text-foreground/80">
               <p>
-                선택 동의한 경우에만 Google Analytics 4를 로드하여 유입
-                경로(UTM), 페이지 활성 이용시간, 설문 진행 이벤트와 기기 범주를
-                측정합니다. 설문 답변, 이름, 연락처, 배송지와 반려견 사진은
-                Google Analytics로 전송하지 않습니다.
+                페이지 접속 시 Google Analytics 4를 로드하여 유입 경로(UTM),
+                페이지 활성 이용시간, 설문 진행 이벤트와 기기 범주를 측정합니다.
+                설문 답변, 이름, 연락처, 배송지와 반려견 사진은 Google
+                Analytics로 전송하지 않습니다.
               </p>
               <p className="text-sm">
-                외부 방문 분석 설정은 아래에서 언제든 변경할 수 있습니다. 외부
-                분석을 사용하지 않아도 설문과 굿즈 신청 기능은 이용할 수
-                있습니다. 설문을 시작하면 자체 연구를 위해 유입 경로, 기기
-                유형과 응답 소요시간이 무작위 응답 ID와 함께 Pawever 내부에
-                저장됩니다.
+                설문을 시작하면 자체 연구를 위해 유입 경로, 기기 유형과 응답
+                소요시간이 무작위 응답 ID와 함께 Pawever 내부에 저장됩니다.
               </p>
-              <AnalyticsPreferenceControls />
             </div>
           </section>
 
