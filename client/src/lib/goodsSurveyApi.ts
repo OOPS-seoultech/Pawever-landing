@@ -1,4 +1,4 @@
-export const GOODS_SURVEY_VERSION = "2026-07-23-v1";
+export const GOODS_SURVEY_VERSION = "2026-07-25-v2";
 
 type ApiEnvelope<T> = {
   success: boolean;
@@ -71,6 +71,7 @@ export type ApplicationPayload = {
   address: string;
   addressDetail: string;
   photoIds: string[];
+  publicPhotoIds: string[];
   conversionEventId: string;
   tracking: SurveyTrackingPayload;
   privacyAgreed: boolean;
@@ -123,7 +124,8 @@ const apiRequest = async <T>(path: string, init?: RequestInit): Promise<T> => {
 
   if (!response.ok || !envelope?.success) {
     throw new GoodsSurveyApiError(
-      envelope?.message ?? "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+      envelope?.message ??
+        "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.",
       envelope?.code ?? "NETWORK_ERROR",
       response.status
     );
@@ -152,14 +154,11 @@ export const saveSurveyDraft = (
   session: SurveyDraftSession,
   payload: SaveSurveyPayload
 ) =>
-  apiRequest<void>(
-    `/api/public/goods-survey/responses/${session.responseId}`,
-    {
-      method: "PATCH",
-      headers: editHeaders(session),
-      body: JSON.stringify(payload),
-    }
-  );
+  apiRequest<void>(`/api/public/goods-survey/responses/${session.responseId}`, {
+    method: "PATCH",
+    headers: editHeaders(session),
+    body: JSON.stringify(payload),
+  });
 
 export const completeSurvey = (
   session: SurveyDraftSession,
@@ -205,10 +204,7 @@ const createPhotoUpload = (
     }
   );
 
-const confirmPhotoUpload = (
-  session: SurveyDraftSession,
-  photoId: string
-) =>
+const confirmPhotoUpload = (session: SurveyDraftSession, photoId: string) =>
   apiRequest<PhotoUpload>(
     `/api/public/goods-survey/responses/${session.responseId}/photos/${photoId}/confirm`,
     {
@@ -259,14 +255,11 @@ export const submitSurveyApplication = (
     applicationId: number;
     status: "SUBMITTED";
     remaining: number;
-  }>(
-    `/api/public/goods-survey/responses/${session.responseId}/application`,
-    {
-      method: "POST",
-      headers: {
-        ...editHeaders(session),
-        "Idempotency-Key": idempotencyKey,
-      },
-      body: JSON.stringify(payload),
-    }
-  );
+  }>(`/api/public/goods-survey/responses/${session.responseId}/application`, {
+    method: "POST",
+    headers: {
+      ...editHeaders(session),
+      "Idempotency-Key": idempotencyKey,
+    },
+    body: JSON.stringify(payload),
+  });

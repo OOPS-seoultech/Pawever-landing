@@ -7,6 +7,5 @@ export const analyticsConfig = {
   metaPixelId: import.meta.env.VITE_META_PIXEL_ID?.trim() ?? "",
 } as const;
 
-export const hasConfiguredAnalyticsTags =
-  analyticsConfig.enabled &&
-  Boolean(analyticsConfig.ga4MeasurementId || analyticsConfig.metaPixelId);
+export const hasConfiguredExternalAnalytics =
+  analyticsConfig.enabled && Boolean(analyticsConfig.ga4MeasurementId);

@@ -38,11 +38,19 @@ import {
   getNextMultiSelection,
   getQuestionOptions,
   getQuestionTitle,
+  pruneHiddenAnswers,
+  getSurveyProgress,
   getVisibleQuestions,
   isSurveyTerminated,
   type SurveyAnswers,
   type SurveyQuestion,
 } from "./goodsSurveySchema";
+import {
+  goodsSurveyClosingContent,
+  goodsSurveyIntroContent,
+  goodsSurveyPrivacyContent,
+  goodsSurveyStoryContent,
+} from "./goodsSurveyContent";
 import "./GoodsSurveyForm.css";
 
 type SurveyStage =
@@ -70,6 +78,15 @@ type StoryFields = {
   wishKnownEarlier: string;
   finalHelp: string;
   oneLine: string;
+};
+
+type ConsentValue = boolean | null;
+
+type StoryConsent = {
+  analysis: ConsentValue;
+  publish: ConsentValue;
+  reviewContact: ConsentValue;
+  interview: ConsentValue;
 };
 
 type ProductionFields = {
@@ -111,6 +128,9 @@ const createClientId = () =>
     ? crypto.randomUUID()
     : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 
+const getFileKey = (file: File) =>
+  `${file.name}:${file.size}:${file.lastModified}`;
+
 const storySelects = {
   status: ["함께 살고 있다", "이별했다", "답하고 싶지 않다"],
   age: ["2세 이하", "3~5세", "6~8세", "9~11세", "12세 이상 또는 모름"],
@@ -138,12 +158,32 @@ function FieldLabel({
   );
 }
 
+function EmphasizedCopy({
+  text,
+  emphasis,
+}: {
+  text: string;
+  emphasis: string;
+}) {
+  const emphasisStart = text.indexOf(emphasis);
+  if (emphasisStart < 0) return <>{text}</>;
+
+  return (
+    <>
+      {text.slice(0, emphasisStart)}
+      <strong>{emphasis}</strong>
+      {text.slice(emphasisStart + emphasis.length)}
+    </>
+  );
+}
+
 function StoryTextarea({
   label,
   prompt,
   value,
   onChange,
   maxLength,
+  recommended,
   optional = true,
 }: {
   label: string;
@@ -151,6 +191,7 @@ function StoryTextarea({
   value: string;
   onChange: (value: string) => void;
   maxLength: number;
+  recommended: string;
   optional?: boolean;
 }) {
   return (
@@ -165,9 +206,52 @@ function StoryTextarea({
         placeholder="떠오르는 장면을 편안하게 적어 주세요."
       />
       <small>
-        {value.length.toLocaleString()} / {maxLength.toLocaleString()}자
+        {recommended} · 현재 {value.length.toLocaleString()} /{" "}
+        {maxLength.toLocaleString()}자
       </small>
     </label>
+  );
+}
+
+function ConsentChoice({
+  name,
+  label,
+  value,
+  onChange,
+  required = false,
+}: {
+  name: string;
+  label: string;
+  value: ConsentValue;
+  onChange: (value: boolean) => void;
+  required?: boolean;
+}) {
+  return (
+    <fieldset className="gsf-consent-question">
+      <legend>
+        {label} <em>{required ? "필수" : "선택"}</em>
+      </legend>
+      <div>
+        <label>
+          <input
+            type="radio"
+            name={name}
+            checked={value === true}
+            onChange={() => onChange(true)}
+          />
+          <span>예</span>
+        </label>
+        <label>
+          <input
+            type="radio"
+            name={name}
+            checked={value === false}
+            onChange={() => onChange(false)}
+          />
+          <span>아니요</span>
+        </label>
+      </div>
+    </fieldset>
   );
 }
 
@@ -288,8 +372,8 @@ export default function GoodsSurveyForm() {
     return draft;
   }, [initialGoods]);
   const [stage, setStage] = useState<SurveyStage>("intro");
-  const [answers, setAnswers] = useState<SurveyAnswers>(
-    () => restoredDraft?.answers ?? {}
+  const [answers, setAnswers] = useState<SurveyAnswers>(() =>
+    pruneHiddenAnswers(restoredDraft?.answers ?? {})
   );
   const [currentQuestionId, setCurrentQuestionId] = useState(
     () => restoredDraft?.currentQuestionId ?? "q1"
@@ -304,11 +388,11 @@ export default function GoodsSurveyForm() {
     () => restoredDraft?.surveyActiveMs ?? 0
   );
   const [story, setStory] = useState<StoryFields>(emptyStory);
-  const [storyConsent, setStoryConsent] = useState({
-    analysis: false,
-    publish: false,
-    reviewContact: false,
-    interview: false,
+  const [storyConsent, setStoryConsent] = useState<StoryConsent>({
+    analysis: null,
+    publish: null,
+    reviewContact: null,
+    interview: null,
   });
   const [production, setProduction] = useState<ProductionFields>({
     goods: productionGoods.some(([id]) => id === initialGoods)
@@ -323,6 +407,9 @@ export default function GoodsSurveyForm() {
     addressDetail: "",
   });
   const [photos, setPhotos] = useState<File[]>([]);
+  const [photoPublicationConsent, setPhotoPublicationConsent] = useState<
+    Record<string, ConsentValue>
+  >({});
   const [privacyConsent, setPrivacyConsent] = useState(false);
   const [shippingConsent, setShippingConsent] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
@@ -358,10 +445,12 @@ export default function GoodsSurveyForm() {
   const hasAnswer = Array.isArray(currentAnswer)
     ? currentAnswer.length > 0
     : Boolean(currentAnswer);
-  const progress =
-    visibleQuestions.length > 0
-      ? Math.round(((currentIndex + 1) / visibleQuestions.length) * 100)
-      : 0;
+  const terminatingAnswerSelected = isSurveyTerminated(answers);
+  const progress = getSurveyProgress({
+    currentIndex,
+    visibleQuestionCount: visibleQuestions.length,
+    terminated: terminatingAnswerSelected,
+  });
   const getQuestionActiveMs = useActiveTime(
     `${surveyRun}:${currentQuestion?.id ?? "none"}`,
     stage === "questions" && !apiBusy
@@ -584,29 +673,33 @@ export default function GoodsSurveyForm() {
     timings: Record<string, number>
   ) => {
     if (!draftSession) {
-      setApiError("설문 연결 정보가 없습니다. 처음 화면에서 다시 시작해 주세요.");
+      setApiError(
+        "설문 연결 정보가 없습니다. 처음 화면에서 다시 시작해 주세요."
+      );
       return;
     }
 
-    const nextVisible = getVisibleQuestions(nextAnswers);
+    const prunedAnswers = pruneHiddenAnswers(nextAnswers);
+    setAnswers(prunedAnswers);
+    const nextVisible = getVisibleQuestions(prunedAnswers);
     const index = nextVisible.findIndex(
       question => question.id === currentQuestionId
     );
     const nextQuestion = nextVisible[index + 1];
-    if (!isSurveyTerminated(nextAnswers) && nextQuestion) {
+    if (!isSurveyTerminated(prunedAnswers) && nextQuestion) {
       setCurrentQuestionId(nextQuestion.id);
       persistSnapshot(
         draftSession,
-        nextAnswers,
+        prunedAnswers,
         nextQuestion.id,
         timings,
         "questions"
       );
-      queueDraftSave(draftSession, nextAnswers, nextQuestion.id, timings);
+      queueDraftSave(draftSession, prunedAnswers, nextQuestion.id, timings);
       return;
     }
 
-    await completeCurrentSurvey(draftSession, nextAnswers, timings);
+    await completeCurrentSurvey(draftSession, prunedAnswers, timings);
   };
 
   const goNext = async () => {
@@ -695,12 +788,7 @@ export default function GoodsSurveyForm() {
           timings,
           "questions"
         );
-        queueDraftSave(
-          draftSession,
-          answers,
-          previousQuestion.id,
-          timings
-        );
+        queueDraftSave(draftSession, answers, previousQuestion.id, timings);
       }
     } else {
       setStage("intro");
@@ -756,10 +844,10 @@ export default function GoodsSurveyForm() {
     try {
       await saveSurveyStory(draftSession, {
         ...story,
-        analysisAgreed: storyConsent.analysis,
-        publishAgreed: storyConsent.publish,
-        reviewContactAgreed: storyConsent.reviewContact,
-        interviewAgreed: storyConsent.interview,
+        analysisAgreed: storyConsent.analysis === true,
+        publishAgreed: storyConsent.publish === true,
+        reviewContactAgreed: storyConsent.reviewContact === true,
+        interviewAgreed: storyConsent.interview === true,
       });
       continueToProduction();
     } catch (error) {
@@ -777,7 +865,7 @@ export default function GoodsSurveyForm() {
       setSubmissionProgress("사진을 안전하게 업로드하고 있어요.");
       const photoIds = await Promise.all(
         photos.map(file => {
-          const key = `${file.name}:${file.size}:${file.lastModified}`;
+          const key = getFileKey(file);
           let clientFileId = fileClientIds.current.get(key);
           if (!clientFileId) {
             clientFileId = createClientId();
@@ -786,8 +874,14 @@ export default function GoodsSurveyForm() {
           return uploadSurveyPhoto(draftSession, file, clientFileId);
         })
       );
+      const publicPhotoIds = photoIds.filter(
+        (_, index) =>
+          photoPublicationConsent[getFileKey(photos[index])] === true
+      );
 
-      setSubmissionProgress("신청 정보를 저장하고 선착순 자리를 확정하고 있어요.");
+      setSubmissionProgress(
+        "신청 정보를 저장하고 선착순 자리를 확정하고 있어요."
+      );
       const tracking = createSubmissionTrackingContext();
       const application = await submitSurveyApplication(
         draftSession,
@@ -802,6 +896,7 @@ export default function GoodsSurveyForm() {
           address: production.address,
           addressDetail: production.addressDetail,
           photoIds,
+          publicPhotoIds,
           conversionEventId: tracking.conversionEventId,
           tracking,
           privacyAgreed: privacyConsent,
@@ -841,12 +936,13 @@ export default function GoodsSurveyForm() {
     setSurveyActiveBaseMs(0);
     setStory(emptyStory);
     setStoryConsent({
-      analysis: false,
-      publish: false,
-      reviewContact: false,
-      interview: false,
+      analysis: null,
+      publish: null,
+      reviewContact: null,
+      interview: null,
     });
     setPhotos([]);
+    setPhotoPublicationConsent({});
     setPrivacyConsent(false);
     setShippingConsent(false);
     setReviewId("");
@@ -862,10 +958,6 @@ export default function GoodsSurveyForm() {
   return (
     <main className="goods-survey-form-page">
       <div className="gsf-shell">
-        <div className="gsf-review-banner">
-          설문 자동 저장 · 제작·배송 정보는 선착순 확정 후 별도 수집
-        </div>
-
         <header className="gsf-header">
           <button
             type="button"
@@ -892,14 +984,21 @@ export default function GoodsSurveyForm() {
         </header>
 
         {stage === "questions" && (
-          <div className="gsf-progress" aria-label={`설문 진행률 ${progress}%`}>
+          <div
+            className="gsf-progress"
+            aria-label={
+              terminatingAnswerSelected
+                ? "설문 대상 확인 단계"
+                : `설문 진행률 ${progress.value}%`
+            }
+          >
             <div>
-              <span style={{ width: `${progress}%` }} />
+              <span style={{ width: `${progress.value}%` }} />
             </div>
             <p>
-              <strong>{progress}%</strong>
+              <strong>{progress.label}</strong>
               <span>
-                {currentIndex + 1} / 예상 {visibleQuestions.length}단계
+                {progress.detail}
                 {draftSaveState === "saving" && " · 저장 중"}
                 {draftSaveState === "saved" && " · 저장됨"}
                 {draftSaveState === "offline" && " · 재연결 필요"}
@@ -924,38 +1023,48 @@ export default function GoodsSurveyForm() {
         <div className="gsf-content">
           {stage === "intro" && (
             <section className="gsf-intro">
-              <span className="gsf-eyebrow">
-                <Heart aria-hidden="true" />
-                오늘을 더 기억하기 위한 조사
-              </span>
-              <h1>
-                함께 있는 오늘을
-                <br />더 오래 기억하기 위해
-              </h1>
-              <p>
-                저희는 <strong>오늘을 더 잘 기억하는 서비스</strong>를 만들고
-                있어요. 그래서 아이와의 일상과 돌봄 경험을 질문드립니다.
-              </p>
+              <h1>{goodsSurveyIntroContent.title}</h1>
+              <div className="gsf-intro-copy">
+                <p>
+                  <EmphasizedCopy
+                    text={goodsSurveyIntroContent.introduction[0]}
+                    emphasis="오늘을 더 잘 기억하는 서비스"
+                  />
+                </p>
+                <p>{goodsSurveyIntroContent.introduction[1]}</p>
+                <p>{goodsSurveyIntroContent.introduction[2]}</p>
+              </div>
               <div className="gsf-intro-card">
                 <Sparkles aria-hidden="true" />
                 <div>
-                  <strong>답하기 어려우면 건너뛰어도 괜찮아요</strong>
+                  <p>{goodsSurveyIntroContent.introduction[3]}</p>
                   <p>
-                    후반부에는 노화·아픔에 관한 질문도 조금 있어요. 정답은
-                    없으며, 여러분의 속도로 답해 주세요.
+                    <EmphasizedCopy
+                      text={goodsSurveyIntroContent.introduction[4]}
+                      emphasis="건너뛰어도 괜찮습니다 :)"
+                    />
                   </p>
                 </div>
               </div>
               <div className="gsf-intro-meta">
-                <span>객관식 중심</span>
-                <span>약 10~15분</span>
-                <span>만 18세 이상</span>
+                <span>{goodsSurveyIntroContent.expectedTime}</span>
+                <span>{goodsSurveyIntroContent.audience}</span>
               </div>
-              <p className="gsf-baseline">
-                여러 반려견이 있다면 현재 가장 많이 돌보는 아이 한 마리, 이별
-                경험을 중심으로 답한다면 가장 최근에 이별한 아이 한 마리를
-                떠올려 주세요.
-              </p>
+              <div className="gsf-baseline">
+                <p>
+                  <EmphasizedCopy
+                    text={goodsSurveyIntroContent.responseCriteria[0]}
+                    emphasis="현재 가장 많이 돌보고 있는 아이 한 마리"
+                  />
+                </p>
+                <p>
+                  <EmphasizedCopy
+                    text={goodsSurveyIntroContent.responseCriteria[1]}
+                    emphasis="가장 최근에 이별한 아이 한 마리"
+                  />
+                </p>
+                <p>{goodsSurveyIntroContent.responseCriteria[2]}</p>
+              </div>
               <button
                 type="button"
                 className="gsf-primary"
@@ -990,10 +1099,15 @@ export default function GoodsSurveyForm() {
               <span className="gsf-message-icon">
                 <Heart aria-hidden="true" />
               </span>
-              <h1>응답해 주셔서 감사합니다.</h1>
+              <h1>
+                {answers.q1 === "prefer_not"
+                  ? "선택을 존중합니다."
+                  : "응답해 주셔서 감사합니다."}
+              </h1>
               <p>
-                이번 조사는 반려견을 직접 돌본 경험이 있는 분을 대상으로
-                진행하고 있어 여기에서 마무리됩니다.
+                {answers.q1 === "prefer_not"
+                  ? "답하고 싶지 않다는 선택에 따라 설문을 여기에서 마무리합니다."
+                  : "이번 조사는 반려견을 직접 돌본 경험이 있는 분을 대상으로 진행하고 있어 여기에서 마무리됩니다."}
               </p>
               <button
                 type="button"
@@ -1018,29 +1132,13 @@ export default function GoodsSurveyForm() {
                 <PawPrint aria-hidden="true" />
               </span>
               <span className="gsf-eyebrow">설문 응답 완료</span>
-              <h1>
-                아이와의 시간을 떠올리며
-                <br />
-                답해 주셔서 감사합니다.
-              </h1>
-              <p>
-                우리가 바라는 것은 이별을 미리 연습하는 일이 아닙니다. 오늘 한
-                번 더 바라보고, 함께 걷고, 한 장 더 남기며 아이와의 시간을 더
-                행복하게 채우는 일입니다.
-              </p>
-              <p className="gsf-reservation-note">
-                선착순 자리는{" "}
-                {reservationDeadline
-                  ? `오늘 ${reservationDeadline}까지`
-                  : "설문 완료 후 15분 동안"}{" "}
-                임시 보관됩니다.
-              </p>
+              <h1>{goodsSurveyClosingContent.title}</h1>
+              {goodsSurveyClosingContent.paragraphs.map(paragraph => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
               <div className="gsf-choice-card">
-                <strong>체크만으로 다 담기지 않은 장면이 있나요?</strong>
-                <p>
-                  사연 작성은 선택이며, 작성하지 않아도 굿즈 신청에 불이익이
-                  없습니다.
-                </p>
+                <strong>{goodsSurveyClosingContent.storyTitle}</strong>
+                <p>{goodsSurveyClosingContent.storyDescription}</p>
                 <button
                   type="button"
                   className="gsf-primary"
@@ -1058,7 +1156,7 @@ export default function GoodsSurveyForm() {
                     setStage("story");
                   }}
                 >
-                  사연 남기기
+                  {goodsSurveyClosingContent.storyButton}
                   <ArrowRight aria-hidden="true" />
                 </button>
                 <button
@@ -1071,7 +1169,7 @@ export default function GoodsSurveyForm() {
                     continueToProduction();
                   }}
                 >
-                  설문만 제출하고 굿즈 신청하기
+                  {goodsSurveyClosingContent.skipButton}
                 </button>
               </div>
             </section>
@@ -1086,15 +1184,21 @@ export default function GoodsSurveyForm() {
               }}
             >
               <span className="gsf-eyebrow">선택 작성</span>
-              <h1>그날부터, 아이가 조금 다르게 보이기 시작했어요.</h1>
-              <p className="gsf-form-lead">
-                아주 작은 장면도 괜찮습니다. 지금 함께 사는 이야기와 이미 작별한
-                이야기 모두 소중하게 듣겠습니다.
-              </p>
+              <h1>{goodsSurveyStoryContent.title}</h1>
+              <div className="gsf-form-lead">
+                {goodsSurveyStoryContent.introduction.map(paragraph => (
+                  <p key={paragraph}>{paragraph}</p>
+                ))}
+              </div>
 
+              <h2 className="gsf-story-section-title">
+                {goodsSurveyStoryContent.sections.basicInfo}
+              </h2>
               <div className="gsf-form-card">
                 <label>
-                  <FieldLabel>지금 아이와 함께 살고 있나요?</FieldLabel>
+                  <FieldLabel>
+                    {goodsSurveyStoryContent.fields.status}
+                  </FieldLabel>
                   <select
                     value={story.status}
                     onChange={event =>
@@ -1108,7 +1212,7 @@ export default function GoodsSurveyForm() {
                   </select>
                 </label>
                 <label>
-                  <FieldLabel>아이의 현재 또는 이별 당시 나이</FieldLabel>
+                  <FieldLabel>{goodsSurveyStoryContent.fields.age}</FieldLabel>
                   <select
                     value={story.age}
                     onChange={event => updateStory("age", event.target.value)}
@@ -1120,7 +1224,9 @@ export default function GoodsSurveyForm() {
                   </select>
                 </label>
                 <label>
-                  <FieldLabel>이야기 속 당시 아이의 상태</FieldLabel>
+                  <FieldLabel>
+                    {goodsSurveyStoryContent.fields.condition}
+                  </FieldLabel>
                   <select
                     value={story.condition}
                     onChange={event =>
@@ -1135,122 +1241,112 @@ export default function GoodsSurveyForm() {
                 </label>
               </div>
 
+              <h2 className="gsf-story-section-title">
+                {goodsSurveyStoryContent.sections.commonStories}
+              </h2>
               <StoryTextarea
-                label="행복한데도 시간이 영원하지 않다는 생각이 스친 장면"
-                prompt="어디에 있었고 아이는 무엇을 하고 있었나요? 표정, 걸음, 소리, 날씨처럼 기억나는 단서부터 들려주세요."
+                {...goodsSurveyStoryContent.fields.scene}
                 value={story.scene}
                 onChange={value => updateStory("scene", value)}
-                maxLength={1000}
                 optional={false}
               />
               <StoryTextarea
-                label="그 장면 뒤 나도 모르게 달라진 하루"
-                prompt="사진을 더 찍거나 산책길을 바꾼 일처럼 실제로 달라진 행동이 있었나요?"
+                {...goodsSurveyStoryContent.fields.changedDay}
                 value={story.changedDay}
                 onChange={value => updateStory("changedDay", value)}
-                maxLength={700}
               />
               <StoryTextarea
-                label="지금을 후회 없이 보내기 위해 시작한 것"
-                prompt="더 자주 하고 싶은 일, 미루지 않기로 한 일, 오래 기억하기 위해 남기는 것이 있나요?"
+                {...goodsSurveyStoryContent.fields.startedNow}
                 value={story.startedNow}
                 onChange={value => updateStory("startedNow", value)}
-                maxLength={700}
               />
               <StoryTextarea
-                label="검색창에 썼다가 지웠거나 끝내 묻지 못한 말"
-                prompt="알고 싶었지만 알게 될까 두려워 차마 묻지 못한 말이 있었나요?"
+                {...goodsSurveyStoryContent.fields.unsaidSearch}
                 value={story.unsaidSearch}
                 onChange={value => updateStory("unsaidSearch", value)}
-                maxLength={500}
               />
               <StoryTextarea
-                label="누군가 그때 조용히 알려주었으면 했던 것"
-                prompt="누가, 어느 순간에, 어떤 말로 다가왔다면 부담 없이 받아들일 수 있었을까요?"
+                {...goodsSurveyStoryContent.fields.neededHelp}
                 value={story.neededHelp}
                 onChange={value => updateStory("neededHelp", value)}
-                maxLength={700}
               />
 
               {story.status === "함께 살고 있다" && (
-                <StoryTextarea
-                  label="아직은 생각하고 싶지 않아 미루고 있는 것"
-                  prompt="언젠가는 알아야 하지만 '지금은 아직'이라며 미뤄둔 것이 있나요?"
-                  value={story.postponed}
-                  onChange={value => updateStory("postponed", value)}
-                  maxLength={700}
-                />
-              )}
-
-              {story.status === "이별했다" && (
                 <>
+                  <h2 className="gsf-story-section-title">
+                    {goodsSurveyStoryContent.sections.currentGuardian}
+                  </h2>
                   <StoryTextarea
-                    label="지나고 나서야 조금 더 일찍 알았더라면 생각한 것"
-                    prompt="미리 알았더라면 아이와 나 모두 조금 덜 힘들었을 것 같은 것이 있나요?"
-                    value={story.wishKnownEarlier}
-                    onChange={value => updateStory("wishKnownEarlier", value)}
-                    maxLength={800}
-                  />
-                  <StoryTextarea
-                    label="마지막 무렵 가장 필요했던 실제 도움"
-                    prompt="가장 필요했던 도움이나, 선의였지만 힘이 되지 않았던 말이 있었나요?"
-                    value={story.finalHelp}
-                    onChange={value => updateStory("finalHelp", value)}
-                    maxLength={800}
+                    {...goodsSurveyStoryContent.fields.postponed}
+                    value={story.postponed}
+                    onChange={value => updateStory("postponed", value)}
                   />
                 </>
               )}
 
+              {story.status === "이별했다" && (
+                <>
+                  <h2 className="gsf-story-section-title">
+                    {goodsSurveyStoryContent.sections.departedGuardian}
+                  </h2>
+                  <StoryTextarea
+                    {...goodsSurveyStoryContent.fields.wishKnownEarlier}
+                    value={story.wishKnownEarlier}
+                    onChange={value => updateStory("wishKnownEarlier", value)}
+                  />
+                  <StoryTextarea
+                    {...goodsSurveyStoryContent.fields.finalHelp}
+                    value={story.finalHelp}
+                    onChange={value => updateStory("finalHelp", value)}
+                  />
+                </>
+              )}
+
+              <h2 className="gsf-story-section-title">
+                {goodsSurveyStoryContent.sections.closing}
+              </h2>
               <StoryTextarea
-                label="오늘의 아이에게 남기는 한 문장"
-                prompt="지금 곁에 있는 아이에게, 또는 마음속에 남은 아이에게 한 문장만 건넨다면 무엇인가요?"
+                {...goodsSurveyStoryContent.fields.oneLine}
                 value={story.oneLine}
                 onChange={value => updateStory("oneLine", value)}
-                maxLength={100}
               />
 
               <div className="gsf-consent-card">
-                <strong>사연 이용 동의</strong>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={storyConsent.analysis}
-                    onChange={event =>
+                <strong>{goodsSurveyStoryContent.sections.consents}</strong>
+                <ConsentChoice
+                  name="story-analysis-consent"
+                  label={goodsSurveyStoryContent.consents.analysis}
+                  value={storyConsent.analysis}
+                  required
+                  onChange={value =>
+                    setStoryConsent(previous => ({
+                      ...previous,
+                      analysis: value,
+                    }))
+                  }
+                />
+                {[
+                  ["publish", goodsSurveyStoryContent.consents.publish],
+                  [
+                    "reviewContact",
+                    goodsSurveyStoryContent.consents.reviewContact,
+                  ],
+                  ["interview", goodsSurveyStoryContent.consents.interview],
+                ].map(([key, label]) => (
+                  <ConsentChoice
+                    key={key}
+                    name={`story-${key}-consent`}
+                    label={label}
+                    value={storyConsent[key as keyof StoryConsent]}
+                    onChange={value =>
                       setStoryConsent(previous => ({
                         ...previous,
-                        analysis: event.target.checked,
+                        [key]: value,
                       }))
                     }
                   />
-                  <span>
-                    익명 연구·서비스 개선 분석에 동의합니다. <em>필수</em>
-                  </span>
-                </label>
-                {[
-                  ["publish", "웹사이트·SNS 익명 소개에 동의합니다."],
-                  ["reviewContact", "게시 전 문안 확인 연락에 동의합니다."],
-                  ["interview", "후속 인터뷰 연락에 동의합니다."],
-                ].map(([key, label]) => (
-                  <label key={key}>
-                    <input
-                      type="checkbox"
-                      checked={storyConsent[key as keyof typeof storyConsent]}
-                      onChange={event =>
-                        setStoryConsent(previous => ({
-                          ...previous,
-                          [key]: event.target.checked,
-                        }))
-                      }
-                    />
-                    <span>
-                      {label} <em>선택</em>
-                    </span>
-                  </label>
                 ))}
-                <p>
-                  공개에 동의하지 않아도 사연 제출과 굿즈 신청에 불이익이
-                  없습니다.
-                </p>
+                <p>{goodsSurveyStoryContent.consents.note}</p>
               </div>
 
               <button
@@ -1353,11 +1449,11 @@ export default function GoodsSurveyForm() {
                         file =>
                           !["image/jpeg", "image/png", "image/webp"].includes(
                             file.type
-                          ) ||
-                          file.size > 10 * 1024 * 1024
+                          ) || file.size > 10 * 1024 * 1024
                       );
                       if (invalidFile) {
                         setPhotos([]);
+                        setPhotoPublicationConsent({});
                         setApiError(
                           "사진은 JPG·PNG·WEBP 형식, 장당 10MB 이하만 올릴 수 있어요."
                         );
@@ -1366,18 +1462,46 @@ export default function GoodsSurveyForm() {
                       }
                       setApiError("");
                       setPhotos(nextFiles);
+                      setPhotoPublicationConsent(previous =>
+                        Object.fromEntries(
+                          nextFiles.map(file => {
+                            const key = getFileKey(file);
+                            return [key, previous[key] ?? null];
+                          })
+                        )
+                      );
                     }}
                   />
                 </label>
                 {photos.length > 0 && (
-                  <ul className="gsf-file-list">
-                    {photos.map(file => (
-                      <li key={`${file.name}-${file.lastModified}`}>
-                        <Check aria-hidden="true" />
-                        <span>{file.name}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="gsf-photo-consents">
+                    <p>
+                      첨부 사진 공개 동의는 사진별 선택 사항입니다. 공개에
+                      동의하지 않아도 굿즈 응모나 제작에 불이익이 없습니다.
+                    </p>
+                    {photos.map((file, index) => {
+                      const key = getFileKey(file);
+                      return (
+                        <div className="gsf-photo-consent" key={key}>
+                          <span className="gsf-file-name">
+                            <Check aria-hidden="true" />
+                            {file.name}
+                          </span>
+                          <ConsentChoice
+                            name={`photo-${index}-publication-consent`}
+                            label={goodsSurveyStoryContent.consents.photo}
+                            value={photoPublicationConsent[key] ?? null}
+                            onChange={value =>
+                              setPhotoPublicationConsent(previous => ({
+                                ...previous,
+                                [key]: value,
+                              }))
+                            }
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
                 <p className="gsf-field-help">
                   밝은 곳에서 얼굴 정면과 귀가 가리지 않은 사진이 좋아요. 전신
@@ -1462,7 +1586,9 @@ export default function GoodsSurveyForm() {
                 className="gsf-primary"
                 disabled={!productionReady || apiBusy}
               >
-                {apiBusy ? "신청을 안전하게 저장하고 있어요..." : "신청 완료하기"}
+                {apiBusy
+                  ? "신청을 안전하게 저장하고 있어요..."
+                  : "신청 완료하기"}
                 <ArrowRight aria-hidden="true" />
               </button>
               {submissionProgress && (
@@ -1510,8 +1636,8 @@ export default function GoodsSurveyForm() {
                 정상적으로 접수됐어요.
               </h1>
               <p>
-                설문 응답과 제작·배송 정보는 분리해 안전하게 저장했습니다.
-                제작 관련 안내는 입력한 연락처로 전달드릴게요.
+                설문 응답과 제작·배송 정보는 분리해 안전하게 저장했습니다. 제작
+                관련 안내는 입력한 연락처로 전달드릴게요.
               </p>
               <div className="gsf-review-id">
                 <span>접수 확인 번호</span>
@@ -1546,7 +1672,7 @@ export default function GoodsSurveyForm() {
               onClick={goNext}
               disabled={!hasAnswer || apiBusy}
             >
-              다음
+              {terminatingAnswerSelected ? "설문 종료" : "다음"}
               <ArrowRight aria-hidden="true" />
             </button>
             {currentQuestion.id !== "q1" && (
@@ -1590,24 +1716,12 @@ export default function GoodsSurveyForm() {
             </span>
             <h2 id="privacy-modal-title">개인정보 수집·이용 안내</h2>
             <dl>
-              <div>
-                <dt>수집 항목</dt>
-                <dd>반려견 사진, 이름·연락처, 배송지</dd>
-              </div>
-              <div>
-                <dt>이용 목적</dt>
-                <dd>굿즈 제작·발송, 문의 대응</dd>
-              </div>
-              <div>
-                <dt>보유·파기</dt>
-                <dd>배송 완료 후 3개월 뒤 삭제</dd>
-              </div>
-              <div>
-                <dt>동의 거부</dt>
-                <dd>
-                  동의를 거부할 수 있으며, 거부 시 제작 및 배송이 어렵습니다.
-                </dd>
-              </div>
+              {goodsSurveyPrivacyContent.map(([term, description]) => (
+                <div key={term}>
+                  <dt>{term}</dt>
+                  <dd>{description}</dd>
+                </div>
+              ))}
             </dl>
             <button
               type="button"

@@ -181,18 +181,21 @@ export default function PrivacyPolicy() {
           <section>
             <h2 className="text-2xl font-bold text-foreground mb-4 flex items-center gap-2">
               <span className="w-1 h-8 bg-orange-400 rounded-full"></span>웹
-              분석 및 광고 성과 측정
+              분석 및 서비스 개선 측정
             </h2>
             <div className="space-y-4 text-foreground/80">
               <p>
-                선택 동의한 경우에만 Google Analytics 4와 Meta Pixel을 로드하여
-                광고 유입 경로, 페이지 활성 이용시간, 설문 진행 이벤트와 기기
-                범주를 측정합니다. 설문 답변, 이름, 연락처, 배송지와 반려견
-                사진은 이 분석 도구로 전송하지 않습니다.
+                선택 동의한 경우에만 Google Analytics 4를 로드하여 유입
+                경로(UTM), 페이지 활성 이용시간, 설문 진행 이벤트와 기기 범주를
+                측정합니다. 설문 답변, 이름, 연락처, 배송지와 반려견 사진은
+                Google Analytics로 전송하지 않습니다.
               </p>
               <p className="text-sm">
-                분석 및 광고 측정 동의는 아래에서 언제든 변경할 수 있습니다.
-                거부해도 설문과 굿즈 신청 기능은 이용할 수 있습니다.
+                외부 방문 분석 설정은 아래에서 언제든 변경할 수 있습니다. 외부
+                분석을 사용하지 않아도 설문과 굿즈 신청 기능은 이용할 수
+                있습니다. 설문을 시작하면 자체 연구를 위해 유입 경로, 기기
+                유형과 응답 소요시간이 무작위 응답 ID와 함께 Pawever 내부에
+                저장됩니다.
               </p>
               <AnalyticsPreferenceControls />
             </div>

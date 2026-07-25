@@ -7,6 +7,20 @@ const defaultConsent: ConsentState = {
   decidedAt: null,
 };
 
+export const EXTERNAL_ANALYTICS_CONSENT_CHOICES = {
+  allow: {
+    analytics: true,
+    marketing: false,
+  },
+  decline: {
+    analytics: false,
+    marketing: false,
+  },
+} as const satisfies Record<
+  "allow" | "decline",
+  Pick<ConsentState, "analytics" | "marketing">
+>;
+
 type ConsentListener = (consent: ConsentState) => void;
 
 const listeners = new Set<ConsentListener>();
@@ -32,7 +46,13 @@ export const getConsentState = (): ConsentState => {
       return inMemoryConsent;
     }
     const parsed: unknown = JSON.parse(stored);
-    inMemoryConsent = isConsentState(parsed) ? parsed : defaultConsent;
+    inMemoryConsent = isConsentState(parsed)
+      ? {
+          ...parsed,
+          // 광고 측정은 별도 안내·동의 UI를 마련하기 전까지 활성화하지 않는다.
+          marketing: false,
+        }
+      : defaultConsent;
     return inMemoryConsent;
   } catch {
     inMemoryConsent = defaultConsent;
@@ -41,10 +61,11 @@ export const getConsentState = (): ConsentState => {
 };
 
 export const setConsentState = (
-  categories: Pick<ConsentState, "analytics" | "marketing">
+  categories: Pick<ConsentState, "analytics">
 ) => {
   const next: ConsentState = {
-    ...categories,
+    analytics: categories.analytics,
+    marketing: false,
     decidedAt: new Date().toISOString(),
   };
   inMemoryConsent = next;

@@ -96,20 +96,20 @@ const scaleUsage = numbered(
 );
 
 const sensitiveNotice: SurveyNotice = {
-  title: "잠시 안내드릴게요",
+  title: "민감 문항 전 안내",
   paragraphs: [
-    "다음부터 마지막 돌봄이나 이별 이후의 정보에 관한 질문이 일부 나옵니다.",
-    "어떤 준비를 서두르게 하려는 것이 아니라, 필요한 정보가 너무 늦게 닿아 더 힘들었던 순간과 부담스럽지 않은 도움의 방식을 이해하기 위한 질문입니다.",
+    "다음 문항부터는 마지막 돌봄이나 이별 이후의 정보에 관한 질문이 일부 나옵니다.",
+    "이 질문들은 어떤 준비를 서두르게 하거나, 아이와 함께 있는 오늘을 슬프게 만들기 위한 것이 아닙니다. 오히려 필요한 정보가 너무 늦게 닿아 더 힘들었던 순간은 없었는지, 그리고 어떤 도움이라면 부담스럽지 않게 받아들일 수 있는지를 이해하기 위한 질문입니다.",
     "사람마다 편안하게 생각할 수 있는 시점이 다릅니다. 지금의 마음에 가장 가까운 답을 골라 주세요.",
   ],
 };
 
 const serviceNotice: SurveyNotice = {
-  title: "가상의 서비스를 떠올려 주세요",
+  title: "서비스 설명",
   paragraphs: [
-    "건강한 날에는 사진·영상과 일상·건강 기록을 돕고, 아이가 나이를 먹거나 아플 때에는 필요한 돌봄 정보를 보여주는 서비스입니다.",
-    "마지막 돌봄이나 이별 이후의 정보는 처음부터 앞세우지 않고, 보호자가 원하거나 실제로 필요해진 때에만 조심스럽게 제공합니다.",
-    "목표는 이별을 앞당겨 생각하게 하는 것이 아니라, 오늘 함께할 일을 놓치지 않고 행복한 시간과 기억을 더 많이 남기도록 돕는 것입니다.",
+    "이제부터는 하나의 가상 서비스를 떠올려 주세요.",
+    "이 서비스는 건강한 날에는 사진·영상과 일상·건강 기록을 도와주고, 아이가 나이를 먹거나 아플 때에는 필요한 돌봄 정보를 보여줍니다. 마지막 돌봄이나 이별 이후의 정보는 처음부터 앞에 내세우지 않고, 보호자가 원하거나 실제로 필요해진 때에만 조심스럽게 제공합니다.",
+    "이 서비스의 목표는 이별을 앞당겨 생각하게 하는 것이 아니라, 오늘 함께할 일을 놓치지 않고 행복한 시간과 기억을 더 많이 남기도록 돕는 것입니다.",
   ],
 };
 
@@ -194,7 +194,7 @@ export const surveyQuestions: SurveyQuestion[] = [
     id: "q4_2",
     number: "Q4-2",
     section: "A. 아이와 함께하는 지금",
-    title: "당시 돌봄에서 큰 비중을 차지한 것을 모두 골라 주세요.",
+    title: "당시 돌봄에서 가장 큰 비중을 차지한 것은 무엇이었나요?",
     options: numbered(
       "정기 검진과 약·처방식 관리",
       "증상과 일상 상태의 반복 관찰",
@@ -231,7 +231,7 @@ export const surveyQuestions: SurveyQuestion[] = [
     id: "q7",
     number: "Q7",
     section: "A. 아이와 함께하는 지금",
-    title: "아이와의 일상에서 현재 꾸준히 하고 있는 것을 모두 골라 주세요.",
+    title: "아이와의 일상에서 현재 가장 꾸준히 하고 있는 것은 무엇인가요?",
     options: numbered(
       "사진·영상·일기 등 추억 기록",
       "식사·배변·약·병원 등 건강 기록",
@@ -375,7 +375,7 @@ export const surveyQuestions: SurveyQuestion[] = [
     id: "q11_1b",
     number: "Q11-1B",
     section: "B. 아이와의 시간이 조금 다르게 보이기 시작한 순간",
-    title: "처음 찾아본 정보는 어느 범주였나요?",
+    title: "처음 찾아본 정보는 어느 내용였나요?",
     options: named(
       ["symptom", "증상의 원인과 응급 여부"],
       ["treatment", "검사·치료·질환의 예후"],
@@ -771,7 +771,8 @@ export const surveyQuestions: SurveyQuestion[] = [
       id: `q22_${index + 1}`,
       number: "Q22",
       section: "D. 부담 없이 시작할 수 있는 서비스",
-      title: `"${row}"에 이 서비스를 처음 소개받았다면 설치했을 가능성은 어느 정도인가요?`,
+      title:
+        "기능과 가격이 같다고 가정할 때, 각 시점에 이 서비스를 처음 소개받았다면 설치했을 가능성은 어느 정도인가요?",
       options: scaleLikelihood,
       matrix: {
         title:
@@ -920,7 +921,8 @@ export const surveyQuestions: SurveyQuestion[] = [
       id: `q28_${index + 1}`,
       number: "Q28",
       section: "D. 부담 없이 시작할 수 있는 서비스",
-      title: `"${row}" 지원이 필요할 때 추가된다면 이용 의향은 어느 정도인가요?`,
+      title:
+        "일상·건강 기록으로 먼저 사용하다가 아래 지원이 필요할 때 추가된다면 이용 의향은 어느 정도인가요?",
       options: scaleUsage,
       matrix: {
         title: "일상·건강 기록 이후 추가 지원별 이용 의향",
@@ -1115,6 +1117,35 @@ export const getQuestionOptions = (
 export const isSurveyTerminated = (answers: SurveyAnswers) =>
   answerIn(answers, "q1", ["no_experience", "prefer_not"]);
 
+export const getSurveyProgress = ({
+  currentIndex,
+  visibleQuestionCount,
+  terminated,
+}: {
+  currentIndex: number;
+  visibleQuestionCount: number;
+  terminated: boolean;
+}) => {
+  if (terminated) {
+    return {
+      value: 3,
+      label: "대상 확인",
+      detail: "선택한 응답에 따라 설문이 종료됩니다",
+    };
+  }
+
+  const value =
+    visibleQuestionCount > 0
+      ? Math.round(((currentIndex + 1) / visibleQuestionCount) * 100)
+      : 0;
+
+  return {
+    value,
+    label: `${value}%`,
+    detail: `${currentIndex + 1} / 예상 ${visibleQuestionCount}단계`,
+  };
+};
+
 export const getVisibleQuestions = (answers: SurveyAnswers) => {
   if (isSurveyTerminated(answers)) {
     return surveyQuestions.filter(question => question.id === "q1");
@@ -1127,3 +1158,69 @@ export const getVisibleQuestions = (answers: SurveyAnswers) => {
 
 export const getVisibleQuestionIds = (answers: SurveyAnswers) =>
   getVisibleQuestions(answers).map(question => question.id);
+
+export const pruneHiddenAnswers = (answers: SurveyAnswers): SurveyAnswers => {
+  const pruned: SurveyAnswers = { ...answers };
+
+  for (let pass = 0; pass < surveyQuestions.length; pass += 1) {
+    let changed = false;
+    const visibleQuestions = getVisibleQuestions(pruned);
+    const visibleById = new Map(
+      visibleQuestions.map(question => [question.id, question])
+    );
+
+    for (const questionId of Object.keys(pruned)) {
+      if (!visibleById.has(questionId)) {
+        delete pruned[questionId];
+        changed = true;
+      }
+    }
+
+    for (const question of visibleQuestions) {
+      const answer = pruned[question.id];
+      if (answer === undefined) continue;
+
+      const optionIds = new Set(
+        getQuestionOptions(question, pruned).map(option => option.id)
+      );
+      if (question.kind !== "multi") {
+        if (Array.isArray(answer) || !optionIds.has(answer)) {
+          delete pruned[question.id];
+          changed = true;
+        }
+        continue;
+      }
+
+      if (!Array.isArray(answer)) {
+        delete pruned[question.id];
+        changed = true;
+        continue;
+      }
+
+      const valid = Array.from(
+        new Set(answer.filter(optionId => optionIds.has(optionId)))
+      );
+      const exclusive = valid.find(optionId =>
+        question.exclusiveOptionIds?.includes(optionId)
+      );
+      const normalized = exclusive
+        ? [exclusive]
+        : valid.slice(0, question.maxSelections ?? optionIds.size);
+
+      if (normalized.length === 0) {
+        delete pruned[question.id];
+        changed = true;
+      } else if (
+        normalized.length !== answer.length ||
+        normalized.some((optionId, index) => optionId !== answer[index])
+      ) {
+        pruned[question.id] = normalized;
+        changed = true;
+      }
+    }
+
+    if (!changed) break;
+  }
+
+  return pruned;
+};

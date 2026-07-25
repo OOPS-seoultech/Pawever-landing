@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   completeSurvey,
   createSurveyDraft,
+  submitSurveyApplication,
   type SurveyDraftSession,
 } from "./goodsSurveyApi";
 
@@ -123,5 +124,52 @@ describe("내부 설문 API", () => {
       "https://api.pawever.kr/api/public/goods-survey/campaign",
       expect.any(Object)
     );
+  });
+
+  it("제작 신청에는 사진별 공개 동의 ID를 일반 사진 ID와 분리해 보낸다", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          success: true,
+          data: {
+            responseId: "response-1",
+            applicationId: 1,
+            status: "SUBMITTED",
+            remaining: 72,
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      )
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const session: SurveyDraftSession = {
+      responseId: "response-1",
+      editToken: "edit-token",
+      status: "RESERVED",
+      remaining: 72,
+    };
+
+    await submitSurveyApplication(session, "idempotency-1", {
+      goodsType: "acrylic",
+      customGoods: "",
+      petName: "몽이",
+      guardianName: "보호자",
+      phone: "01012345678",
+      postalCode: "01234",
+      address: "서울시 노원구",
+      addressDetail: "",
+      photoIds: ["photo-public", "photo-private"],
+      publicPhotoIds: ["photo-public"],
+      conversionEventId: "conversion-1",
+      tracking: { visitId: "visit-1" },
+      privacyAgreed: true,
+      shippingConfirmed: true,
+    });
+
+    const [, options] = fetchMock.mock.calls[0];
+    expect(JSON.parse(String(options.body))).toMatchObject({
+      photoIds: ["photo-public", "photo-private"],
+      publicPhotoIds: ["photo-public"],
+    });
   });
 });
