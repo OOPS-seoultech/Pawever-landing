@@ -21,6 +21,7 @@ export interface SurveyQuestion {
   maxSelections?: number;
   exclusiveOptionIds?: string[];
   optional?: boolean;
+  nonSkippable?: boolean;
   helper?: string;
   notice?: SurveyNotice;
   matrix?: {
@@ -119,6 +120,7 @@ export const surveyQuestions: SurveyQuestion[] = [
     number: "Q1",
     section: "A. 아이와 함께하는 지금",
     title: "현재 또는 과거의 반려견 양육 경험과 가장 가까운 것은 무엇인가요?",
+    nonSkippable: true,
     options: named(
       ["current_only", "현재 반려견과 살고 있으며 과거 이별 경험은 없다"],
       ["current_and_loss", "현재 반려견과 살고 있으며 과거 이별 경험도 있다"],
@@ -132,6 +134,7 @@ export const surveyQuestions: SurveyQuestion[] = [
     number: "Q2",
     section: "A. 아이와 함께하는 지금",
     title: "이번 설문에서 어떤 아이를 떠올리며 답하시겠어요?",
+    nonSkippable: true,
     options: answers => {
       if (answerIs(answers, "q1", "current_only")) {
         return named(["current", "현재 가장 많이 돌보고 있는 아이"]);
@@ -375,7 +378,7 @@ export const surveyQuestions: SurveyQuestion[] = [
     id: "q11_1b",
     number: "Q11-1B",
     section: "B. 아이와의 시간이 조금 다르게 보이기 시작한 순간",
-    title: "처음 찾아본 정보는 어느 내용였나요?",
+    title: "처음 찾아본 정보는 어느 내용이었나요?",
     options: named(
       ["symptom", "증상의 원인과 응급 여부"],
       ["treatment", "검사·치료·질환의 예후"],
@@ -1224,3 +1227,14 @@ export const pruneHiddenAnswers = (answers: SurveyAnswers): SurveyAnswers => {
 
   return pruned;
 };
+
+// 무료 제작 슬롯을 예약하려면 최소한의 실제 응답이 있어야 한다.
+// 자격 확인(Q1)과 기준 아이 선택(Q2)만 답하고 나머지를 모두 건너뛴
+// 사실상 빈 응답이 선착순 자리를 선점하는 것을 막는 1차 방어선이다.
+// 값을 낮게 둔 이유: 민감한 주제라 힘든 문항은 자유롭게 건너뛰게 두되
+// 참여 자체를 하지 않은 응답만 걸러내기 위함이며, 서버측 검증과 함께 쓴다.
+export const MIN_ANSWERED_FOR_RESERVATION = 5;
+
+export const hasMinimumAnswers = (answers: SurveyAnswers) =>
+  Object.keys(pruneHiddenAnswers(answers)).length >=
+  MIN_ANSWERED_FOR_RESERVATION;

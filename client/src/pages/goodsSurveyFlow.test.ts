@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getNextMultiSelection,
+  hasMinimumAnswers,
   pruneHiddenAnswers,
   getSurveyProgress,
   getVisibleQuestionIds,
@@ -158,5 +159,33 @@ describe("굿즈 설문 분기", () => {
     ).toEqual({
       q1: "loss_only",
     });
+  });
+
+  it("Q1·Q2는 건너뛸 수 없는 문항으로 표시한다", () => {
+    const nonSkippable = (id: string) =>
+      surveyQuestions.find(question => question.id === id)?.nonSkippable ??
+      false;
+
+    expect(nonSkippable("q1")).toBe(true);
+    expect(nonSkippable("q2")).toBe(true);
+    expect(nonSkippable("q3")).toBe(false);
+    expect(nonSkippable("q29_current")).toBe(false);
+  });
+
+  it("자격 문항만 답하고 나머지를 건너뛰면 무료 제작 예약 기준에 미달한다", () => {
+    expect(hasMinimumAnswers({ q1: "current_only", q2: "current" })).toBe(
+      false
+    );
+
+    expect(
+      hasMinimumAnswers({
+        q1: "current_only",
+        q2: "current",
+        q3: "3",
+        q4: "healthy",
+        q5: "2",
+        q6: "1",
+      })
+    ).toBe(true);
   });
 });
