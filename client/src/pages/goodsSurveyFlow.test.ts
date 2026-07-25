@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   getNextMultiSelection,
+  pruneHiddenAnswers,
+  getSurveyProgress,
   getVisibleQuestionIds,
   surveyQuestions,
   type SurveyAnswers,
@@ -10,6 +12,27 @@ describe("굿즈 설문 분기", () => {
   it("양육 경험이 없거나 응답을 원하지 않으면 첫 문항에서 종료한다", () => {
     expect(getVisibleQuestionIds({ q1: "no_experience" })).toEqual(["q1"]);
     expect(getVisibleQuestionIds({ q1: "prefer_not" })).toEqual(["q1"]);
+  });
+
+  it("첫 문항에서 종료 답변을 골라도 진행률을 100% 완료로 표시하지 않는다", () => {
+    expect(
+      getSurveyProgress({
+        currentIndex: 0,
+        visibleQuestionCount: 1,
+        terminated: true,
+      })
+    ).toMatchObject({
+      value: expect.any(Number),
+      label: "대상 확인",
+      detail: "선택한 응답에 따라 설문이 종료됩니다",
+    });
+    expect(
+      getSurveyProgress({
+        currentIndex: 0,
+        visibleQuestionCount: 1,
+        terminated: true,
+      }).value
+    ).toBeLessThan(100);
   });
 
   it("Q4에서 선택한 상태에 맞는 꼬리 문항 하나만 노출한다", () => {
@@ -102,5 +125,38 @@ describe("굿즈 설문 분기", () => {
     expect(getVisibleQuestionIds(current)).not.toContain("q29_departed");
     expect(getVisibleQuestionIds(departed)).toContain("q29_departed");
     expect(getVisibleQuestionIds(departed)).not.toContain("q29_current");
+  });
+
+  it("이전 답변으로 생긴 꼬리 문항은 상위 답변을 바꾸면 제출값에서 제거한다", () => {
+    expect(
+      pruneHiddenAnswers({
+        q1: "current_only",
+        q4: "healthy",
+        q4_1: "2",
+        q8: "medical",
+        q8_1a: "1",
+        q8_1c: "3",
+        q9: "2",
+      })
+    ).toEqual({
+      q1: "current_only",
+      q4: "healthy",
+      q8: "medical",
+      q8_1c: "3",
+      q9: "2",
+    });
+  });
+
+  it("상위 답변 변경으로 선택지에서 사라진 기존 답변도 연쇄 제거한다", () => {
+    expect(
+      pruneHiddenAnswers({
+        q1: "loss_only",
+        q2: "current",
+        q29_current: "health",
+        q29_1a: "2",
+      })
+    ).toEqual({
+      q1: "loss_only",
+    });
   });
 });
