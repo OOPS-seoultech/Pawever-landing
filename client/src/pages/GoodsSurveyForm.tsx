@@ -41,6 +41,7 @@ import {
   pruneHiddenAnswers,
   getSurveyProgress,
   getVisibleQuestions,
+  hasMinimumAnswers,
   isSurveyTerminated,
   type SurveyAnswers,
   type SurveyQuestion,
@@ -696,6 +697,17 @@ export default function GoodsSurveyForm() {
         "questions"
       );
       queueDraftSave(draftSession, prunedAnswers, nextQuestion.id, timings);
+      return;
+    }
+
+    if (
+      !isSurveyTerminated(prunedAnswers) &&
+      !hasMinimumAnswers(prunedAnswers)
+    ) {
+      setApiError(
+        "무료 제작 신청은 설문에 최소한의 응답이 있어야 접수돼요. 이전으로 돌아가 몇 문항만 더 답해 주세요."
+      );
+      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
 
@@ -1675,7 +1687,7 @@ export default function GoodsSurveyForm() {
               {terminatingAnswerSelected ? "설문 종료" : "다음"}
               <ArrowRight aria-hidden="true" />
             </button>
-            {currentQuestion.id !== "q1" && (
+            {!currentQuestion.nonSkippable && (
               <button
                 type="button"
                 className="gsf-skip"
