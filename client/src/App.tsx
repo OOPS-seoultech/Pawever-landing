@@ -11,7 +11,6 @@ import AccountDeletion from "./pages/AccountDeletion";
 import Contact from "./pages/Contact";
 import GoodsSurvey from "./pages/GoodsSurvey";
 import GoodsSurveyForm from "./pages/GoodsSurveyForm";
-import AnalyticsConsent from "./components/AnalyticsConsent";
 import { useEffect } from "react";
 import { initializeAnalytics } from "./lib/analytics/analytics";
 
@@ -20,7 +19,7 @@ function AnalyticsBootstrap() {
     initializeAnalytics();
   }, []);
 
-  return <AnalyticsConsent />;
+  return null;
 }
 
 function Router() {

@@ -7,7 +7,7 @@ import {
   recordFirstPartyEngagement,
 } from "./firstPartyEngagement";
 import { sanitizeAnalyticsProperties } from "./analytics";
-import { EXTERNAL_ANALYTICS_CONSENT_CHOICES } from "./consent";
+import { createAutomaticConsentState } from "./consent";
 
 class MemoryStorage implements AttributionStorage {
   private readonly values = new Map<string, string>();
@@ -129,18 +129,14 @@ describe("분석 속성 개인정보 방어", () => {
   });
 });
 
-describe("외부 방문 분석 동의", () => {
-  it("방문 분석 허용은 GA4 분석만 켜고 광고 측정은 켜지 않는다", () => {
-    expect(EXTERNAL_ANALYTICS_CONSENT_CHOICES.allow).toEqual({
+describe("외부 방문 분석 자동 허용", () => {
+  it("팝업 선택 없이 분석과 광고 측정을 모두 허용한다", () => {
+    expect(
+      createAutomaticConsentState(() => "2026-07-25T12:00:00.000Z")
+    ).toEqual({
       analytics: true,
-      marketing: false,
-    });
-  });
-
-  it("외부 분석 없이 계속하면 분석과 광고 측정을 모두 끈다", () => {
-    expect(EXTERNAL_ANALYTICS_CONSENT_CHOICES.decline).toEqual({
-      analytics: false,
-      marketing: false,
+      marketing: true,
+      decidedAt: "2026-07-25T12:00:00.000Z",
     });
   });
 });

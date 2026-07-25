@@ -1,6 +1,6 @@
 import { refreshAttributionContext } from "./attribution";
 import { analyticsConfig } from "./config";
-import { getConsentState, subscribeConsent } from "./consent";
+import { getConsentState } from "./consent";
 import { getDeviceContext } from "./device";
 import { getFirstPartyEngagement } from "./firstPartyEngagement";
 import {
@@ -17,12 +17,10 @@ import type {
   SubmissionTrackingContext,
 } from "./types";
 
-const MAX_PENDING_EVENTS = 50;
 const FORBIDDEN_PROPERTY =
   /^(answer|answer_value|response|response_text|photo|file)$|email|phone|address|file_name|filename|photo_url|photo_name|pet_name|guardian_name/i;
 
 let initialized = false;
-let pendingEvents: AnalyticsEvent[] = [];
 
 export const createAnalyticsEventId = () =>
   typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
@@ -68,12 +66,6 @@ const applyConsent = (consent: ConsentState) => {
     }
     setMetaConsent(consent.marketing);
   }
-
-  if (!consent.decidedAt) return;
-
-  const queued = pendingEvents;
-  pendingEvents = [];
-  queued.forEach(event => dispatchEvent(event, consent));
 };
 
 export const initializeAnalytics = () => {
@@ -84,7 +76,6 @@ export const initializeAnalytics = () => {
     refreshAttributionContext();
     initializeGoogleConsentDefaults();
     applyConsent(getConsentState());
-    subscribeConsent(applyConsent);
   } catch (error) {
     if (analyticsConfig.debug) {
       console.warn("[Pawever analytics] 초기화 실패", error);
@@ -120,14 +111,7 @@ export const trackEvent = (
     }
 
     const consent = getConsentState();
-    if (consent.decidedAt) {
-      dispatchEvent(event, consent);
-    } else {
-      pendingEvents = [
-        ...pendingEvents.slice(-(MAX_PENDING_EVENTS - 1)),
-        event,
-      ];
-    }
+    dispatchEvent(event, consent);
 
     return event;
   } catch (error) {
