@@ -209,6 +209,20 @@
   background: #f7f1eb;
 }
 
+.gs-hero-tag {
+  position: absolute;
+  left: 7px;
+  bottom: 7px;
+  padding: 3px 9px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #43352e;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  box-shadow: 0 1px 4px rgba(67, 53, 46, 0.18);
+}
+
 .gs-hero-limit {
   margin: 15px 0 14px;
   color: #79716b;
