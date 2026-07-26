@@ -46,11 +46,16 @@
 }
 
 .gs-wordmark {
-  color: var(--gs-orange);
-  font-size: 15px;
-  font-weight: 950;
-  letter-spacing: -0.055em;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
   text-decoration: none;
+}
+
+.gs-wordmark img {
+  display: block;
+  width: 118px;
+  height: 16px;
 }
 
 .gs-topbar > span {
