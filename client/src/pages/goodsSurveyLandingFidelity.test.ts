@@ -40,4 +40,19 @@ describe("굿즈 랜딩 피그마 기준본", () => {
     expect(landingSource).not.toContain("product-sprite-v1.png");
     expect(landingSource).not.toContain("story-sprite-v1.png");
   });
+
+  it("상단 워드마크는 피그마에서 받은 벡터 로고를 사용한다", () => {
+    expect(landingSource).toContain("paw-ever-logo.svg");
+    expect(landingSource).toContain('alt="PAW-EVER"');
+    expect(landingSource).not.toMatch(
+      /className="gs-wordmark">\s*PAW-EVER/
+    );
+
+    const logoSource = readFileSync(
+      new URL("../../public/goods-survey/paw-ever-logo.svg", import.meta.url),
+      "utf8"
+    );
+    expect(logoSource).toContain('width="118" height="16"');
+    expect(logoSource).toContain('fill="#FFA94E"');
+  });
 });

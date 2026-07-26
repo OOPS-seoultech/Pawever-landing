@@ -282,7 +282,12 @@ export default function GoodsSurvey() {
       <div className="gs-phone">
         <header className="gs-topbar">
           <a href="/goods-survey" className="gs-wordmark">
-            PAW-EVER
+            <img
+              src={`${ASSET_BASE}/paw-ever-logo.svg`}
+              alt="PAW-EVER"
+              width="118"
+              height="16"
+            />
           </a>
           <span>완료자 전원 제작비 0원</span>
         </header>
