@@ -26,6 +26,29 @@ const eventName = (event: AnalyticsEvent) => {
   return event.name;
 };
 
+// GA4는 표준 획득 리포트를 page_location의 utm 쿼리에서 귀속한다.
+// send_page_view를 끄고 수동 이벤트만 보내므로, utm이 담긴 전체 URL을
+// page_location으로 직접 실어야 유입 소스/매체가 direct로 뭉개지지 않는다.
+export const buildGoogleAnalyticsParams = (
+  event: AnalyticsEvent,
+  pageLocation: string
+) =>
+  compact({
+    ...event.properties,
+    ...campaignProperties(event.attribution.lastTouch),
+    internal_event_name: event.name,
+    event_id: event.eventId,
+    visit_id: event.visitId,
+    page_path: event.path,
+    page_location: pageLocation,
+    device_category: event.device.category,
+    viewport_size: `${event.device.viewportWidth}x${event.device.viewportHeight}`,
+    engagement_time_msec:
+      typeof event.properties.active_ms === "number"
+        ? event.properties.active_ms
+        : undefined,
+  });
+
 let configured = false;
 
 const ensureGtag = () => {
@@ -91,22 +114,10 @@ export const googleAnalyticsProvider = {
   track(event: AnalyticsEvent) {
     if (!configured) return;
 
-    const lastTouch = event.attribution.lastTouch;
-    const properties = compact({
-      ...event.properties,
-      ...campaignProperties(lastTouch),
-      internal_event_name: event.name,
-      event_id: event.eventId,
-      visit_id: event.visitId,
-      page_path: event.path,
-      device_category: event.device.category,
-      viewport_size: `${event.device.viewportWidth}x${event.device.viewportHeight}`,
-      engagement_time_msec:
-        typeof event.properties.active_ms === "number"
-          ? event.properties.active_ms
-          : undefined,
-    });
-
-    window.gtag?.("event", eventName(event), properties);
+    window.gtag?.(
+      "event",
+      eventName(event),
+      buildGoogleAnalyticsParams(event, window.location.href)
+    );
   },
 };

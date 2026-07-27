@@ -8,6 +8,8 @@ import {
 } from "./firstPartyEngagement";
 import { sanitizeAnalyticsProperties } from "./analytics";
 import { createAutomaticConsentState } from "./consent";
+import { buildGoogleAnalyticsParams } from "./providers/googleAnalytics";
+import type { AnalyticsEvent } from "./types";
 
 class MemoryStorage implements AttributionStorage {
   private readonly values = new Map<string, string>();
@@ -138,5 +140,44 @@ describe("외부 방문 분석 자동 허용", () => {
       marketing: true,
       decidedAt: "2026-07-25T12:00:00.000Z",
     });
+  });
+});
+
+describe("GA4 이벤트 파라미터", () => {
+  const baseEvent: AnalyticsEvent = {
+    eventId: "evt-1",
+    name: "landing_view",
+    occurredAt: "2026-07-26T00:00:00.000Z",
+    path: "/goods-survey",
+    visitId: "visit-1",
+    attribution: {
+      visitId: "visit-1",
+      startedAt: "2026-07-26T00:00:00.000Z",
+      entryPath: "/goods-survey",
+      firstTouch: { utm_source: "meta", utm_medium: "cpc", utm_campaign: "goods" },
+      lastTouch: { utm_source: "meta", utm_medium: "cpc", utm_campaign: "goods" },
+      lastTouchAt: "2026-07-26T00:00:00.000Z",
+    },
+    device: {
+      category: "mobile",
+      viewportWidth: 390,
+      viewportHeight: 844,
+      screenWidth: 390,
+      screenHeight: 844,
+      pixelRatio: 3,
+      language: "ko-KR",
+      timezone: "Asia/Seoul",
+    },
+    properties: {},
+  };
+
+  it("utm이 담긴 전체 URL을 page_location으로 함께 보내 GA4 표준 귀속을 살린다", () => {
+    const url =
+      "https://www.pawever.kr/goods-survey?utm_source=meta&utm_medium=cpc&utm_campaign=goods";
+    const params = buildGoogleAnalyticsParams(baseEvent, url);
+
+    expect(params.page_location).toBe(url);
+    expect(params.campaign_source).toBe("meta");
+    expect(params.campaign_medium).toBe("cpc");
   });
 });
