@@ -10,6 +10,20 @@ import {
 } from "./goodsSurveySchema";
 
 describe("굿즈 설문 분기", () => {
+  it("복수선택을 모두 해제하면 응답 자체를 지운다", () => {
+    // 서버는 빈 배열을 거부한다. 저장 요청에 실려 나가면 안 된다.
+    expect(pruneHiddenAnswers({ q1: "current_only", q7: [] })).toEqual({
+      q1: "current_only",
+    });
+    expect(
+      getNextMultiSelection({
+        selected: ["3"],
+        optionId: "3",
+        maxSelections: 5,
+      })
+    ).toEqual([]);
+  });
+
   it("양육 경험이 없거나 응답을 원하지 않으면 첫 문항에서 종료한다", () => {
     expect(getVisibleQuestionIds({ q1: "no_experience" })).toEqual(["q1"]);
     expect(getVisibleQuestionIds({ q1: "prefer_not" })).toEqual(["q1"]);

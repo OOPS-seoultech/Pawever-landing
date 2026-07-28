@@ -36,6 +36,7 @@ import {
 } from "@/lib/goodsSurveyDraftStorage";
 import {
   getNextMultiSelection,
+  getQuestionNotice,
   getQuestionOptions,
   getQuestionTitle,
   pruneHiddenAnswers,
@@ -134,9 +135,21 @@ const createClientId = () =>
 const getFileKey = (file: File) =>
   `${file.name}:${file.size}:${file.lastModified}`;
 
-const storySelects = {
-  status: ["함께 살고 있다", "이별했다", "답하고 싶지 않다"],
-  age: ["2세 이하", "3~5세", "6~8세", "9~11세", "12세 이상 또는 모름"],
+// 화면 분기를 이 값으로만 판단한다. 라벨을 직접 비교하면
+// 문구가 바뀔 때 조건이 조용히 어긋난다.
+export const STORY_STATUS = {
+  living: "함께 살고 있다",
+  departed: "이별했다",
+  undisclosed: "답하고 싶지 않다",
+} as const;
+
+export const storySelects = {
+  status: [
+    STORY_STATUS.living,
+    STORY_STATUS.departed,
+    STORY_STATUS.undisclosed,
+  ],
+  age: ["2세 이하", "3~5세", "6~8세", "9~11세", "12세 이상", "잘 모르겠다"],
   condition: [
     "건강한 일상",
     "작은 노화나 이상 변화",
@@ -268,6 +281,7 @@ export function QuestionScreen({
   onAnswer: (value: string | string[]) => void;
 }) {
   const options = getQuestionOptions(question, answers);
+  const notice = getQuestionNotice(question, answers);
   const answer = answers[question.id];
   const selected = Array.isArray(answer) ? answer : answer ? [answer] : [];
 
@@ -289,12 +303,12 @@ export function QuestionScreen({
 
   return (
     <section className="gsf-question" aria-labelledby="survey-question-title">
-      {question.notice && (
+      {notice && (
         <div className="gsf-notice">
           <Info aria-hidden="true" />
           <div>
-            <strong>{question.notice.title}</strong>
-            {question.notice.paragraphs.map(paragraph => (
+            <strong>{notice.title}</strong>
+            {notice.paragraphs.map(paragraph => (
               <p key={paragraph}>{paragraph}</p>
             ))}
           </div>
@@ -530,7 +544,14 @@ export default function GoodsSurveyForm() {
     nextQuestionId: string,
     timings: Record<string, number>
   ) => {
-    const payload = buildSavePayload(nextAnswers, nextQuestionId, timings);
+    // 저장 요청은 어느 경로로 들어오든 서버가 받는 형태여야 한다.
+    // 특히 복수선택을 모두 해제하면 빈 배열이 남는데 서버는 이를 거부하므로,
+    // 호출부에 맡기지 않고 여기서 한 번 더 정리한다.
+    const payload = buildSavePayload(
+      pruneHiddenAnswers(nextAnswers),
+      nextQuestionId,
+      timings
+    );
     setDraftSaveState("saving");
     draftSaveQueue.current = draftSaveQueue.current
       .catch(() => undefined)
@@ -815,6 +836,13 @@ export default function GoodsSurveyForm() {
     return () => urls.forEach(url => URL.revokeObjectURL(url));
   }, [photos]);
 
+  // 사연 페이지의 조건부 섹션은 T1이 아니라 Q1로 판단한다.
+  // T1은 단일선택이라 "지금도 함께 살고 이별 경험도 있다"를 표현하지 못한다.
+  const livesWithPet =
+    answers.q1 === "current_only" || answers.q1 === "current_and_loss";
+  const hasLostPet =
+    answers.q1 === "current_and_loss" || answers.q1 === "loss_only";
+
   const storyReady =
     Boolean(
       story.status && story.age && story.condition && story.scene.trim()
@@ -1093,10 +1121,17 @@ export default function GoodsSurveyForm() {
               question={currentQuestion}
               answers={answers}
               onAnswer={value =>
-                setAnswers(previous => ({
-                  ...previous,
-                  [currentQuestion.id]: value,
-                }))
+                setAnswers(previous => {
+                  const next = { ...previous };
+                  // 복수선택을 모두 해제하면 답하지 않은 것으로 되돌린다.
+                  // 빈 배열을 그대로 두면 "다음"이 열린 채로 저장이 거부된다.
+                  if (Array.isArray(value) && value.length === 0) {
+                    delete next[currentQuestion.id];
+                  } else {
+                    next[currentQuestion.id] = value;
+                  }
+                  return next;
+                })
               }
             />
           )}
@@ -1278,7 +1313,7 @@ export default function GoodsSurveyForm() {
                 onChange={value => updateStory("neededHelp", value)}
               />
 
-              {story.status === "함께 살고 있다" && (
+              {livesWithPet && (
                 <>
                   <h2 className="gsf-story-section-title">
                     {goodsSurveyStoryContent.sections.currentGuardian}
@@ -1291,7 +1326,7 @@ export default function GoodsSurveyForm() {
                 </>
               )}
 
-              {story.status === "이별했다" && (
+              {hasLostPet && (
                 <>
                   <h2 className="gsf-story-section-title">
                     {goodsSurveyStoryContent.sections.departedGuardian}

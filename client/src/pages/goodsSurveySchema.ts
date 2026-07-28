@@ -23,7 +23,10 @@ export interface SurveyQuestion {
   optional?: boolean;
   nonSkippable?: boolean;
   helper?: string;
-  notice?: SurveyNotice;
+  // 응답에 따라 안내가 붙는 화면이 달라질 수 있어 함수도 받는다.
+  notice?:
+    | SurveyNotice
+    | ((answers: SurveyAnswers) => SurveyNotice | undefined);
   matrix?: {
     title: string;
     row: string;
@@ -111,6 +114,11 @@ const serviceNotice: SurveyNotice = {
     "건강한 날엔 사진과 일상·건강 기록을 돕고, 아프거나 나이 들 때는 돌봄 정보를 보여줍니다. 이별 관련 정보는 필요해진 때에만 조심스럽게 전해집니다.",
     "오늘 함께할 시간과 기억을 더 많이 남기도록 돕는 게 목표에요.",
   ],
+};
+
+const finalStepNotice: SurveyNotice = {
+  title: "마지막 단계에요.",
+  paragraphs: ["세상에 하나뿐인 굿즈를 정성스레 만들어드릴게요."],
 };
 
 export const surveyQuestions: SurveyQuestion[] = [
@@ -541,7 +549,6 @@ export const surveyQuestions: SurveyQuestion[] = [
       ["farewell", "장례·추억 보존·펫로스 지원"],
       ["none", "관련 기관이나 서비스를 알아본 적이 없다"]
     ),
-    notice: sensitiveNotice,
   },
   {
     id: "q16_1a",
@@ -555,6 +562,7 @@ export const surveyQuestions: SurveyQuestion[] = [
       "다른 병원의 2차 의견",
       "비대면·방문 상담"
     ),
+    notice: sensitiveNotice,
     when: answers => answerIs(answers, "q16", "medical"),
   },
   {
@@ -569,6 +577,7 @@ export const surveyQuestions: SurveyQuestion[] = [
       "카드·할부·의료비 마련 방법",
       "민간단체·모금 지원"
     ),
+    notice: sensitiveNotice,
     when: answers => answerIs(answers, "q16", "finance"),
   },
   {
@@ -583,6 +592,7 @@ export const surveyQuestions: SurveyQuestion[] = [
       "삶의 질을 확인하는 방법",
       "치료 방향을 상담하는 서비스"
     ),
+    notice: sensitiveNotice,
     when: answers => answerIs(answers, "q16", "care"),
   },
   {
@@ -597,6 +607,7 @@ export const surveyQuestions: SurveyQuestion[] = [
       "추모 공간·메모리얼 상품",
       "펫로스 상담·모임·콘텐츠"
     ),
+    notice: sensitiveNotice,
     when: answers => answerIs(answers, "q16", "farewell"),
   },
   {
@@ -611,6 +622,10 @@ export const surveyQuestions: SurveyQuestion[] = [
       "마지막 돌봄·장례·추모·상담",
       "비용을 지불하거나 준비한 적이 없어요"
     ),
+    // Q16에서 "알아본 적이 없다"를 고르면 꼬리 문항이 없어 안내를 볼 기회가 사라진다.
+    // 그 경로에서는 Q16 다음 화면인 여기에 붙인다.
+    notice: answers =>
+      answerIs(answers, "q16", "none") ? sensitiveNotice : undefined,
   },
   {
     id: "q18",
@@ -941,7 +956,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   {
     id: "q29_current",
     number: "Q29-A",
-    section: "E. 지금 또는 지나고 나서 필요했던 것",
+    section: "E. 지금 보니 필요했던 것들",
     title: "알고 싶지만 마음이 무거워 충분히 알아보지 못한 것은 무엇인가요?",
     options: named(
       ["health", "건강 변화·예후·응급상황"],
@@ -951,12 +966,13 @@ export const surveyQuestions: SurveyQuestion[] = [
       ["emotion", "내 감정 또는 가족과 대화"],
       ["none", "특별히 없어요"]
     ),
+    notice: finalStepNotice,
     when: answers => answerIs(answers, "q2", "current"),
   },
   {
     id: "q29_departed",
     number: "Q29-B",
-    section: "E. 지금 또는 지나고 나서 필요했던 것",
+    section: "E. 지금 보니 필요했던 것들",
     title: "조금 더 일찍 알았더라면 덜 힘들었을 것은 무엇인가요?",
     options: named(
       ["health", "건강 변화·예후·응급상황"],
@@ -966,12 +982,13 @@ export const surveyQuestions: SurveyQuestion[] = [
       ["emotion", "내 감정 또는 가족과 대화"],
       ["none", "특별히 없어요"]
     ),
+    notice: finalStepNotice,
     when: answers => answerIn(answers, "q2", ["recent_departed", "longest"]),
   },
   {
     id: "q29_1a",
     number: "Q29-1A",
-    section: "E. 지금 또는 지나고 나서 필요했던 것",
+    section: "E. 지금 보니 필요했던 것들",
     title: "가장 필요했던 내용은 무엇인가요?",
     options: numbered(
       "앞으로 나타날 수 있는 몸의 변화",
@@ -987,7 +1004,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   {
     id: "q29_1b",
     number: "Q29-1B",
-    section: "E. 지금 또는 지나고 나서 필요했던 것",
+    section: "E. 지금 보니 필요했던 것들",
     title: "가장 필요했던 내용은 무엇인가요?",
     options: numbered(
       "통증과 불편함을 알아채는 방법",
@@ -1003,7 +1020,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   {
     id: "q29_1c",
     number: "Q29-1C",
-    section: "E. 지금 또는 지나고 나서 필요했던 것",
+    section: "E. 지금 보니 필요했던 것들",
     title: "가장 필요했던 내용은 무엇인가요?",
     options: numbered(
       "예상 치료비와 비용 비교",
@@ -1019,7 +1036,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   {
     id: "q29_1d",
     number: "Q29-1D",
-    section: "E. 지금 또는 지나고 나서 필요했던 것",
+    section: "E. 지금 보니 필요했던 것들",
     title: "가장 필요했던 내용은 무엇인가요?",
     options: numbered(
       "지금 함께하면 좋을 경험",
@@ -1035,7 +1052,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   {
     id: "q29_1e",
     number: "Q29-1E",
-    section: "E. 지금 또는 지나고 나서 필요했던 것",
+    section: "E. 지금 보니 필요했던 것들",
     title: "가장 가까운 답을 골라 주세요.",
     options: numbered(
       "불안과 죄책감을 다루는 방법",
@@ -1051,7 +1068,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   {
     id: "q30",
     number: "Q30",
-    section: "E. 지금 또는 지나고 나서 필요했던 것",
+    section: "E. 지금 보니 필요했던 것들",
     title: "이 내용들을 누가 알려주는 게 나을까요?",
     options: numbered(
       "다니던 동물병원 수의사",
@@ -1122,6 +1139,14 @@ export const getQuestionOptions = (
   typeof question.options === "function"
     ? question.options(answers)
     : question.options;
+
+export const getQuestionNotice = (
+  question: SurveyQuestion,
+  answers: SurveyAnswers
+) =>
+  typeof question.notice === "function"
+    ? question.notice(answers)
+    : question.notice;
 
 export const isSurveyTerminated = (answers: SurveyAnswers) =>
   answerIn(answers, "q1", ["no_experience", "prefer_not"]);

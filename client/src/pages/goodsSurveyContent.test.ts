@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { STORY_STATUS, storySelects } from "./GoodsSurveyForm";
 import {
   goodsSurveyClosingContent,
   goodsSurveyIntroContent,
@@ -133,6 +134,24 @@ describe("굿즈 설문 첫 화면 문구", () => {
         note: "사연을 작성해주신 분 중 SNS 공유를 수락해주신 분들께 추가 선물이 제공됩니다. 모든 사연이 공유되지는 않습니다.",
       },
     });
+  });
+
+  it("사연 기본 정보 선택지를 노션 원문대로 제공한다", () => {
+    // T1 값은 이야기 6-A(현재 함께 사는 반려인 전용)와 6-B·7-B(이별 경험자 전용)의
+    // 노출 조건이기도 하다. 라벨만 바꾸면 화면이 조용히 사라지므로 같이 고정한다.
+    expect(storySelects.status).toEqual([
+      STORY_STATUS.living,
+      STORY_STATUS.departed,
+      STORY_STATUS.undisclosed,
+    ]);
+    expect(storySelects.age).toEqual([
+      "2세 이하",
+      "3~5세",
+      "6~8세",
+      "9~11세",
+      "12세 이상",
+      "잘 모르겠다",
+    ]);
   });
 
   it("제작 정보 화면 문구를 노션 검토 의견대로 사용한다", () => {
