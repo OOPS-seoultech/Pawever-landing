@@ -57,8 +57,6 @@ export type StoryPayload = {
   oneLine: string;
   analysisAgreed: boolean;
   publishAgreed: boolean;
-  reviewContactAgreed: boolean;
-  interviewAgreed: boolean;
 };
 
 export type ApplicationPayload = {

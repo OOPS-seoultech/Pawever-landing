@@ -50,6 +50,7 @@ import {
   goodsSurveyClosingContent,
   goodsSurveyIntroContent,
   goodsSurveyPrivacyContent,
+  goodsSurveyProductionContent,
   goodsSurveyStoryContent,
 } from "./goodsSurveyContent";
 import "./GoodsSurveyForm.css";
@@ -81,13 +82,14 @@ type StoryFields = {
   oneLine: string;
 };
 
+// 굿즈 발송 안내를 문자로 보내므로 휴대폰 번호만 받는다.
+const PHONE_PATTERN = /^01[016789][-\s]?\d{3,4}[-\s]?\d{4}$/;
+
 type ConsentValue = boolean | null;
 
 type StoryConsent = {
   analysis: ConsentValue;
   publish: ConsentValue;
-  reviewContact: ConsentValue;
-  interview: ConsentValue;
 };
 
 type ProductionFields = {
@@ -392,8 +394,6 @@ export default function GoodsSurveyForm() {
   const [storyConsent, setStoryConsent] = useState<StoryConsent>({
     analysis: null,
     publish: null,
-    reviewContact: null,
-    interview: null,
   });
   const [production, setProduction] = useState<ProductionFields>({
     goods: productionGoods.some(([id]) => id === initialGoods)
@@ -408,9 +408,7 @@ export default function GoodsSurveyForm() {
     addressDetail: "",
   });
   const [photos, setPhotos] = useState<File[]>([]);
-  const [photoPublicationConsent, setPhotoPublicationConsent] = useState<
-    Record<string, ConsentValue>
-  >({});
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [privacyConsent, setPrivacyConsent] = useState(false);
   const [shippingConsent, setShippingConsent] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
@@ -810,10 +808,21 @@ export default function GoodsSurveyForm() {
   const updateStory = (field: keyof StoryFields, value: string) =>
     setStory(previous => ({ ...previous, [field]: value }));
 
+  // 첨부한 사진을 그대로 보여준다. 미리보기 URL은 사진이 바뀌면 바로 회수한다.
+  useEffect(() => {
+    const urls = photos.map(file => URL.createObjectURL(file));
+    setPhotoPreviews(urls);
+    return () => urls.forEach(url => URL.revokeObjectURL(url));
+  }, [photos]);
+
   const storyReady =
     Boolean(
       story.status && story.age && story.condition && story.scene.trim()
     ) && storyConsent.analysis;
+
+  const phoneInvalid =
+    production.phone.trim().length > 0 &&
+    !PHONE_PATTERN.test(production.phone.trim());
 
   const productionReady =
     photos.length > 0 &&
@@ -821,20 +830,13 @@ export default function GoodsSurveyForm() {
       production.goods &&
         production.petName.trim() &&
         production.guardianName.trim() &&
-        production.phone.trim() &&
+        PHONE_PATTERN.test(production.phone.trim()) &&
         production.postalCode.trim() &&
         production.address.trim()
     ) &&
     (production.goods !== "custom" || Boolean(production.customGoods.trim())) &&
     privacyConsent &&
     shippingConsent;
-  const reservationDeadline = draftSession?.reservationExpiresAt
-    ? new Intl.DateTimeFormat("ko-KR", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      }).format(new Date(draftSession.reservationExpiresAt))
-    : null;
 
   const continueToProduction = () => {
     if (draftSession) {
@@ -858,8 +860,6 @@ export default function GoodsSurveyForm() {
         ...story,
         analysisAgreed: storyConsent.analysis === true,
         publishAgreed: storyConsent.publish === true,
-        reviewContactAgreed: storyConsent.reviewContact === true,
-        interviewAgreed: storyConsent.interview === true,
       });
       continueToProduction();
     } catch (error) {
@@ -886,10 +886,8 @@ export default function GoodsSurveyForm() {
           return uploadSurveyPhoto(draftSession, file, clientFileId);
         })
       );
-      const publicPhotoIds = photoIds.filter(
-        (_, index) =>
-          photoPublicationConsent[getFileKey(photos[index])] === true
-      );
+      // 사진별 공개 동의를 따로 받지 않고, 사연의 SNS 공유 동의 하나로 일괄 처리한다.
+      const publicPhotoIds = storyConsent.publish === true ? photoIds : [];
 
       setSubmissionProgress(
         "신청 정보를 저장하고 선착순 자리를 확정하고 있어요."
@@ -950,11 +948,8 @@ export default function GoodsSurveyForm() {
     setStoryConsent({
       analysis: null,
       publish: null,
-      reviewContact: null,
-      interview: null,
     });
     setPhotos([]);
-    setPhotoPublicationConsent({});
     setPrivacyConsent(false);
     setShippingConsent(false);
     setReviewId("");
@@ -1337,27 +1332,17 @@ export default function GoodsSurveyForm() {
                     }))
                   }
                 />
-                {[
-                  ["publish", goodsSurveyStoryContent.consents.publish],
-                  [
-                    "reviewContact",
-                    goodsSurveyStoryContent.consents.reviewContact,
-                  ],
-                  ["interview", goodsSurveyStoryContent.consents.interview],
-                ].map(([key, label]) => (
-                  <ConsentChoice
-                    key={key}
-                    name={`story-${key}-consent`}
-                    label={label}
-                    value={storyConsent[key as keyof StoryConsent]}
-                    onChange={value =>
-                      setStoryConsent(previous => ({
-                        ...previous,
-                        [key]: value,
-                      }))
-                    }
-                  />
-                ))}
+                <ConsentChoice
+                  name="story-publish-consent"
+                  label={goodsSurveyStoryContent.consents.publish}
+                  value={storyConsent.publish}
+                  onChange={value =>
+                    setStoryConsent(previous => ({
+                      ...previous,
+                      publish: value,
+                    }))
+                  }
+                />
                 <p>{goodsSurveyStoryContent.consents.note}</p>
               </div>
 
@@ -1395,11 +1380,9 @@ export default function GoodsSurveyForm() {
               }}
             >
               <span className="gsf-eyebrow">마지막 단계</span>
-              <h1>우리 아이 굿즈 제작 정보를 알려주세요.</h1>
+              <h1>{goodsSurveyProductionContent.title}</h1>
               <p className="gsf-form-lead">
-                설문 응답과 제작·배송 정보는 무작위 응답 ID로만 연결됩니다.
-                {reservationDeadline &&
-                  ` 선착순 자리는 오늘 ${reservationDeadline}까지 보관됩니다.`}
+                {goodsSurveyProductionContent.lead}
               </p>
 
               <section className="gsf-form-section">
@@ -1441,6 +1424,9 @@ export default function GoodsSurveyForm() {
                     />
                   </label>
                 )}
+                <p className="gsf-field-help">
+                  {goodsSurveyProductionContent.goodsSubstitution}
+                </p>
               </section>
 
               <section className="gsf-form-section">
@@ -1465,7 +1451,6 @@ export default function GoodsSurveyForm() {
                       );
                       if (invalidFile) {
                         setPhotos([]);
-                        setPhotoPublicationConsent({});
                         setApiError(
                           "사진은 JPG·PNG·WEBP 형식, 장당 10MB 이하만 올릴 수 있어요."
                         );
@@ -1474,46 +1459,23 @@ export default function GoodsSurveyForm() {
                       }
                       setApiError("");
                       setPhotos(nextFiles);
-                      setPhotoPublicationConsent(previous =>
-                        Object.fromEntries(
-                          nextFiles.map(file => {
-                            const key = getFileKey(file);
-                            return [key, previous[key] ?? null];
-                          })
-                        )
-                      );
                     }}
                   />
                 </label>
                 {photos.length > 0 && (
-                  <div className="gsf-photo-consents">
-                    <p>
-                      첨부 사진 공개 동의는 사진별 선택 사항입니다. 공개에
-                      동의하지 않아도 굿즈 응모나 제작에 불이익이 없습니다.
-                    </p>
-                    {photos.map((file, index) => {
-                      const key = getFileKey(file);
-                      return (
-                        <div className="gsf-photo-consent" key={key}>
-                          <span className="gsf-file-name">
-                            <Check aria-hidden="true" />
-                            {file.name}
-                          </span>
-                          <ConsentChoice
-                            name={`photo-${index}-publication-consent`}
-                            label={goodsSurveyStoryContent.consents.photo}
-                            value={photoPublicationConsent[key] ?? null}
-                            onChange={value =>
-                              setPhotoPublicationConsent(previous => ({
-                                ...previous,
-                                [key]: value,
-                              }))
-                            }
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
+                  <ul className="gsf-photo-preview">
+                    {photos.map((file, index) => (
+                      <li key={getFileKey(file)}>
+                        {photoPreviews[index] && (
+                          <img src={photoPreviews[index]} alt="" />
+                        )}
+                        <span className="gsf-file-name">
+                          <Check aria-hidden="true" />
+                          {file.name}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
                 )}
                 <p className="gsf-field-help">
                   밝은 곳에서 얼굴 정면과 귀가 가리지 않은 사진이 좋아요. 전신
@@ -1545,7 +1507,13 @@ export default function GoodsSurveyForm() {
                       }
                       placeholder={placeholder}
                       inputMode={field === "phone" ? "tel" : "text"}
+                      aria-invalid={field === "phone" && phoneInvalid}
                     />
+                    {field === "phone" && phoneInvalid && (
+                      <span className="gsf-field-error" role="alert">
+                        {goodsSurveyProductionContent.phoneFormatError}
+                      </span>
+                    )}
                   </label>
                 ))}
               </section>
@@ -1554,10 +1522,7 @@ export default function GoodsSurveyForm() {
                 <ShieldCheck aria-hidden="true" />
                 <div>
                   <h2>제품 안전 안내</h2>
-                  <p>
-                    본 굿즈는 보호자용 키링 또는 전시용입니다. 반려견이 물거나
-                    삼키지 않도록 손이 닿지 않는 곳에서 사용해 주세요.
-                  </p>
+                  <p>{goodsSurveyProductionContent.safety}</p>
                 </div>
               </section>
 
