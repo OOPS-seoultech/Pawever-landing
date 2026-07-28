@@ -55,4 +55,14 @@ describe("굿즈 랜딩 피그마 기준본", () => {
     expect(logoSource).toContain('width="118" height="16"');
     expect(logoSource).toContain('fill="#FFA94E"');
   });
+
+  it("최하단 크레딧과 문의 링크를 노션 수정본대로 표기한다", () => {
+    expect(landingSource).toContain(
+      "서울과학기술대학교 창업팀이 만드는 반려인 서비스. 포에버 (PAW-EVER)"
+    );
+    expect(landingSource).not.toContain("서울특별시공덕지원센터");
+    expect(landingSource).toContain("문의하기");
+    expect(landingSource).toContain('href="/contact"');
+    expect(landingSource).not.toContain("문의 채널 준비 중");
+  });
 });

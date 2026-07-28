@@ -6,7 +6,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 import { trackEvent } from "@/lib/analytics/analytics";
 import { usePageEngagement } from "@/lib/analytics/react";
 import {
@@ -747,9 +747,9 @@ export default function GoodsSurvey() {
             </a>
           </nav>
           <p>
-            서울특별시공덕지원센터 만드는 반려인 서비스 · paw ever
+            서울과학기술대학교 창업팀이 만드는 반려인 서비스. 포에버 (PAW-EVER)
             <br />
-            문의 채널 준비 중
+            <Link href="/contact">문의하기</Link>
           </p>
         </footer>
 
