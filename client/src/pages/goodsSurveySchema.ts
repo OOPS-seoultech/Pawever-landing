@@ -120,12 +120,13 @@ export const surveyQuestions: SurveyQuestion[] = [
     section: "A. 아이와 함께하는 지금",
     title: "현재 어떤 양육 경험을 하고 계신가요?",
     nonSkippable: true,
+    // prefer_not("답하고 싶지 않다")은 개정본에서 빠졌다. 선택지로는 더 이상
+    // 보여주지 않지만, 저장된 임시 응답이 남아 있을 수 있어 종료 판정에서는 계속 받아준다.
     options: named(
-      ["current_only", "현재 반려견과 살고 있으며 과거 이별 경험은 없다"],
-      ["current_and_loss", "현재 반려견과 살고 있으며 과거 이별 경험도 있다"],
-      ["loss_only", "현재 함께 사는 반려견은 없지만 이별 경험이 있다"],
-      ["no_experience", "반려견을 주로 돌본 경험이 없다"],
-      ["prefer_not", "답하고 싶지 않다"]
+      ["current_only", "반려견과 살고 있으며 이별 경험은 없어요"],
+      ["current_and_loss", "반려견과 살고 있으며 이별 경험도 있어요"],
+      ["loss_only", "함께 사는 반려견은 없지만 이별 경험이 있어요"],
+      ["no_experience", "반려견을 돌본 경험이 없다"]
     ),
   },
   {
@@ -608,7 +609,7 @@ export const surveyQuestions: SurveyQuestion[] = [
       "보험 가입·의료비 마련",
       "사진·여행·앨범 등 함께할 추억",
       "마지막 돌봄·장례·추모·상담",
-      "비용을 지불하거나 준비한 적이 없다"
+      "비용을 지불하거나 준비한 적이 없어요"
     ),
   },
   {
