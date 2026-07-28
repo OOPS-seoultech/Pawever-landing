@@ -27,9 +27,31 @@ describe("노션 설문 원문", () => {
   it("기본·꼬리·모바일 분할 매트릭스 문항을 빠짐없이 제공한다", () => {
     expect(surveyQuestions).toHaveLength(76);
     expect(new Set(surveyQuestions.map(item => item.id)).size).toBe(76);
+  });
+
+  it("선택지가 5개를 넘는 문항은 노션에서 쪼개진 것만 허용한다", () => {
+    // 백엔드 GoodsSurveyAnswerValidator의 문항별 허용 개수와 같이 관리한다.
+    // 여기에 문항을 추가하려면 서버 검증도 함께 넓혀야 응답이 거부되지 않는다.
     expect(
-      surveyQuestions.every(item => getQuestionOptions(item, {}).length <= 5)
-    ).toBe(true);
+      surveyQuestions
+        .map(item => [item.id, getQuestionOptions(item, {}).length] as const)
+        .filter(([, count]) => count > 5)
+    ).toEqual([
+      ["q3", 6],
+      ["q12", 6],
+      ["q18", 6],
+      ["q29_current", 6],
+      ["q29_departed", 6],
+      ["q33", 7],
+    ]);
+  });
+
+  it("Q18-1은 이별 무렵 응답에만 보이고 예전 late_or_never 응답도 받아준다", () => {
+    const q18_1 = question("q18_1");
+    expect(q18_1.when?.({ q18: "late" })).toBe(true);
+    expect(q18_1.when?.({ q18: "late_or_never" })).toBe(true);
+    expect(q18_1.when?.({ q18: "never" })).toBe(false);
+    expect(q18_1.when?.({ q18: "healthy" })).toBe(false);
   });
 
   it("현재 구현에서 축약됐던 질문을 노션 원문으로 복원한다", () => {

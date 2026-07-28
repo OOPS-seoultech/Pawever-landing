@@ -161,7 +161,8 @@ export const surveyQuestions: SurveyQuestion[] = [
       "3~5세",
       "6~8세",
       "9~11세",
-      "12세 이상 또는 정확히 모름"
+      "12세 이상",
+      "정확히 모름"
     ),
   },
   {
@@ -448,11 +449,12 @@ export const surveyQuestions: SurveyQuestion[] = [
     section: "B. 아이와의 시간이 조금 다르게 보이기 시작한 순간",
     title: "이 행동들은 계기를 느낀 얼마 뒤에 시작했나요?",
     options: numbered(
-      "같은 날",
+      "그날 바로",
       "2~3일 안에",
-      "1주일 안에",
+      "1주일 정도 뒤",
       "1개월 이후",
-      "계기 이전부터 했거나 행동하지 않았다"
+      "계기 이전부터 했어요",
+      "그 이후로 따로 하진 않았어요"
     ),
   },
   {
@@ -617,10 +619,11 @@ export const surveyQuestions: SurveyQuestion[] = [
       "마지막 돌봄·장례·추억 보존·펫로스 중 하나라도 처음 찾아본 시점은 언제인가요?",
     options: named(
       ["healthy", "건강하고 특별한 변화가 없던 때"],
-      ["aging", "나이가 들거나 작은 변화를 느낀 때"],
-      ["diagnosis", "이상 증상 또는 질환 진단이 생긴 때"],
-      ["care", "간호가 늘거나 앞으로의 시간을 설명 들은 때"],
-      ["late_or_never", "이별 무렵·이별 후 또는 아직 찾아보지 않음"]
+      ["aging", "나이가 들거나 작은 변화를 느꼈을 때"],
+      ["diagnosis", "이상 증상 또는 질환이 생겼을 때"],
+      ["care", "간호가 늘거나 앞으로의 시간을 들었을 때"],
+      ["late", "이별 무렵·이별 상황 때"],
+      ["never", "아직 찾아보지 않았어요"]
     ),
   },
   {
@@ -635,7 +638,9 @@ export const surveyQuestions: SurveyQuestion[] = [
       "아직 찾아본 적이 없어요",
       "기억이 잘 안나고 답하고 싶지 않아요"
     ),
-    when: answers => answerIs(answers, "q18", "late_or_never"),
+    // late_or_never는 Q18이 late·never로 쪼개지기 전의 값이다.
+    // 저장된 임시 응답이 남아 있을 수 있어 계속 받아준다.
+    when: answers => answerIn(answers, "q18", ["late", "late_or_never"]),
   },
   {
     id: "q19",
@@ -942,7 +947,8 @@ export const surveyQuestions: SurveyQuestion[] = [
       ["quality", "삶의 질·치료 선택·마지막 돌봄"],
       ["cost", "병원비·보험·공공 지원"],
       ["memory", "함께할 추억·장례·추모"],
-      ["emotion", "내 감정·가족 대화 또는 특별히 없음"]
+      ["emotion", "내 감정 또는 가족과 대화"],
+      ["none", "특별히 없어요"]
     ),
     when: answers => answerIs(answers, "q2", "current"),
   },
@@ -956,7 +962,8 @@ export const surveyQuestions: SurveyQuestion[] = [
       ["quality", "삶의 질·치료 선택·마지막 돌봄"],
       ["cost", "병원비·보험·공공 지원"],
       ["memory", "함께할 추억·장례·추모"],
-      ["emotion", "내 감정·가족 대화 또는 특별히 없음"]
+      ["emotion", "내 감정 또는 가족과 대화"],
+      ["none", "특별히 없어요"]
     ),
     when: answers => answerIn(answers, "q2", ["recent_departed", "longest"]),
   },
@@ -1089,9 +1096,11 @@ export const surveyQuestions: SurveyQuestion[] = [
     options: numbered(
       "서울",
       "경기·인천",
-      "강원·대전·세종·충청",
-      "광주·전라·제주",
-      "대구·부산·울산·경상 또는 해외"
+      "강원",
+      "대전·세종·충청",
+      "광주·전라",
+      "대구·부산·울산·경상",
+      "제주 또는 해외"
     ),
     optional: true,
   },
