@@ -54,6 +54,20 @@ const answerIn = (
   return typeof answer === "string" && values.includes(answer);
 };
 
+// 복수선택 문항을 부모로 두는 분기에 쓴다.
+// 여러 개를 고르면 해당하는 꼬리 문항이 각각 순서대로 노출된다.
+const answerHas = (
+  answers: SurveyAnswers,
+  questionId: string,
+  values: string[]
+) => {
+  const answer = answers[questionId];
+  if (Array.isArray(answer)) {
+    return answer.some(value => values.includes(value));
+  }
+  return typeof answer === "string" && values.includes(answer);
+};
+
 export const getNextMultiSelection = ({
   selected,
   optionId,
@@ -186,6 +200,8 @@ export const surveyQuestions: SurveyQuestion[] = [
       ["continuous_care", "악화와 회복을 반복하거나 지속적인 돌봄이 필요했다"],
       ["sudden", "갑작스러운 사고·급성 질환으로 위 단계를 거의 겪지 못했다"]
     ),
+    kind: "multi",
+    helper: "해당하는 것을 모두 선택할 수 있어요.",
   },
   {
     id: "q4_1",
@@ -199,7 +215,7 @@ export const surveyQuestions: SurveyQuestion[] = [
       "식사·물·배변 등 기본 습관의 변화",
       "기침·호흡·통증처럼 건강이 걱정되는 신호"
     ),
-    when: answers => answerIs(answers, "q4", "small_change"),
+    when: answers => answerHas(answers, "q4", ["small_change"]),
   },
   {
     id: "q4_2",
@@ -215,7 +231,7 @@ export const surveyQuestions: SurveyQuestion[] = [
     ),
     kind: "multi",
     helper: "해당하는 것을 모두 선택할 수 있어요.",
-    when: answers => answerIn(answers, "q4", ["diagnosed", "continuous_care"]),
+    when: answers => answerHas(answers, "q4", ["diagnosed", "continuous_care"]),
   },
   {
     id: "q5",
@@ -267,6 +283,9 @@ export const surveyQuestions: SurveyQuestion[] = [
       ["others", "다른 반려동물의 노화·아픔·이별을 접했을 때"],
       ["not_yet", "아직 그런 생각을 해본 적이 없어요"]
     ),
+    kind: "multi",
+    exclusiveOptionIds: ["not_yet"],
+    helper: "해당하는 것을 모두 선택할 수 있어요.",
   },
   {
     id: "q8_1a",
@@ -280,7 +299,7 @@ export const surveyQuestions: SurveyQuestion[] = [
       "함께한 계절이나 햇수가 문득 떠오른 순간",
       "평범하게 행복한데 시간이 멈췄으면 했던 순간"
     ),
-    when: answers => answerIs(answers, "q8", "anniversary"),
+    when: answers => answerHas(answers, "q8", ["anniversary"]),
   },
   {
     id: "q8_1b",
@@ -294,7 +313,7 @@ export const surveyQuestions: SurveyQuestion[] = [
       "식사·배변·호흡 등 건강 신호의 변화",
       "예전에는 쉽게 하던 일을 망설이는 모습"
     ),
-    when: answers => answerIs(answers, "q8", "change"),
+    when: answers => answerHas(answers, "q8", ["change"]),
   },
   {
     id: "q8_1c",
@@ -308,7 +327,7 @@ export const surveyQuestions: SurveyQuestion[] = [
       "증상 악화와 회복을 반복할 때",
       "수의사에게 노화나 앞으로의 시간을 들었을 때"
     ),
-    when: answers => answerIs(answers, "q8", "medical"),
+    when: answers => answerHas(answers, "q8", ["medical"]),
   },
   {
     id: "q8_1d",
@@ -322,7 +341,7 @@ export const surveyQuestions: SurveyQuestion[] = [
       "뉴스·방송·책의 이야기",
       "산책이나 병원에서 우연히 본 다른 아이의 모습"
     ),
-    when: answers => answerIs(answers, "q8", "others"),
+    when: answers => answerHas(answers, "q8", ["others"]),
   },
   {
     id: "q9",
@@ -336,7 +355,7 @@ export const surveyQuestions: SurveyQuestion[] = [
       "자주 떠올렸어요",
       "매우 자주 떠올렸어요"
     ),
-    when: answers => !answerIs(answers, "q8", "not_yet"),
+    when: answers => !answerHas(answers, "q8", ["not_yet"]),
   },
   {
     id: "q10",
@@ -350,14 +369,14 @@ export const surveyQuestions: SurveyQuestion[] = [
       "미안함이나 슬픔이 먼저 들었어요",
       "알고는 있지만 최대한 생각을 피하고 싶었어요"
     ),
-    when: answers => !answerIs(answers, "q8", "not_yet"),
+    when: answers => !answerHas(answers, "q8", ["not_yet"]),
   },
   {
     id: "q11",
     number: "Q11",
     section: "B. 아이와의 시간이 조금 다르게 보이기 시작한 순간",
     title: answers =>
-      answerIs(answers, "q8", "not_yet")
+      answerHas(answers, "q8", ["not_yet"])
         ? "최근 아이를 위해 달라진 행동 중 가장 먼저 한 것은 무엇인가요?"
         : "그 뒤 가장 먼저 한 행동은 무엇인가요?",
     options: named(
@@ -380,6 +399,8 @@ export const surveyQuestions: SurveyQuestion[] = [
       "약·진료·검사 결과",
       "사진·영상과 함께한 일상"
     ),
+    kind: "multi",
+    helper: "해당하는 것을 모두 선택할 수 있어요.",
     when: answers => answerIs(answers, "q11", "record"),
   },
   {
@@ -1077,6 +1098,9 @@ export const surveyQuestions: SurveyQuestion[] = [
       "전문가가 검수한 중립적 앱",
       "제가 직접 검색할 때만 보고 싶어요"
     ),
+    kind: "multi",
+    exclusiveOptionIds: ["5"],
+    helper: "해당하는 것을 모두 선택할 수 있어요.",
   },
   {
     id: "q31",

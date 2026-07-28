@@ -66,14 +66,54 @@ describe("굿즈 설문 분기", () => {
     ).not.toContain("q4_1");
   });
 
-  it("Q4·Q8은 단일선택, Q4-2·Q7은 복수선택으로 유지한다", () => {
-    const questionKind = (id: string) =>
-      surveyQuestions.find(question => question.id === id)?.kind ?? "single";
+  it("노션에서 복수선택인 문항만 복수선택으로 둔다", () => {
+    // 백엔드 MULTI_QUESTION_IDS와 같은 목록이어야 한다.
+    expect(
+      surveyQuestions
+        .filter(question => question.kind === "multi")
+        .map(question => question.id)
+    ).toEqual(["q4", "q4_2", "q7", "q8", "q11_1a", "q27", "q30"]);
+  });
 
-    expect(questionKind("q4")).toBe("single");
-    expect(questionKind("q4_2")).toBe("multi");
-    expect(questionKind("q7")).toBe("multi");
-    expect(questionKind("q8")).toBe("single");
+  it("Q4에서 여러 상태를 고르면 해당 꼬리 문항이 모두 열린다", () => {
+    // "2 + 3 동시 선택 시 질문 2개 동시 노출" — 노션 댓글
+    const visible = getVisibleQuestionIds({
+      q1: "current_only",
+      q2: "current",
+      q4: ["small_change", "diagnosed"],
+    });
+    expect(visible).toContain("q4_1");
+    expect(visible).toContain("q4_2");
+
+    const onlyOne = getVisibleQuestionIds({
+      q1: "current_only",
+      q2: "current",
+      q4: ["small_change"],
+    });
+    expect(onlyOne).toContain("q4_1");
+    expect(onlyOne).not.toContain("q4_2");
+  });
+
+  it("Q8에서 여러 계기를 고르면 꼬리 문항이 고른 만큼 열린다", () => {
+    const visible = getVisibleQuestionIds({
+      q1: "current_only",
+      q2: "current",
+      q8: ["anniversary", "medical", "others"],
+    });
+    expect(visible).toContain("q8_1a");
+    expect(visible).toContain("q8_1c");
+    expect(visible).toContain("q8_1d");
+    expect(visible).not.toContain("q8_1b");
+  });
+
+  it("Q8에서 '아직 생각해본 적 없다'를 고르면 Q9·Q10을 건너뛴다", () => {
+    const visible = getVisibleQuestionIds({
+      q1: "current_only",
+      q2: "current",
+      q8: ["not_yet"],
+    });
+    expect(visible).not.toContain("q9");
+    expect(visible).not.toContain("q10");
   });
 
   it("Q7의 '특별히 없음'은 다른 선택과 동시에 유지하지 않는다", () => {
@@ -146,17 +186,17 @@ describe("굿즈 설문 분기", () => {
     expect(
       pruneHiddenAnswers({
         q1: "current_only",
-        q4: "healthy",
+        q4: ["healthy"],
         q4_1: "2",
-        q8: "medical",
+        q8: ["medical"],
         q8_1a: "1",
         q8_1c: "3",
         q9: "2",
       })
     ).toEqual({
       q1: "current_only",
-      q4: "healthy",
-      q8: "medical",
+      q4: ["healthy"],
+      q8: ["medical"],
       q8_1c: "3",
       q9: "2",
     });
