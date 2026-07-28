@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  FREE_TEXT_MAX_LENGTH,
   getNextMultiSelection,
   hasMinimumAnswers,
   pruneHiddenAnswers,
@@ -72,7 +73,27 @@ describe("굿즈 설문 분기", () => {
       surveyQuestions
         .filter(question => question.kind === "multi")
         .map(question => question.id)
-    ).toEqual(["q4", "q4_2", "q7", "q8", "q11_1a", "q27", "q30"]);
+    ).toEqual(["q4", "q4_2", "q7", "q8", "q11_1a", "q17", "q27", "q30"]);
+  });
+
+  it("직접 입력을 고른 동안에만 자유 입력값을 남긴다", () => {
+    const base = { q1: "current_only", q2: "current", q16: "none" };
+
+    // 6번(직접 입력)을 고르면 q17_text가 유지된다.
+    expect(
+      pruneHiddenAnswers({ ...base, q17: ["6"], q17_text: "장난감" })
+    ).toMatchObject({ q17: ["6"], q17_text: "장난감" });
+
+    // 선택을 바꾸면 입력값도 같이 지워진다.
+    expect(
+      pruneHiddenAnswers({ ...base, q17: ["1"], q17_text: "장난감" })
+    ).not.toHaveProperty("q17_text");
+
+    // 길이 제한을 넘으면 잘라서 보낸다.
+    const long = "가".repeat(FREE_TEXT_MAX_LENGTH + 20);
+    expect(
+      pruneHiddenAnswers({ ...base, q17: ["6"], q17_text: long }).q17_text
+    ).toHaveLength(FREE_TEXT_MAX_LENGTH);
   });
 
   it("Q4에서 여러 상태를 고르면 해당 꼬리 문항이 모두 열린다", () => {

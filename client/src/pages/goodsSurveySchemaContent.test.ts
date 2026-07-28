@@ -41,11 +41,34 @@ describe("노션 설문 원문", () => {
     ).toEqual([
       ["q3", 6],
       ["q12", 6],
+      ["q17", 6],
       ["q18", 6],
+      ["q23_1a", 6],
+      ["q23_1b", 6],
+      ["q23_1c", 6],
+      ["q23_1d", 6],
       ["q29_current", 6],
       ["q29_departed", 6],
       ["q33", 7],
     ]);
+  });
+
+  it("직접 입력이 있는 문항은 6번을 자유 입력 선택지로 둔다", () => {
+    expect(
+      surveyQuestions
+        .filter(item => item.freeTextOptionId)
+        .map(item => [item.id, item.freeTextOptionId])
+    ).toEqual([
+      ["q17", "6"],
+      ["q23_1a", "6"],
+      ["q23_1b", "6"],
+      ["q23_1c", "6"],
+      ["q23_1d", "6"],
+    ]);
+
+    for (const id of ["q17", "q23_1a", "q23_1b", "q23_1c", "q23_1d"]) {
+      expect(copyOf(id).options[5]).toBe("직접 입력");
+    }
   });
 
   it("Q1은 개정본대로 네 개만 보여주되 예전 prefer_not 응답도 종료로 처리한다", () => {

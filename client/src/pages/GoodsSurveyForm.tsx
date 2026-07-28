@@ -35,10 +35,13 @@ import {
   saveGoodsSurveyDraftSnapshot,
 } from "@/lib/goodsSurveyDraftStorage";
 import {
+  FREE_TEXT_MAX_LENGTH,
+  freeTextKey,
   getNextMultiSelection,
   getQuestionNotice,
   getQuestionOptions,
   getQuestionTitle,
+  isFreeTextOpen,
   pruneHiddenAnswers,
   getSurveyProgress,
   getVisibleQuestions,
@@ -275,15 +278,20 @@ export function QuestionScreen({
   question,
   answers,
   onAnswer,
+  onFreeText,
 }: {
   question: SurveyQuestion;
   answers: SurveyAnswers;
   onAnswer: (value: string | string[]) => void;
+  onFreeText?: (value: string) => void;
 }) {
   const options = getQuestionOptions(question, answers);
   const notice = getQuestionNotice(question, answers);
   const answer = answers[question.id];
   const selected = Array.isArray(answer) ? answer : answer ? [answer] : [];
+  const freeTextOpen = isFreeTextOpen(question, answers);
+  const storedFreeText = answers[freeTextKey(question.id)];
+  const freeText = typeof storedFreeText === "string" ? storedFreeText : "";
 
   const toggleOption = (optionId: string) => {
     if (question.kind !== "multi") {
@@ -368,6 +376,21 @@ export function QuestionScreen({
           );
         })}
       </div>
+
+      {freeTextOpen && (
+        <label className="gsf-free-text">
+          <span>어떤 것인지 적어 주세요.</span>
+          <input
+            value={freeText}
+            onChange={event => onFreeText?.(event.target.value)}
+            maxLength={FREE_TEXT_MAX_LENGTH}
+            placeholder="직접 입력"
+          />
+          <small>
+            {freeText.length} / {FREE_TEXT_MAX_LENGTH}자
+          </small>
+        </label>
+      )}
     </section>
   );
 }
@@ -1130,6 +1153,15 @@ export default function GoodsSurveyForm() {
                   } else {
                     next[currentQuestion.id] = value;
                   }
+                  return next;
+                })
+              }
+              onFreeText={value =>
+                setAnswers(previous => {
+                  const next = { ...previous };
+                  const key = freeTextKey(currentQuestion.id);
+                  if (value.trim() === "") delete next[key];
+                  else next[key] = value.slice(0, FREE_TEXT_MAX_LENGTH);
                   return next;
                 })
               }

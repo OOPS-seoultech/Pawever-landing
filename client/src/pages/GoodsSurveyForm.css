@@ -975,6 +975,24 @@
   text-overflow: ellipsis;
 }
 
+.gsf-free-text {
+  display: grid;
+  gap: 6px;
+  margin-top: 11px;
+}
+
+.gsf-free-text > span {
+  color: var(--gsf-ink-soft);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.gsf-free-text > small {
+  justify-self: end;
+  color: var(--gsf-ink-soft);
+  font-size: 10px;
+}
+
 .gsf-field-error {
   display: block;
   margin-top: 5px;

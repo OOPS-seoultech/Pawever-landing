@@ -23,6 +23,8 @@ export interface SurveyQuestion {
   optional?: boolean;
   // 노션에서 "건너뛰기 가능"이라고 표시된 문항에만 둔다.
   skippable?: boolean;
+  // 이 선택지를 고르면 자유 입력칸이 열린다. 입력값은 `${id}_text`에 담는다.
+  freeTextOptionId?: string;
   helper?: string;
   // 응답에 따라 안내가 붙는 화면이 달라질 수 있어 함수도 받는다.
   notice?:
@@ -640,8 +642,13 @@ export const surveyQuestions: SurveyQuestion[] = [
       "보험 가입·의료비 마련",
       "사진·여행·앨범 등 함께할 추억",
       "마지막 돌봄·장례·추모·상담",
-      "비용을 지불하거나 준비한 적이 없어요"
+      "비용을 지불하거나 준비한 적이 없어요",
+      "직접 입력"
     ),
+    kind: "multi",
+    exclusiveOptionIds: ["5"],
+    freeTextOptionId: "6",
+    helper: "해당하는 것을 모두 선택할 수 있어요.",
     // Q16에서 "알아본 적이 없다"를 고르면 꼬리 문항이 없어 안내를 볼 기회가 사라진다.
     // 그 경로에서는 Q16 다음 화면인 여기에 붙인다.
     notice: answers =>
@@ -849,8 +856,10 @@ export const surveyQuestions: SurveyQuestion[] = [
       "하루 한 줄 성장일기",
       "생일·입양기념일 회고",
       "가족이 함께 만드는 앨범",
-      "사진책·발도장 등 실물 제작"
+      "사진책·발도장 등 실물 제작",
+      "직접 입력"
     ),
+    freeTextOptionId: "6",
     when: answers => answerIs(answers, "q23", "memory"),
   },
   {
@@ -863,8 +872,10 @@ export const surveyQuestions: SurveyQuestion[] = [
       "약·처방식·영양제 기록",
       "병원·검사 결과 보관",
       "증상 사진·영상과 메모",
-      "수의사에게 보여줄 요약 리포트"
+      "수의사에게 보여줄 요약 리포트",
+      "직접 입력"
     ),
+    freeTextOptionId: "6",
     when: answers => answerIs(answers, "q23", "health"),
   },
   {
@@ -877,8 +888,10 @@ export const surveyQuestions: SurveyQuestion[] = [
       "식사·물·배변 기록",
       "수면·휴식 기록",
       "가족 공동 돌봄 일정",
-      "실종·응급 연락 카드"
+      "실종·응급 연락 카드",
+      "직접 입력"
     ),
+    freeTextOptionId: "6",
     when: answers => answerIs(answers, "q23", "daily"),
   },
   {
@@ -891,8 +904,10 @@ export const surveyQuestions: SurveyQuestion[] = [
       "전문가가 검수한 노화 정보",
       "증상별 병원 방문 기준",
       "보험·병원비·공공 지원",
-      "지역 병원·돌봄 서비스 정보"
+      "지역 병원·돌봄 서비스 정보",
+      "직접 입력"
     ),
+    freeTextOptionId: "6",
     when: answers => answerIs(answers, "q23", "info"),
   },
   {
@@ -1164,6 +1179,22 @@ export const getQuestionOptions = (
     ? question.options(answers)
     : question.options;
 
+export const FREE_TEXT_MAX_LENGTH = 100;
+
+/** "직접 입력" 응답이 담기는 키. 서버 QUESTION_IDS에도 같은 이름으로 있다. */
+export const freeTextKey = (questionId: string) => `${questionId}_text`;
+
+export const isFreeTextOpen = (
+  question: SurveyQuestion,
+  answers: SurveyAnswers
+) => {
+  if (!question.freeTextOptionId) return false;
+  const answer = answers[question.id];
+  return Array.isArray(answer)
+    ? answer.includes(question.freeTextOptionId)
+    : answer === question.freeTextOptionId;
+};
+
 export const getQuestionNotice = (
   question: SurveyQuestion,
   answers: SurveyAnswers
@@ -1227,12 +1258,35 @@ export const pruneHiddenAnswers = (answers: SurveyAnswers): SurveyAnswers => {
       visibleQuestions.map(question => [question.id, question])
     );
 
+    // "직접 입력" 값은 문항이 아니라 `${id}_text` 키로 따로 담긴다.
+    // 해당 선택지를 고른 동안에만 남기고, 해제하면 같이 지운다.
+    const freeTextKeys = new Map(
+      visibleQuestions
+        .filter(question => isFreeTextOpen(question, pruned))
+        .map(question => [freeTextKey(question.id), question])
+    );
+
     for (const questionId of Object.keys(pruned)) {
-      if (!visibleById.has(questionId)) {
+      if (!visibleById.has(questionId) && !freeTextKeys.has(questionId)) {
         delete pruned[questionId];
         changed = true;
       }
     }
+
+    freeTextKeys.forEach((_question, key) => {
+      const value = pruned[key];
+      if (value === undefined) return;
+      if (typeof value !== "string") {
+        delete pruned[key];
+        changed = true;
+        return;
+      }
+      const trimmed = value.slice(0, FREE_TEXT_MAX_LENGTH);
+      if (trimmed !== value) {
+        pruned[key] = trimmed;
+        changed = true;
+      }
+    });
 
     for (const question of visibleQuestions) {
       const answer = pruned[question.id];
