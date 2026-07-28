@@ -114,12 +114,8 @@ export const goodsSurveyStoryContent = {
   },
   consents: {
     analysis: "익명 연구·서비스 개선 분석 동의",
+    // SNS 공유에 동의하면 첨부 사진까지 함께 공개된다. 사진별 동의는 받지 않는다.
     publish: "익명으로 SNS에 공유해도 괜찮을까요?",
-    // TODO(노션 개정): reviewContact·interview·photo 세 항목은 삭제 요청이 있으나
-    // photo 동의가 백엔드 사진 공개 동의(V3 마이그레이션)와 엮여 있어 후속 작업으로 분리한다.
-    reviewContact: "게시 전 문안 확인 연락 동의",
-    interview: "후속 인터뷰 필요시 문자를 드려도 될까요?",
-    photo: "첨부 사진 공개 동의",
     note: "사연을 작성해주신 분 중 SNS 공유를 수락해주신 분들께 추가 선물이 제공됩니다. 모든 사연이 공유되지는 않습니다.",
   },
 } as const;

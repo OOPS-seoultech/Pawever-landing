@@ -963,24 +963,14 @@
   text-overflow: ellipsis;
 }
 
-.gsf-photo-consents {
+.gsf-photo-list {
   display: grid;
-  gap: 10px;
-}
-
-.gsf-photo-consents > p {
+  gap: 7px;
   margin: 0;
-  color: var(--gsf-ink-soft);
-  font-size: 11px;
-}
-
-.gsf-photo-consent {
-  min-width: 0;
-  display: grid;
-  gap: 8px;
   padding: 11px;
   border-radius: 13px;
   background: var(--gsf-sage-soft);
+  list-style: none;
 }
 
 .gsf-file-name {
@@ -1000,10 +990,6 @@
   width: 14px;
   height: 14px;
   flex: none;
-}
-
-.gsf-photo-consent .gsf-consent-question {
-  background: rgba(255, 255, 255, 0.65);
 }
 
 .gsf-safety-summary {

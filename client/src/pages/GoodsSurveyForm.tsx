@@ -86,8 +86,6 @@ type ConsentValue = boolean | null;
 type StoryConsent = {
   analysis: ConsentValue;
   publish: ConsentValue;
-  reviewContact: ConsentValue;
-  interview: ConsentValue;
 };
 
 type ProductionFields = {
@@ -392,8 +390,6 @@ export default function GoodsSurveyForm() {
   const [storyConsent, setStoryConsent] = useState<StoryConsent>({
     analysis: null,
     publish: null,
-    reviewContact: null,
-    interview: null,
   });
   const [production, setProduction] = useState<ProductionFields>({
     goods: productionGoods.some(([id]) => id === initialGoods)
@@ -408,9 +404,6 @@ export default function GoodsSurveyForm() {
     addressDetail: "",
   });
   const [photos, setPhotos] = useState<File[]>([]);
-  const [photoPublicationConsent, setPhotoPublicationConsent] = useState<
-    Record<string, ConsentValue>
-  >({});
   const [privacyConsent, setPrivacyConsent] = useState(false);
   const [shippingConsent, setShippingConsent] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
@@ -858,8 +851,6 @@ export default function GoodsSurveyForm() {
         ...story,
         analysisAgreed: storyConsent.analysis === true,
         publishAgreed: storyConsent.publish === true,
-        reviewContactAgreed: storyConsent.reviewContact === true,
-        interviewAgreed: storyConsent.interview === true,
       });
       continueToProduction();
     } catch (error) {
@@ -886,10 +877,8 @@ export default function GoodsSurveyForm() {
           return uploadSurveyPhoto(draftSession, file, clientFileId);
         })
       );
-      const publicPhotoIds = photoIds.filter(
-        (_, index) =>
-          photoPublicationConsent[getFileKey(photos[index])] === true
-      );
+      // 사진별 공개 동의를 따로 받지 않고, 사연의 SNS 공유 동의 하나로 일괄 처리한다.
+      const publicPhotoIds = storyConsent.publish === true ? photoIds : [];
 
       setSubmissionProgress(
         "신청 정보를 저장하고 선착순 자리를 확정하고 있어요."
@@ -950,11 +939,8 @@ export default function GoodsSurveyForm() {
     setStoryConsent({
       analysis: null,
       publish: null,
-      reviewContact: null,
-      interview: null,
     });
     setPhotos([]);
-    setPhotoPublicationConsent({});
     setPrivacyConsent(false);
     setShippingConsent(false);
     setReviewId("");
@@ -1337,27 +1323,17 @@ export default function GoodsSurveyForm() {
                     }))
                   }
                 />
-                {[
-                  ["publish", goodsSurveyStoryContent.consents.publish],
-                  [
-                    "reviewContact",
-                    goodsSurveyStoryContent.consents.reviewContact,
-                  ],
-                  ["interview", goodsSurveyStoryContent.consents.interview],
-                ].map(([key, label]) => (
-                  <ConsentChoice
-                    key={key}
-                    name={`story-${key}-consent`}
-                    label={label}
-                    value={storyConsent[key as keyof StoryConsent]}
-                    onChange={value =>
-                      setStoryConsent(previous => ({
-                        ...previous,
-                        [key]: value,
-                      }))
-                    }
-                  />
-                ))}
+                <ConsentChoice
+                  name="story-publish-consent"
+                  label={goodsSurveyStoryContent.consents.publish}
+                  value={storyConsent.publish}
+                  onChange={value =>
+                    setStoryConsent(previous => ({
+                      ...previous,
+                      publish: value,
+                    }))
+                  }
+                />
                 <p>{goodsSurveyStoryContent.consents.note}</p>
               </div>
 
@@ -1465,7 +1441,6 @@ export default function GoodsSurveyForm() {
                       );
                       if (invalidFile) {
                         setPhotos([]);
-                        setPhotoPublicationConsent({});
                         setApiError(
                           "사진은 JPG·PNG·WEBP 형식, 장당 10MB 이하만 올릴 수 있어요."
                         );
@@ -1474,46 +1449,18 @@ export default function GoodsSurveyForm() {
                       }
                       setApiError("");
                       setPhotos(nextFiles);
-                      setPhotoPublicationConsent(previous =>
-                        Object.fromEntries(
-                          nextFiles.map(file => {
-                            const key = getFileKey(file);
-                            return [key, previous[key] ?? null];
-                          })
-                        )
-                      );
                     }}
                   />
                 </label>
                 {photos.length > 0 && (
-                  <div className="gsf-photo-consents">
-                    <p>
-                      첨부 사진 공개 동의는 사진별 선택 사항입니다. 공개에
-                      동의하지 않아도 굿즈 응모나 제작에 불이익이 없습니다.
-                    </p>
-                    {photos.map((file, index) => {
-                      const key = getFileKey(file);
-                      return (
-                        <div className="gsf-photo-consent" key={key}>
-                          <span className="gsf-file-name">
-                            <Check aria-hidden="true" />
-                            {file.name}
-                          </span>
-                          <ConsentChoice
-                            name={`photo-${index}-publication-consent`}
-                            label={goodsSurveyStoryContent.consents.photo}
-                            value={photoPublicationConsent[key] ?? null}
-                            onChange={value =>
-                              setPhotoPublicationConsent(previous => ({
-                                ...previous,
-                                [key]: value,
-                              }))
-                            }
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
+                  <ul className="gsf-photo-list">
+                    {photos.map(file => (
+                      <li className="gsf-file-name" key={getFileKey(file)}>
+                        <Check aria-hidden="true" />
+                        {file.name}
+                      </li>
+                    ))}
+                  </ul>
                 )}
                 <p className="gsf-field-help">
                   밝은 곳에서 얼굴 정면과 귀가 가리지 않은 사진이 좋아요. 전신
