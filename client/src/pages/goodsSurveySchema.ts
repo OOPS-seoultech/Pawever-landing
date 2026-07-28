@@ -1248,6 +1248,40 @@ export const getVisibleQuestions = (answers: SurveyAnswers) => {
 export const getVisibleQuestionIds = (answers: SurveyAnswers) =>
   getVisibleQuestions(answers).map(question => question.id);
 
+/**
+ * 화면 단위. 같은 매트릭스에 속한 문항들은 한 화면에 함께 놓는다.
+ * (Q22·Q28은 5행을 한 번에 보고 바로바로 고를 수 있어야 한다)
+ */
+export type SurveyScreen = {
+  id: string;
+  questions: SurveyQuestion[];
+  matrixTitle?: string;
+};
+
+export const getVisibleScreens = (answers: SurveyAnswers): SurveyScreen[] => {
+  const screens: SurveyScreen[] = [];
+
+  for (const question of getVisibleQuestions(answers)) {
+    const last = screens[screens.length - 1];
+    if (question.matrix && last && last.matrixTitle === question.matrix.title) {
+      last.questions.push(question);
+      continue;
+    }
+    screens.push({
+      id: question.id,
+      questions: [question],
+      matrixTitle: question.matrix?.title,
+    });
+  }
+
+  return screens;
+};
+
+export const findScreenIndex = (screens: SurveyScreen[], questionId: string) =>
+  screens.findIndex(screen =>
+    screen.questions.some(question => question.id === questionId)
+  );
+
 export const pruneHiddenAnswers = (answers: SurveyAnswers): SurveyAnswers => {
   const pruned: SurveyAnswers = { ...answers };
 

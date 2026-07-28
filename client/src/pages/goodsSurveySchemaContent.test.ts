@@ -1,11 +1,12 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { QuestionScreen } from "./GoodsSurveyForm";
+import { MatrixScreen } from "./GoodsSurveyForm";
 import {
   getQuestionNotice,
   getQuestionOptions,
   getQuestionTitle,
+  getVisibleScreens,
   isSurveyTerminated,
   surveyQuestions,
   type SurveyAnswers,
@@ -161,23 +162,36 @@ describe("노션 설문 원문", () => {
     }
   });
 
-  it("분할 매트릭스 화면에 현재 평가할 행을 직접 표시한다", () => {
-    const q22 = renderToStaticMarkup(
-      createElement(QuestionScreen, {
-        question: question("q22_1"),
-        answers: {},
-        onAnswer: () => undefined,
-      })
-    );
-    const q28 = renderToStaticMarkup(
-      createElement(QuestionScreen, {
-        question: question("q28_5"),
+  it("Q22·Q28은 다섯 행을 한 화면에 모아 보여준다", () => {
+    const screens = getVisibleScreens({
+      q1: "current_only",
+      q2: "current",
+    });
+
+    const q22Screen = screens.find(screen => screen.id === "q22_1");
+    const q28Screen = screens.find(screen => screen.id === "q28_1");
+    expect(q22Screen?.questions.map(item => item.id)).toEqual([
+      "q22_1",
+      "q22_2",
+      "q22_3",
+      "q22_4",
+      "q22_5",
+    ]);
+    expect(q28Screen?.questions).toHaveLength(5);
+
+    const markup = renderToStaticMarkup(
+      createElement(MatrixScreen, {
+        screen: q22Screen!,
         answers: {},
         onAnswer: () => undefined,
       })
     );
 
-    expect(q22).toContain("건강하고 특별한 변화가 없던 때");
-    expect(q28).toContain("추억 보존과 이별 후 마음 돌봄");
+    // 다섯 행이 한 화면에 모두 있고, 척도 라벨은 양끝에만 노출한다.
+    expect(markup).toContain("건강하고 특별한 변화가 없던 때");
+    expect(markup).toContain("앞으로의 시간을 설명 들은 때");
+    expect(markup).toContain("전혀 설치하지 않았을 것");
+    expect(markup).toContain("반드시 설치했을 것");
+    expect(markup).toContain("gsf-matrix-row");
   });
 });

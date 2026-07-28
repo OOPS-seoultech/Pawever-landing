@@ -975,6 +975,83 @@
   text-overflow: ellipsis;
 }
 
+/* 한 화면에 행 5개 × 5점. 라벨은 양끝에만 두고 가운데는 점으로 잇는다. */
+.gsf-matrix {
+  display: grid;
+  gap: 9px;
+}
+
+.gsf-matrix-scale {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 2px 1px;
+  color: var(--gsf-ink-soft);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.gsf-matrix-row {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 11px 12px 8px;
+  border: 1px solid var(--gsf-line);
+  border-radius: 13px;
+  background: #ffffff;
+}
+
+.gsf-matrix-row legend {
+  padding: 0;
+  color: var(--gsf-ink);
+  font-size: 12.5px;
+  font-weight: 750;
+  line-height: 1.4;
+}
+
+.gsf-matrix-row > div {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: center;
+}
+
+/* 점들을 잇는 가로선 */
+.gsf-matrix-row > div::before {
+  position: absolute;
+  top: 50%;
+  right: 10%;
+  left: 10%;
+  height: 1px;
+  background: var(--gsf-line);
+  content: "";
+}
+
+.gsf-matrix-row label {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  padding: 7px 0;
+  cursor: pointer;
+}
+
+.gsf-matrix-row label > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.gsf-matrix-row input[type="radio"] {
+  width: 19px;
+  height: 19px;
+  margin: 0;
+  accent-color: var(--gsf-accent);
+}
+
 .gsf-free-text {
   display: grid;
   gap: 6px;
