@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  FREE_TEXT_MAX_LENGTH,
   getNextMultiSelection,
   hasMinimumAnswers,
   pruneHiddenAnswers,
@@ -10,6 +11,20 @@ import {
 } from "./goodsSurveySchema";
 
 describe("굿즈 설문 분기", () => {
+  it("복수선택을 모두 해제하면 응답 자체를 지운다", () => {
+    // 서버는 빈 배열을 거부한다. 저장 요청에 실려 나가면 안 된다.
+    expect(pruneHiddenAnswers({ q1: "current_only", q7: [] })).toEqual({
+      q1: "current_only",
+    });
+    expect(
+      getNextMultiSelection({
+        selected: ["3"],
+        optionId: "3",
+        maxSelections: 5,
+      })
+    ).toEqual([]);
+  });
+
   it("양육 경험이 없거나 응답을 원하지 않으면 첫 문항에서 종료한다", () => {
     expect(getVisibleQuestionIds({ q1: "no_experience" })).toEqual(["q1"]);
     expect(getVisibleQuestionIds({ q1: "prefer_not" })).toEqual(["q1"]);
@@ -52,14 +67,74 @@ describe("굿즈 설문 분기", () => {
     ).not.toContain("q4_1");
   });
 
-  it("Q4·Q8은 단일선택, Q4-2·Q7은 복수선택으로 유지한다", () => {
-    const questionKind = (id: string) =>
-      surveyQuestions.find(question => question.id === id)?.kind ?? "single";
+  it("노션에서 복수선택인 문항만 복수선택으로 둔다", () => {
+    // 백엔드 MULTI_QUESTION_IDS와 같은 목록이어야 한다.
+    expect(
+      surveyQuestions
+        .filter(question => question.kind === "multi")
+        .map(question => question.id)
+    ).toEqual(["q4", "q4_2", "q7", "q8", "q11_1a", "q17", "q27", "q30"]);
+  });
 
-    expect(questionKind("q4")).toBe("single");
-    expect(questionKind("q4_2")).toBe("multi");
-    expect(questionKind("q7")).toBe("multi");
-    expect(questionKind("q8")).toBe("single");
+  it("직접 입력을 고른 동안에만 자유 입력값을 남긴다", () => {
+    const base = { q1: "current_only", q2: "current", q16: "none" };
+
+    // 6번(직접 입력)을 고르면 q17_text가 유지된다.
+    expect(
+      pruneHiddenAnswers({ ...base, q17: ["6"], q17_text: "장난감" })
+    ).toMatchObject({ q17: ["6"], q17_text: "장난감" });
+
+    // 선택을 바꾸면 입력값도 같이 지워진다.
+    expect(
+      pruneHiddenAnswers({ ...base, q17: ["1"], q17_text: "장난감" })
+    ).not.toHaveProperty("q17_text");
+
+    // 길이 제한을 넘으면 잘라서 보낸다.
+    const long = "가".repeat(FREE_TEXT_MAX_LENGTH + 20);
+    expect(
+      pruneHiddenAnswers({ ...base, q17: ["6"], q17_text: long }).q17_text
+    ).toHaveLength(FREE_TEXT_MAX_LENGTH);
+  });
+
+  it("Q4에서 여러 상태를 고르면 해당 꼬리 문항이 모두 열린다", () => {
+    // "2 + 3 동시 선택 시 질문 2개 동시 노출" — 노션 댓글
+    const visible = getVisibleQuestionIds({
+      q1: "current_only",
+      q2: "current",
+      q4: ["small_change", "diagnosed"],
+    });
+    expect(visible).toContain("q4_1");
+    expect(visible).toContain("q4_2");
+
+    const onlyOne = getVisibleQuestionIds({
+      q1: "current_only",
+      q2: "current",
+      q4: ["small_change"],
+    });
+    expect(onlyOne).toContain("q4_1");
+    expect(onlyOne).not.toContain("q4_2");
+  });
+
+  it("Q8에서 여러 계기를 고르면 꼬리 문항이 고른 만큼 열린다", () => {
+    const visible = getVisibleQuestionIds({
+      q1: "current_only",
+      q2: "current",
+      q8: ["anniversary", "medical", "others"],
+    });
+    expect(visible).toContain("q8_1a");
+    expect(visible).toContain("q8_1c");
+    expect(visible).toContain("q8_1d");
+    expect(visible).not.toContain("q8_1b");
+  });
+
+  it("Q8에서 '아직 생각해본 적 없다'를 고르면 Q9·Q10을 건너뛴다", () => {
+    const visible = getVisibleQuestionIds({
+      q1: "current_only",
+      q2: "current",
+      q8: ["not_yet"],
+    });
+    expect(visible).not.toContain("q9");
+    expect(visible).not.toContain("q10");
   });
 
   it("Q7의 '특별히 없음'은 다른 선택과 동시에 유지하지 않는다", () => {
@@ -132,17 +207,17 @@ describe("굿즈 설문 분기", () => {
     expect(
       pruneHiddenAnswers({
         q1: "current_only",
-        q4: "healthy",
+        q4: ["healthy"],
         q4_1: "2",
-        q8: "medical",
+        q8: ["medical"],
         q8_1a: "1",
         q8_1c: "3",
         q9: "2",
       })
     ).toEqual({
       q1: "current_only",
-      q4: "healthy",
-      q8: "medical",
+      q4: ["healthy"],
+      q8: ["medical"],
       q8_1c: "3",
       q9: "2",
     });
@@ -161,15 +236,23 @@ describe("굿즈 설문 분기", () => {
     });
   });
 
-  it("Q1·Q2는 건너뛸 수 없는 문항으로 표시한다", () => {
-    const nonSkippable = (id: string) =>
-      surveyQuestions.find(question => question.id === id)?.nonSkippable ??
-      false;
+  it("Q29는 Q2에서 고른 아이 기준으로 A·B 한쪽만 보여준다", () => {
+    const q29Of = (q2: string) =>
+      getVisibleQuestionIds({ q1: "current_and_loss", q2 }).filter(id =>
+        id.startsWith("q29_")
+      );
 
-    expect(nonSkippable("q1")).toBe(true);
-    expect(nonSkippable("q2")).toBe(true);
-    expect(nonSkippable("q3")).toBe(false);
-    expect(nonSkippable("q29_current")).toBe(false);
+    expect(q29Of("current")).toEqual(["q29_current"]);
+    expect(q29Of("recent_departed")).toEqual(["q29_departed"]);
+    expect(q29Of("longest")).toEqual(["q29_departed"]);
+  });
+
+  it("건너뛰기는 노션에서 허용한 Q19-1A에만 둔다", () => {
+    expect(
+      surveyQuestions
+        .filter(question => question.skippable)
+        .map(question => question.id)
+    ).toEqual(["q19_1a"]);
   });
 
   it("자격 문항만 답하고 나머지를 건너뛰면 무료 제작 예약 기준에 미달한다", () => {

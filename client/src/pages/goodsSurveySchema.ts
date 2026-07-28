@@ -21,9 +21,15 @@ export interface SurveyQuestion {
   maxSelections?: number;
   exclusiveOptionIds?: string[];
   optional?: boolean;
-  nonSkippable?: boolean;
+  // 노션에서 "건너뛰기 가능"이라고 표시된 문항에만 둔다.
+  skippable?: boolean;
+  // 이 선택지를 고르면 자유 입력칸이 열린다. 입력값은 `${id}_text`에 담는다.
+  freeTextOptionId?: string;
   helper?: string;
-  notice?: SurveyNotice;
+  // 응답에 따라 안내가 붙는 화면이 달라질 수 있어 함수도 받는다.
+  notice?:
+    | SurveyNotice
+    | ((answers: SurveyAnswers) => SurveyNotice | undefined);
   matrix?: {
     title: string;
     row: string;
@@ -48,6 +54,20 @@ const answerIn = (
   values: string[]
 ) => {
   const answer = answers[questionId];
+  return typeof answer === "string" && values.includes(answer);
+};
+
+// 복수선택 문항을 부모로 두는 분기에 쓴다.
+// 여러 개를 고르면 해당하는 꼬리 문항이 각각 순서대로 노출된다.
+const answerHas = (
+  answers: SurveyAnswers,
+  questionId: string,
+  values: string[]
+) => {
+  const answer = answers[questionId];
+  if (Array.isArray(answer)) {
+    return answer.some(value => values.includes(value));
+  }
   return typeof answer === "string" && values.includes(answer);
 };
 
@@ -113,13 +133,17 @@ const serviceNotice: SurveyNotice = {
   ],
 };
 
+const finalStepNotice: SurveyNotice = {
+  title: "마지막 단계에요.",
+  paragraphs: ["세상에 하나뿐인 굿즈를 정성스레 만들어드릴게요."],
+};
+
 export const surveyQuestions: SurveyQuestion[] = [
   {
     id: "q1",
     number: "Q1",
     section: "A. 아이와 함께하는 지금",
     title: "현재 어떤 양육 경험을 하고 계신가요?",
-    nonSkippable: true,
     // prefer_not("답하고 싶지 않다")은 개정본에서 빠졌다. 선택지로는 더 이상
     // 보여주지 않지만, 저장된 임시 응답이 남아 있을 수 있어 종료 판정에서는 계속 받아준다.
     options: named(
@@ -134,7 +158,6 @@ export const surveyQuestions: SurveyQuestion[] = [
     number: "Q2",
     section: "A. 아이와 함께하는 지금",
     title: "이번 설문에서 어떤 아이를 떠올리며 답하시겠어요?",
-    nonSkippable: true,
     options: answers => {
       if (answerIs(answers, "q1", "current_only")) {
         return named(["current", "현재 가장 많이 돌보고 있는 아이"]);
@@ -178,6 +201,8 @@ export const surveyQuestions: SurveyQuestion[] = [
       ["continuous_care", "악화와 회복을 반복하거나 지속적인 돌봄이 필요했다"],
       ["sudden", "갑작스러운 사고·급성 질환으로 위 단계를 거의 겪지 못했다"]
     ),
+    kind: "multi",
+    helper: "해당하는 것을 모두 선택할 수 있어요.",
   },
   {
     id: "q4_1",
@@ -191,7 +216,7 @@ export const surveyQuestions: SurveyQuestion[] = [
       "식사·물·배변 등 기본 습관의 변화",
       "기침·호흡·통증처럼 건강이 걱정되는 신호"
     ),
-    when: answers => answerIs(answers, "q4", "small_change"),
+    when: answers => answerHas(answers, "q4", ["small_change"]),
   },
   {
     id: "q4_2",
@@ -207,7 +232,7 @@ export const surveyQuestions: SurveyQuestion[] = [
     ),
     kind: "multi",
     helper: "해당하는 것을 모두 선택할 수 있어요.",
-    when: answers => answerIn(answers, "q4", ["diagnosed", "continuous_care"]),
+    when: answers => answerHas(answers, "q4", ["diagnosed", "continuous_care"]),
   },
   {
     id: "q5",
@@ -259,6 +284,9 @@ export const surveyQuestions: SurveyQuestion[] = [
       ["others", "다른 반려동물의 노화·아픔·이별을 접했을 때"],
       ["not_yet", "아직 그런 생각을 해본 적이 없어요"]
     ),
+    kind: "multi",
+    exclusiveOptionIds: ["not_yet"],
+    helper: "해당하는 것을 모두 선택할 수 있어요.",
   },
   {
     id: "q8_1a",
@@ -272,7 +300,7 @@ export const surveyQuestions: SurveyQuestion[] = [
       "함께한 계절이나 햇수가 문득 떠오른 순간",
       "평범하게 행복한데 시간이 멈췄으면 했던 순간"
     ),
-    when: answers => answerIs(answers, "q8", "anniversary"),
+    when: answers => answerHas(answers, "q8", ["anniversary"]),
   },
   {
     id: "q8_1b",
@@ -286,7 +314,7 @@ export const surveyQuestions: SurveyQuestion[] = [
       "식사·배변·호흡 등 건강 신호의 변화",
       "예전에는 쉽게 하던 일을 망설이는 모습"
     ),
-    when: answers => answerIs(answers, "q8", "change"),
+    when: answers => answerHas(answers, "q8", ["change"]),
   },
   {
     id: "q8_1c",
@@ -300,7 +328,7 @@ export const surveyQuestions: SurveyQuestion[] = [
       "증상 악화와 회복을 반복할 때",
       "수의사에게 노화나 앞으로의 시간을 들었을 때"
     ),
-    when: answers => answerIs(answers, "q8", "medical"),
+    when: answers => answerHas(answers, "q8", ["medical"]),
   },
   {
     id: "q8_1d",
@@ -314,7 +342,7 @@ export const surveyQuestions: SurveyQuestion[] = [
       "뉴스·방송·책의 이야기",
       "산책이나 병원에서 우연히 본 다른 아이의 모습"
     ),
-    when: answers => answerIs(answers, "q8", "others"),
+    when: answers => answerHas(answers, "q8", ["others"]),
   },
   {
     id: "q9",
@@ -328,7 +356,7 @@ export const surveyQuestions: SurveyQuestion[] = [
       "자주 떠올렸어요",
       "매우 자주 떠올렸어요"
     ),
-    when: answers => !answerIs(answers, "q8", "not_yet"),
+    when: answers => !answerHas(answers, "q8", ["not_yet"]),
   },
   {
     id: "q10",
@@ -342,14 +370,14 @@ export const surveyQuestions: SurveyQuestion[] = [
       "미안함이나 슬픔이 먼저 들었어요",
       "알고는 있지만 최대한 생각을 피하고 싶었어요"
     ),
-    when: answers => !answerIs(answers, "q8", "not_yet"),
+    when: answers => !answerHas(answers, "q8", ["not_yet"]),
   },
   {
     id: "q11",
     number: "Q11",
     section: "B. 아이와의 시간이 조금 다르게 보이기 시작한 순간",
     title: answers =>
-      answerIs(answers, "q8", "not_yet")
+      answerHas(answers, "q8", ["not_yet"])
         ? "최근 아이를 위해 달라진 행동 중 가장 먼저 한 것은 무엇인가요?"
         : "그 뒤 가장 먼저 한 행동은 무엇인가요?",
     options: named(
@@ -372,6 +400,8 @@ export const surveyQuestions: SurveyQuestion[] = [
       "약·진료·검사 결과",
       "사진·영상과 함께한 일상"
     ),
+    kind: "multi",
+    helper: "해당하는 것을 모두 선택할 수 있어요.",
     when: answers => answerIs(answers, "q11", "record"),
   },
   {
@@ -541,7 +571,6 @@ export const surveyQuestions: SurveyQuestion[] = [
       ["farewell", "장례·추억 보존·펫로스 지원"],
       ["none", "관련 기관이나 서비스를 알아본 적이 없다"]
     ),
-    notice: sensitiveNotice,
   },
   {
     id: "q16_1a",
@@ -555,6 +584,7 @@ export const surveyQuestions: SurveyQuestion[] = [
       "다른 병원의 2차 의견",
       "비대면·방문 상담"
     ),
+    notice: sensitiveNotice,
     when: answers => answerIs(answers, "q16", "medical"),
   },
   {
@@ -569,6 +599,7 @@ export const surveyQuestions: SurveyQuestion[] = [
       "카드·할부·의료비 마련 방법",
       "민간단체·모금 지원"
     ),
+    notice: sensitiveNotice,
     when: answers => answerIs(answers, "q16", "finance"),
   },
   {
@@ -583,6 +614,7 @@ export const surveyQuestions: SurveyQuestion[] = [
       "삶의 질을 확인하는 방법",
       "치료 방향을 상담하는 서비스"
     ),
+    notice: sensitiveNotice,
     when: answers => answerIs(answers, "q16", "care"),
   },
   {
@@ -597,6 +629,7 @@ export const surveyQuestions: SurveyQuestion[] = [
       "추모 공간·메모리얼 상품",
       "펫로스 상담·모임·콘텐츠"
     ),
+    notice: sensitiveNotice,
     when: answers => answerIs(answers, "q16", "farewell"),
   },
   {
@@ -609,8 +642,17 @@ export const surveyQuestions: SurveyQuestion[] = [
       "보험 가입·의료비 마련",
       "사진·여행·앨범 등 함께할 추억",
       "마지막 돌봄·장례·추모·상담",
-      "비용을 지불하거나 준비한 적이 없어요"
+      "비용을 지불하거나 준비한 적이 없어요",
+      "직접 입력"
     ),
+    kind: "multi",
+    exclusiveOptionIds: ["5"],
+    freeTextOptionId: "6",
+    helper: "해당하는 것을 모두 선택할 수 있어요.",
+    // Q16에서 "알아본 적이 없다"를 고르면 꼬리 문항이 없어 안내를 볼 기회가 사라진다.
+    // 그 경로에서는 Q16 다음 화면인 여기에 붙인다.
+    notice: answers =>
+      answerIs(answers, "q16", "none") ? sensitiveNotice : undefined,
   },
   {
     id: "q18",
@@ -668,6 +710,7 @@ export const surveyQuestions: SurveyQuestion[] = [
       "좋지 않은 사실을 확인할까 두려웠다",
       "가족에게도 슬픈 생각을 안길 것 같았다"
     ),
+    skippable: true,
     when: answers => answerIs(answers, "q19", "emotion"),
   },
   {
@@ -813,8 +856,10 @@ export const surveyQuestions: SurveyQuestion[] = [
       "하루 한 줄 성장일기",
       "생일·입양기념일 회고",
       "가족이 함께 만드는 앨범",
-      "사진책·발도장 등 실물 제작"
+      "사진책·발도장 등 실물 제작",
+      "직접 입력"
     ),
+    freeTextOptionId: "6",
     when: answers => answerIs(answers, "q23", "memory"),
   },
   {
@@ -827,8 +872,10 @@ export const surveyQuestions: SurveyQuestion[] = [
       "약·처방식·영양제 기록",
       "병원·검사 결과 보관",
       "증상 사진·영상과 메모",
-      "수의사에게 보여줄 요약 리포트"
+      "수의사에게 보여줄 요약 리포트",
+      "직접 입력"
     ),
+    freeTextOptionId: "6",
     when: answers => answerIs(answers, "q23", "health"),
   },
   {
@@ -841,8 +888,10 @@ export const surveyQuestions: SurveyQuestion[] = [
       "식사·물·배변 기록",
       "수면·휴식 기록",
       "가족 공동 돌봄 일정",
-      "실종·응급 연락 카드"
+      "실종·응급 연락 카드",
+      "직접 입력"
     ),
+    freeTextOptionId: "6",
     when: answers => answerIs(answers, "q23", "daily"),
   },
   {
@@ -855,8 +904,10 @@ export const surveyQuestions: SurveyQuestion[] = [
       "전문가가 검수한 노화 정보",
       "증상별 병원 방문 기준",
       "보험·병원비·공공 지원",
-      "지역 병원·돌봄 서비스 정보"
+      "지역 병원·돌봄 서비스 정보",
+      "직접 입력"
     ),
+    freeTextOptionId: "6",
     when: answers => answerIs(answers, "q23", "info"),
   },
   {
@@ -941,7 +992,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   {
     id: "q29_current",
     number: "Q29-A",
-    section: "E. 지금 또는 지나고 나서 필요했던 것",
+    section: "E. 지금 보니 필요했던 것들",
     title: "알고 싶지만 마음이 무거워 충분히 알아보지 못한 것은 무엇인가요?",
     options: named(
       ["health", "건강 변화·예후·응급상황"],
@@ -951,12 +1002,13 @@ export const surveyQuestions: SurveyQuestion[] = [
       ["emotion", "내 감정 또는 가족과 대화"],
       ["none", "특별히 없어요"]
     ),
+    notice: finalStepNotice,
     when: answers => answerIs(answers, "q2", "current"),
   },
   {
     id: "q29_departed",
     number: "Q29-B",
-    section: "E. 지금 또는 지나고 나서 필요했던 것",
+    section: "E. 지금 보니 필요했던 것들",
     title: "조금 더 일찍 알았더라면 덜 힘들었을 것은 무엇인가요?",
     options: named(
       ["health", "건강 변화·예후·응급상황"],
@@ -966,12 +1018,13 @@ export const surveyQuestions: SurveyQuestion[] = [
       ["emotion", "내 감정 또는 가족과 대화"],
       ["none", "특별히 없어요"]
     ),
+    notice: finalStepNotice,
     when: answers => answerIn(answers, "q2", ["recent_departed", "longest"]),
   },
   {
     id: "q29_1a",
     number: "Q29-1A",
-    section: "E. 지금 또는 지나고 나서 필요했던 것",
+    section: "E. 지금 보니 필요했던 것들",
     title: "가장 필요했던 내용은 무엇인가요?",
     options: numbered(
       "앞으로 나타날 수 있는 몸의 변화",
@@ -987,7 +1040,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   {
     id: "q29_1b",
     number: "Q29-1B",
-    section: "E. 지금 또는 지나고 나서 필요했던 것",
+    section: "E. 지금 보니 필요했던 것들",
     title: "가장 필요했던 내용은 무엇인가요?",
     options: numbered(
       "통증과 불편함을 알아채는 방법",
@@ -1003,7 +1056,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   {
     id: "q29_1c",
     number: "Q29-1C",
-    section: "E. 지금 또는 지나고 나서 필요했던 것",
+    section: "E. 지금 보니 필요했던 것들",
     title: "가장 필요했던 내용은 무엇인가요?",
     options: numbered(
       "예상 치료비와 비용 비교",
@@ -1019,7 +1072,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   {
     id: "q29_1d",
     number: "Q29-1D",
-    section: "E. 지금 또는 지나고 나서 필요했던 것",
+    section: "E. 지금 보니 필요했던 것들",
     title: "가장 필요했던 내용은 무엇인가요?",
     options: numbered(
       "지금 함께하면 좋을 경험",
@@ -1035,7 +1088,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   {
     id: "q29_1e",
     number: "Q29-1E",
-    section: "E. 지금 또는 지나고 나서 필요했던 것",
+    section: "E. 지금 보니 필요했던 것들",
     title: "가장 가까운 답을 골라 주세요.",
     options: numbered(
       "불안과 죄책감을 다루는 방법",
@@ -1051,7 +1104,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   {
     id: "q30",
     number: "Q30",
-    section: "E. 지금 또는 지나고 나서 필요했던 것",
+    section: "E. 지금 보니 필요했던 것들",
     title: "이 내용들을 누가 알려주는 게 나을까요?",
     options: numbered(
       "다니던 동물병원 수의사",
@@ -1060,6 +1113,9 @@ export const surveyQuestions: SurveyQuestion[] = [
       "전문가가 검수한 중립적 앱",
       "제가 직접 검색할 때만 보고 싶어요"
     ),
+    kind: "multi",
+    exclusiveOptionIds: ["5"],
+    helper: "해당하는 것을 모두 선택할 수 있어요.",
   },
   {
     id: "q31",
@@ -1123,6 +1179,30 @@ export const getQuestionOptions = (
     ? question.options(answers)
     : question.options;
 
+export const FREE_TEXT_MAX_LENGTH = 100;
+
+/** "직접 입력" 응답이 담기는 키. 서버 QUESTION_IDS에도 같은 이름으로 있다. */
+export const freeTextKey = (questionId: string) => `${questionId}_text`;
+
+export const isFreeTextOpen = (
+  question: SurveyQuestion,
+  answers: SurveyAnswers
+) => {
+  if (!question.freeTextOptionId) return false;
+  const answer = answers[question.id];
+  return Array.isArray(answer)
+    ? answer.includes(question.freeTextOptionId)
+    : answer === question.freeTextOptionId;
+};
+
+export const getQuestionNotice = (
+  question: SurveyQuestion,
+  answers: SurveyAnswers
+) =>
+  typeof question.notice === "function"
+    ? question.notice(answers)
+    : question.notice;
+
 export const isSurveyTerminated = (answers: SurveyAnswers) =>
   answerIn(answers, "q1", ["no_experience", "prefer_not"]);
 
@@ -1168,6 +1248,40 @@ export const getVisibleQuestions = (answers: SurveyAnswers) => {
 export const getVisibleQuestionIds = (answers: SurveyAnswers) =>
   getVisibleQuestions(answers).map(question => question.id);
 
+/**
+ * 화면 단위. 같은 매트릭스에 속한 문항들은 한 화면에 함께 놓는다.
+ * (Q22·Q28은 5행을 한 번에 보고 바로바로 고를 수 있어야 한다)
+ */
+export type SurveyScreen = {
+  id: string;
+  questions: SurveyQuestion[];
+  matrixTitle?: string;
+};
+
+export const getVisibleScreens = (answers: SurveyAnswers): SurveyScreen[] => {
+  const screens: SurveyScreen[] = [];
+
+  for (const question of getVisibleQuestions(answers)) {
+    const last = screens[screens.length - 1];
+    if (question.matrix && last && last.matrixTitle === question.matrix.title) {
+      last.questions.push(question);
+      continue;
+    }
+    screens.push({
+      id: question.id,
+      questions: [question],
+      matrixTitle: question.matrix?.title,
+    });
+  }
+
+  return screens;
+};
+
+export const findScreenIndex = (screens: SurveyScreen[], questionId: string) =>
+  screens.findIndex(screen =>
+    screen.questions.some(question => question.id === questionId)
+  );
+
 export const pruneHiddenAnswers = (answers: SurveyAnswers): SurveyAnswers => {
   const pruned: SurveyAnswers = { ...answers };
 
@@ -1178,12 +1292,35 @@ export const pruneHiddenAnswers = (answers: SurveyAnswers): SurveyAnswers => {
       visibleQuestions.map(question => [question.id, question])
     );
 
+    // "직접 입력" 값은 문항이 아니라 `${id}_text` 키로 따로 담긴다.
+    // 해당 선택지를 고른 동안에만 남기고, 해제하면 같이 지운다.
+    const freeTextKeys = new Map(
+      visibleQuestions
+        .filter(question => isFreeTextOpen(question, pruned))
+        .map(question => [freeTextKey(question.id), question])
+    );
+
     for (const questionId of Object.keys(pruned)) {
-      if (!visibleById.has(questionId)) {
+      if (!visibleById.has(questionId) && !freeTextKeys.has(questionId)) {
         delete pruned[questionId];
         changed = true;
       }
     }
+
+    freeTextKeys.forEach((_question, key) => {
+      const value = pruned[key];
+      if (value === undefined) return;
+      if (typeof value !== "string") {
+        delete pruned[key];
+        changed = true;
+        return;
+      }
+      const trimmed = value.slice(0, FREE_TEXT_MAX_LENGTH);
+      if (trimmed !== value) {
+        pruned[key] = trimmed;
+        changed = true;
+      }
+    });
 
     for (const question of visibleQuestions) {
       const answer = pruned[question.id];

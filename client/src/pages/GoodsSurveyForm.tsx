@@ -35,12 +35,19 @@ import {
   saveGoodsSurveyDraftSnapshot,
 } from "@/lib/goodsSurveyDraftStorage";
 import {
+  FREE_TEXT_MAX_LENGTH,
+  freeTextKey,
   getNextMultiSelection,
+  getQuestionNotice,
   getQuestionOptions,
   getQuestionTitle,
+  isFreeTextOpen,
   pruneHiddenAnswers,
+  findScreenIndex,
   getSurveyProgress,
   getVisibleQuestions,
+  getVisibleScreens,
+  type SurveyScreen,
   hasMinimumAnswers,
   isSurveyTerminated,
   type SurveyAnswers,
@@ -134,9 +141,21 @@ const createClientId = () =>
 const getFileKey = (file: File) =>
   `${file.name}:${file.size}:${file.lastModified}`;
 
-const storySelects = {
-  status: ["함께 살고 있다", "이별했다", "답하고 싶지 않다"],
-  age: ["2세 이하", "3~5세", "6~8세", "9~11세", "12세 이상 또는 모름"],
+// 화면 분기를 이 값으로만 판단한다. 라벨을 직접 비교하면
+// 문구가 바뀔 때 조건이 조용히 어긋난다.
+export const STORY_STATUS = {
+  living: "함께 살고 있다",
+  departed: "이별했다",
+  undisclosed: "답하고 싶지 않다",
+} as const;
+
+export const storySelects = {
+  status: [
+    STORY_STATUS.living,
+    STORY_STATUS.departed,
+    STORY_STATUS.undisclosed,
+  ],
+  age: ["2세 이하", "3~5세", "6~8세", "9~11세", "12세 이상", "잘 모르겠다"],
   condition: [
     "건강한 일상",
     "작은 노화나 이상 변화",
@@ -262,14 +281,20 @@ export function QuestionScreen({
   question,
   answers,
   onAnswer,
+  onFreeText,
 }: {
   question: SurveyQuestion;
   answers: SurveyAnswers;
   onAnswer: (value: string | string[]) => void;
+  onFreeText?: (value: string) => void;
 }) {
   const options = getQuestionOptions(question, answers);
+  const notice = getQuestionNotice(question, answers);
   const answer = answers[question.id];
   const selected = Array.isArray(answer) ? answer : answer ? [answer] : [];
+  const freeTextOpen = isFreeTextOpen(question, answers);
+  const storedFreeText = answers[freeTextKey(question.id)];
+  const freeText = typeof storedFreeText === "string" ? storedFreeText : "";
 
   const toggleOption = (optionId: string) => {
     if (question.kind !== "multi") {
@@ -289,12 +314,12 @@ export function QuestionScreen({
 
   return (
     <section className="gsf-question" aria-labelledby="survey-question-title">
-      {question.notice && (
+      {notice && (
         <div className="gsf-notice">
           <Info aria-hidden="true" />
           <div>
-            <strong>{question.notice.title}</strong>
-            {question.notice.paragraphs.map(paragraph => (
+            <strong>{notice.title}</strong>
+            {notice.paragraphs.map(paragraph => (
               <p key={paragraph}>{paragraph}</p>
             ))}
           </div>
@@ -351,6 +376,88 @@ export function QuestionScreen({
               </span>
               <span>{option.label}</span>
             </button>
+          );
+        })}
+      </div>
+
+      {freeTextOpen && (
+        <label className="gsf-free-text">
+          <span>어떤 것인지 적어 주세요.</span>
+          <input
+            value={freeText}
+            onChange={event => onFreeText?.(event.target.value)}
+            maxLength={FREE_TEXT_MAX_LENGTH}
+            placeholder="직접 입력"
+          />
+          <small>
+            {freeText.length} / {FREE_TEXT_MAX_LENGTH}자
+          </small>
+        </label>
+      )}
+    </section>
+  );
+}
+
+/** 같은 매트릭스의 행들을 한 화면에 놓고 바로바로 고르게 한다. */
+export function MatrixScreen({
+  screen,
+  answers,
+  onAnswer,
+}: {
+  screen: SurveyScreen;
+  answers: SurveyAnswers;
+  onAnswer: (questionId: string, value: string) => void;
+}) {
+  const first = screen.questions[0];
+  const notice = getQuestionNotice(first, answers);
+  const scale = getQuestionOptions(first, answers);
+
+  return (
+    <section className="gsf-question" aria-labelledby="survey-question-title">
+      {notice && (
+        <div className="gsf-notice">
+          <Info aria-hidden="true" />
+          <div>
+            <strong>{notice.title}</strong>
+            {notice.paragraphs.map(paragraph => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="gsf-question-heading">
+        <span>{first.number}</span>
+        <small>{first.section}</small>
+      </div>
+
+      <h1 id="survey-question-title">{getQuestionTitle(first, answers)}</h1>
+
+      <div className="gsf-matrix">
+        <p className="gsf-matrix-scale" aria-hidden="true">
+          <span>{scale[0]?.label}</span>
+          <span>{scale[scale.length - 1]?.label}</span>
+        </p>
+
+        {screen.questions.map(question => {
+          const value = answers[question.id];
+          return (
+            <fieldset className="gsf-matrix-row" key={question.id}>
+              <legend>{question.matrix?.row}</legend>
+              <div>
+                {getQuestionOptions(question, answers).map(option => (
+                  <label key={option.id} title={option.label}>
+                    <input
+                      type="radio"
+                      name={`matrix-${question.id}`}
+                      checked={value === option.id}
+                      onChange={() => onAnswer(question.id, option.id)}
+                    />
+                    <span>{option.label}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
           );
         })}
       </div>
@@ -429,25 +536,24 @@ export default function GoodsSurveyForm() {
   const draftSaveQueue = useRef(Promise.resolve());
   const navigationLocked = useRef(false);
 
-  const visibleQuestions = useMemo(
-    () => getVisibleQuestions(answers),
-    [answers]
-  );
+  const visibleScreens = useMemo(() => getVisibleScreens(answers), [answers]);
   const currentIndex = Math.max(
     0,
-    visibleQuestions.findIndex(question => question.id === currentQuestionId)
+    findScreenIndex(visibleScreens, currentQuestionId)
   );
-  const currentQuestion = visibleQuestions[currentIndex] ?? visibleQuestions[0];
-  const currentAnswer = currentQuestion
-    ? answers[currentQuestion.id]
-    : undefined;
-  const hasAnswer = Array.isArray(currentAnswer)
-    ? currentAnswer.length > 0
-    : Boolean(currentAnswer);
+  const currentScreen = visibleScreens[currentIndex] ?? visibleScreens[0];
+  // 매트릭스 화면은 문항이 여럿이지만 진행·타이밍 기준은 첫 문항으로 잡는다.
+  const currentQuestion = currentScreen?.questions[0];
+  const answered = (question: SurveyQuestion) => {
+    const value = answers[question.id];
+    return Array.isArray(value) ? value.length > 0 : Boolean(value);
+  };
+  const hasAnswer =
+    Boolean(currentScreen) && currentScreen.questions.every(answered);
   const terminatingAnswerSelected = isSurveyTerminated(answers);
   const progress = getSurveyProgress({
     currentIndex,
-    visibleQuestionCount: visibleQuestions.length,
+    visibleQuestionCount: visibleScreens.length,
     terminated: terminatingAnswerSelected,
   });
   const getQuestionActiveMs = useActiveTime(
@@ -530,7 +636,14 @@ export default function GoodsSurveyForm() {
     nextQuestionId: string,
     timings: Record<string, number>
   ) => {
-    const payload = buildSavePayload(nextAnswers, nextQuestionId, timings);
+    // 저장 요청은 어느 경로로 들어오든 서버가 받는 형태여야 한다.
+    // 특히 복수선택을 모두 해제하면 빈 배열이 남는데 서버는 이를 거부하므로,
+    // 호출부에 맡기지 않고 여기서 한 번 더 정리한다.
+    const payload = buildSavePayload(
+      pruneHiddenAnswers(nextAnswers),
+      nextQuestionId,
+      timings
+    );
     setDraftSaveState("saving");
     draftSaveQueue.current = draftSaveQueue.current
       .catch(() => undefined)
@@ -680,11 +793,9 @@ export default function GoodsSurveyForm() {
 
     const prunedAnswers = pruneHiddenAnswers(nextAnswers);
     setAnswers(prunedAnswers);
-    const nextVisible = getVisibleQuestions(prunedAnswers);
-    const index = nextVisible.findIndex(
-      question => question.id === currentQuestionId
-    );
-    const nextQuestion = nextVisible[index + 1];
+    const nextScreens = getVisibleScreens(prunedAnswers);
+    const index = findScreenIndex(nextScreens, currentQuestionId);
+    const nextQuestion = nextScreens[index + 1];
     if (!isSurveyTerminated(prunedAnswers) && nextQuestion) {
       setCurrentQuestionId(nextQuestion.id);
       persistSnapshot(
@@ -787,7 +898,7 @@ export default function GoodsSurveyForm() {
     }
 
     const timings = captureCurrentQuestionTiming();
-    const previousQuestion = visibleQuestions[currentIndex - 1];
+    const previousQuestion = visibleScreens[currentIndex - 1];
     if (previousQuestion) {
       setCurrentQuestionId(previousQuestion.id);
       if (draftSession) {
@@ -814,6 +925,13 @@ export default function GoodsSurveyForm() {
     setPhotoPreviews(urls);
     return () => urls.forEach(url => URL.revokeObjectURL(url));
   }, [photos]);
+
+  // 사연 페이지의 조건부 섹션은 T1이 아니라 Q1로 판단한다.
+  // T1은 단일선택이라 "지금도 함께 살고 이별 경험도 있다"를 표현하지 못한다.
+  const livesWithPet =
+    answers.q1 === "current_only" || answers.q1 === "current_and_loss";
+  const hasLostPet =
+    answers.q1 === "current_and_loss" || answers.q1 === "loss_only";
 
   const storyReady =
     Boolean(
@@ -1088,18 +1206,46 @@ export default function GoodsSurveyForm() {
             </section>
           )}
 
-          {stage === "questions" && currentQuestion && (
-            <QuestionScreen
-              question={currentQuestion}
+          {stage === "questions" && currentScreen?.matrixTitle && (
+            <MatrixScreen
+              screen={currentScreen}
               answers={answers}
-              onAnswer={value =>
-                setAnswers(previous => ({
-                  ...previous,
-                  [currentQuestion.id]: value,
-                }))
+              onAnswer={(questionId, value) =>
+                setAnswers(previous => ({ ...previous, [questionId]: value }))
               }
             />
           )}
+
+          {stage === "questions" &&
+            currentQuestion &&
+            !currentScreen?.matrixTitle && (
+              <QuestionScreen
+                question={currentQuestion}
+                answers={answers}
+                onAnswer={value =>
+                  setAnswers(previous => {
+                    const next = { ...previous };
+                    // 복수선택을 모두 해제하면 답하지 않은 것으로 되돌린다.
+                    // 빈 배열을 그대로 두면 "다음"이 열린 채로 저장이 거부된다.
+                    if (Array.isArray(value) && value.length === 0) {
+                      delete next[currentQuestion.id];
+                    } else {
+                      next[currentQuestion.id] = value;
+                    }
+                    return next;
+                  })
+                }
+                onFreeText={value =>
+                  setAnswers(previous => {
+                    const next = { ...previous };
+                    const key = freeTextKey(currentQuestion.id);
+                    if (value.trim() === "") delete next[key];
+                    else next[key] = value.slice(0, FREE_TEXT_MAX_LENGTH);
+                    return next;
+                  })
+                }
+              />
+            )}
 
           {stage === "terminated" && (
             <section className="gsf-message">
@@ -1278,7 +1424,7 @@ export default function GoodsSurveyForm() {
                 onChange={value => updateStory("neededHelp", value)}
               />
 
-              {story.status === "함께 살고 있다" && (
+              {livesWithPet && (
                 <>
                   <h2 className="gsf-story-section-title">
                     {goodsSurveyStoryContent.sections.currentGuardian}
@@ -1291,7 +1437,7 @@ export default function GoodsSurveyForm() {
                 </>
               )}
 
-              {story.status === "이별했다" && (
+              {hasLostPet && (
                 <>
                   <h2 className="gsf-story-section-title">
                     {goodsSurveyStoryContent.sections.departedGuardian}
@@ -1652,7 +1798,7 @@ export default function GoodsSurveyForm() {
               {terminatingAnswerSelected ? "설문 종료" : "다음"}
               <ArrowRight aria-hidden="true" />
             </button>
-            {!currentQuestion.nonSkippable && (
+            {currentQuestion.skippable && (
               <button
                 type="button"
                 className="gsf-skip"

@@ -1,10 +1,12 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { QuestionScreen } from "./GoodsSurveyForm";
+import { MatrixScreen } from "./GoodsSurveyForm";
 import {
+  getQuestionNotice,
   getQuestionOptions,
   getQuestionTitle,
+  getVisibleScreens,
   isSurveyTerminated,
   surveyQuestions,
   type SurveyAnswers,
@@ -40,11 +42,34 @@ describe("노션 설문 원문", () => {
     ).toEqual([
       ["q3", 6],
       ["q12", 6],
+      ["q17", 6],
       ["q18", 6],
+      ["q23_1a", 6],
+      ["q23_1b", 6],
+      ["q23_1c", 6],
+      ["q23_1d", 6],
       ["q29_current", 6],
       ["q29_departed", 6],
       ["q33", 7],
     ]);
+  });
+
+  it("직접 입력이 있는 문항은 6번을 자유 입력 선택지로 둔다", () => {
+    expect(
+      surveyQuestions
+        .filter(item => item.freeTextOptionId)
+        .map(item => [item.id, item.freeTextOptionId])
+    ).toEqual([
+      ["q17", "6"],
+      ["q23_1a", "6"],
+      ["q23_1b", "6"],
+      ["q23_1c", "6"],
+      ["q23_1d", "6"],
+    ]);
+
+    for (const id of ["q17", "q23_1a", "q23_1b", "q23_1c", "q23_1d"]) {
+      expect(copyOf(id).options[5]).toBe("직접 입력");
+    }
   });
 
   it("Q1은 개정본대로 네 개만 보여주되 예전 prefer_not 응답도 종료로 처리한다", () => {
@@ -79,14 +104,42 @@ describe("노션 설문 원문", () => {
     );
   });
 
-  it("민감 문항과 서비스 설명을 노션 원문 그대로 제공한다", () => {
-    expect(question("q16").notice).toEqual({
+  it("절반 안내는 Q16 화면이 아니라 그 다음 화면에 한 번만 붙는다", () => {
+    const halfway = {
       title: "절반 정도 왔어요!",
       paragraphs: [
         "이제부터 마지막 돌봄이나 이별에 관한 질문이 등장해요.",
         "필요한 정보가 늦어 힘들었던 순간은 없었는지 어떤 도움이 부담 없이 닿을 수 있을지 알기 위한 질문이니, 지금 마음에 가까운 답을 선택해 주세요.",
       ],
-    });
+    };
+
+    // Q16 본인 화면에는 붙지 않는다.
+    expect(getQuestionNotice(question("q16"), {})).toBeUndefined();
+
+    // 꼬리 문항이 있는 경로는 꼬리 문항 화면에서 본다.
+    for (const id of ["q16_1a", "q16_1b", "q16_1c", "q16_1d"]) {
+      expect(getQuestionNotice(question(id), {})).toEqual(halfway);
+    }
+
+    // 꼬리 문항이 없는 경로(Q16=없음)는 다음 화면인 Q17에서 본다.
+    expect(getQuestionNotice(question("q17"), { q16: "none" })).toEqual(
+      halfway
+    );
+    expect(
+      getQuestionNotice(question("q17"), { q16: "medical" })
+    ).toBeUndefined();
+  });
+
+  it("Q29 진입 화면에 마지막 단계 안내를 붙인다", () => {
+    const finalStep = {
+      title: "마지막 단계에요.",
+      paragraphs: ["세상에 하나뿐인 굿즈를 정성스레 만들어드릴게요."],
+    };
+    expect(getQuestionNotice(question("q29_current"), {})).toEqual(finalStep);
+    expect(getQuestionNotice(question("q29_departed"), {})).toEqual(finalStep);
+  });
+
+  it("서비스 설명을 노션 원문 그대로 제공한다", () => {
     expect(question("q20").notice).toEqual({
       title: "서비스 설명",
       paragraphs: [
@@ -109,23 +162,36 @@ describe("노션 설문 원문", () => {
     }
   });
 
-  it("분할 매트릭스 화면에 현재 평가할 행을 직접 표시한다", () => {
-    const q22 = renderToStaticMarkup(
-      createElement(QuestionScreen, {
-        question: question("q22_1"),
-        answers: {},
-        onAnswer: () => undefined,
-      })
-    );
-    const q28 = renderToStaticMarkup(
-      createElement(QuestionScreen, {
-        question: question("q28_5"),
+  it("Q22·Q28은 다섯 행을 한 화면에 모아 보여준다", () => {
+    const screens = getVisibleScreens({
+      q1: "current_only",
+      q2: "current",
+    });
+
+    const q22Screen = screens.find(screen => screen.id === "q22_1");
+    const q28Screen = screens.find(screen => screen.id === "q28_1");
+    expect(q22Screen?.questions.map(item => item.id)).toEqual([
+      "q22_1",
+      "q22_2",
+      "q22_3",
+      "q22_4",
+      "q22_5",
+    ]);
+    expect(q28Screen?.questions).toHaveLength(5);
+
+    const markup = renderToStaticMarkup(
+      createElement(MatrixScreen, {
+        screen: q22Screen!,
         answers: {},
         onAnswer: () => undefined,
       })
     );
 
-    expect(q22).toContain("건강하고 특별한 변화가 없던 때");
-    expect(q28).toContain("추억 보존과 이별 후 마음 돌봄");
+    // 다섯 행이 한 화면에 모두 있고, 척도 라벨은 양끝에만 노출한다.
+    expect(markup).toContain("건강하고 특별한 변화가 없던 때");
+    expect(markup).toContain("앞으로의 시간을 설명 들은 때");
+    expect(markup).toContain("전혀 설치하지 않았을 것");
+    expect(markup).toContain("반드시 설치했을 것");
+    expect(markup).toContain("gsf-matrix-row");
   });
 });
