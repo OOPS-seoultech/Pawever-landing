@@ -783,23 +783,30 @@
   font-size: 10.5px;
 }
 
+/* 질문과 예·아니요를 한 줄에 둔다. 동의 항목이 여러 개라 줄마다 두 단으로
+   쌓이면 화면이 지나치게 길어진다. 폭이 좁아지면 자연스럽게 두 줄로 접힌다. */
 .gsf-consent-question {
   min-width: 0;
-  display: grid;
-  gap: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 7px 10px;
   margin: 0;
-  padding: 12px;
+  padding: 9px 11px;
   border: 1px solid rgba(85, 119, 94, 0.2);
   border-radius: 13px;
   background: rgba(255, 255, 255, 0.55);
 }
 
 .gsf-consent-question legend {
-  width: 100%;
+  float: left;
+  width: auto;
   padding: 0;
   color: #405b48;
   font-size: 12px;
   font-weight: 700;
+  line-height: 1.45;
 }
 
 .gsf-consent-question legend em {
@@ -808,23 +815,26 @@
 
 .gsf-consent-question > div {
   display: flex;
-  gap: 8px;
+  flex: none;
+  gap: 6px;
+  margin-left: auto;
 }
 
 .gsf-consent-question label {
-  min-width: 76px;
+  min-width: 0;
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 8px 10px;
+  gap: 5px;
+  padding: 5px 9px;
   border: 1px solid rgba(85, 119, 94, 0.24);
-  border-radius: 10px;
+  border-radius: 9px;
   background: #ffffff;
+  font-size: 12px;
 }
 
 .gsf-consent-question input[type="radio"] {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   margin: 0;
   accent-color: var(--gsf-sage);
 }
@@ -834,7 +844,9 @@
   margin: -5px 0 1px 29px;
   padding: 0;
   color: var(--gsf-sage);
-  font-size: 11px;
+  /* 바로 위 동의 문구를 넘지 않도록 보조 안내 크기로 둔다. */
+  font-size: 10px;
+  text-underline-offset: 2px;
 }
 
 .gsf-form-section > h2 {

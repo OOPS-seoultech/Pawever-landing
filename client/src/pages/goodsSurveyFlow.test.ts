@@ -215,15 +215,23 @@ describe("굿즈 설문 분기", () => {
     });
   });
 
-  it("Q1·Q2는 건너뛸 수 없는 문항으로 표시한다", () => {
-    const nonSkippable = (id: string) =>
-      surveyQuestions.find(question => question.id === id)?.nonSkippable ??
-      false;
+  it("Q29는 Q2에서 고른 아이 기준으로 A·B 한쪽만 보여준다", () => {
+    const q29Of = (q2: string) =>
+      getVisibleQuestionIds({ q1: "current_and_loss", q2 }).filter(id =>
+        id.startsWith("q29_")
+      );
 
-    expect(nonSkippable("q1")).toBe(true);
-    expect(nonSkippable("q2")).toBe(true);
-    expect(nonSkippable("q3")).toBe(false);
-    expect(nonSkippable("q29_current")).toBe(false);
+    expect(q29Of("current")).toEqual(["q29_current"]);
+    expect(q29Of("recent_departed")).toEqual(["q29_departed"]);
+    expect(q29Of("longest")).toEqual(["q29_departed"]);
+  });
+
+  it("건너뛰기는 노션에서 허용한 Q19-1A에만 둔다", () => {
+    expect(
+      surveyQuestions
+        .filter(question => question.skippable)
+        .map(question => question.id)
+    ).toEqual(["q19_1a"]);
   });
 
   it("자격 문항만 답하고 나머지를 건너뛰면 무료 제작 예약 기준에 미달한다", () => {

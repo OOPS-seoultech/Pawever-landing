@@ -1687,7 +1687,7 @@ export default function GoodsSurveyForm() {
               {terminatingAnswerSelected ? "설문 종료" : "다음"}
               <ArrowRight aria-hidden="true" />
             </button>
-            {!currentQuestion.nonSkippable && (
+            {currentQuestion.skippable && (
               <button
                 type="button"
                 className="gsf-skip"

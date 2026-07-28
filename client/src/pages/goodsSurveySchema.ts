@@ -21,7 +21,8 @@ export interface SurveyQuestion {
   maxSelections?: number;
   exclusiveOptionIds?: string[];
   optional?: boolean;
-  nonSkippable?: boolean;
+  // 노션에서 "건너뛰기 가능"이라고 표시된 문항에만 둔다.
+  skippable?: boolean;
   helper?: string;
   // 응답에 따라 안내가 붙는 화면이 달라질 수 있어 함수도 받는다.
   notice?:
@@ -141,7 +142,6 @@ export const surveyQuestions: SurveyQuestion[] = [
     number: "Q1",
     section: "A. 아이와 함께하는 지금",
     title: "현재 어떤 양육 경험을 하고 계신가요?",
-    nonSkippable: true,
     // prefer_not("답하고 싶지 않다")은 개정본에서 빠졌다. 선택지로는 더 이상
     // 보여주지 않지만, 저장된 임시 응답이 남아 있을 수 있어 종료 판정에서는 계속 받아준다.
     options: named(
@@ -156,7 +156,6 @@ export const surveyQuestions: SurveyQuestion[] = [
     number: "Q2",
     section: "A. 아이와 함께하는 지금",
     title: "이번 설문에서 어떤 아이를 떠올리며 답하시겠어요?",
-    nonSkippable: true,
     options: answers => {
       if (answerIs(answers, "q1", "current_only")) {
         return named(["current", "현재 가장 많이 돌보고 있는 아이"]);
@@ -704,6 +703,7 @@ export const surveyQuestions: SurveyQuestion[] = [
       "좋지 않은 사실을 확인할까 두려웠다",
       "가족에게도 슬픈 생각을 안길 것 같았다"
     ),
+    skippable: true,
     when: answers => answerIs(answers, "q19", "emotion"),
   },
   {
