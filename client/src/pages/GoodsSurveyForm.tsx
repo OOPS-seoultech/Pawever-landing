@@ -248,11 +248,13 @@ function ConsentChoice({
   onChange: (value: boolean) => void;
   required?: boolean;
 }) {
+  // fieldset/legend를 쓰면 legend가 flex 아이템이 되지 않아 항상 줄이 나뉜다.
+  // 질문과 예·아니요를 한 줄에 두려면 일반 요소여야 한다.
   return (
-    <fieldset className="gsf-consent-question">
-      <legend>
+    <div className="gsf-consent-question" role="radiogroup" aria-label={label}>
+      <span className="gsf-consent-question-label">
         {label} <em>{required ? "필수" : "선택"}</em>
-      </legend>
+      </span>
       <div>
         <label>
           <input
@@ -273,7 +275,7 @@ function ConsentChoice({
           <span>아니요</span>
         </label>
       </div>
-    </fieldset>
+    </div>
   );
 }
 
@@ -516,6 +518,7 @@ export default function GoodsSurveyForm() {
   });
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const [privacyConsent, setPrivacyConsent] = useState(false);
   const [shippingConsent, setShippingConsent] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
@@ -918,6 +921,13 @@ export default function GoodsSurveyForm() {
 
   const updateStory = (field: keyof StoryFields, value: string) =>
     setStory(previous => ({ ...previous, [field]: value }));
+
+  const removePhoto = (index: number) => {
+    setPhotos(previous => previous.filter((_, position) => position !== index));
+    setApiError("");
+    // 같은 파일을 다시 고를 수 있도록 input 값을 비운다.
+    if (photoInputRef.current) photoInputRef.current.value = "";
+  };
 
   // 첨부한 사진을 그대로 보여준다. 미리보기 URL은 사진이 바뀌면 바로 회수한다.
   useEffect(() => {
@@ -1582,6 +1592,7 @@ export default function GoodsSurveyForm() {
                   <strong>사진 선택하기</strong>
                   <span>JPG·PNG·WEBP, 장당 10MB 이하·최대 5장</span>
                   <input
+                    ref={photoInputRef}
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
                     multiple
@@ -1612,9 +1623,19 @@ export default function GoodsSurveyForm() {
                   <ul className="gsf-photo-preview">
                     {photos.map((file, index) => (
                       <li key={getFileKey(file)}>
-                        {photoPreviews[index] && (
-                          <img src={photoPreviews[index]} alt="" />
-                        )}
+                        <div className="gsf-photo-thumb">
+                          {photoPreviews[index] && (
+                            <img src={photoPreviews[index]} alt="" />
+                          )}
+                          <button
+                            type="button"
+                            className="gsf-photo-remove"
+                            onClick={() => removePhoto(index)}
+                            aria-label={`${file.name} 첨부 취소`}
+                          >
+                            <X aria-hidden="true" />
+                          </button>
+                        </div>
                         <span className="gsf-file-name">
                           <Check aria-hidden="true" />
                           {file.name}
