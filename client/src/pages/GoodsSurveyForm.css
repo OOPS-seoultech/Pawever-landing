@@ -556,6 +556,9 @@
 .gsf-inline-link {
   border: 0;
   background: transparent;
+  /* 버튼은 페이지 폰트를 상속하지 않는다. 두면 기기 기본 글꼴로 떨어져
+     같은 px여도 주변 문구보다 커 보인다. */
+  font: inherit;
   color: var(--gsf-ink-soft);
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -784,52 +787,49 @@
 }
 
 /* 질문과 예·아니요를 한 줄에 둔다. 동의 항목이 여러 개라 줄마다 두 단으로
-   쌓이면 화면이 지나치게 길어진다. 폭이 좁아지면 자연스럽게 두 줄로 접힌다. */
+   쌓이면 화면이 지나치게 길어진다. */
 .gsf-consent-question {
   min-width: 0;
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 7px 10px;
+  gap: 9px;
   margin: 0;
-  padding: 9px 11px;
+  padding: 8px 10px;
   border: 1px solid rgba(85, 119, 94, 0.2);
-  border-radius: 13px;
+  border-radius: 12px;
   background: rgba(255, 255, 255, 0.55);
 }
 
-.gsf-consent-question legend {
-  float: left;
-  width: auto;
-  padding: 0;
+.gsf-consent-question-label {
+  flex: 1 1 auto;
+  min-width: 0;
   color: #405b48;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
-  line-height: 1.45;
+  line-height: 1.4;
 }
 
-.gsf-consent-question legend em {
-  margin-left: 5px;
+.gsf-consent-question-label em {
+  margin-left: 4px;
 }
 
 .gsf-consent-question > div {
   display: flex;
   flex: none;
-  gap: 6px;
-  margin-left: auto;
+  gap: 5px;
 }
 
 .gsf-consent-question label {
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 5px 9px;
+  gap: 4px;
+  padding: 4px 8px;
   border: 1px solid rgba(85, 119, 94, 0.24);
-  border-radius: 9px;
+  border-radius: 8px;
   background: #ffffff;
-  font-size: 12px;
+  font-size: 11.5px;
+  white-space: nowrap;
 }
 
 .gsf-consent-question input[type="radio"] {
@@ -841,11 +841,12 @@
 
 .gsf-inline-link {
   width: fit-content;
-  margin: -5px 0 1px 29px;
+  margin: -3px 0 1px 29px;
   padding: 0;
   color: var(--gsf-sage);
-  /* 바로 위 동의 문구를 넘지 않도록 보조 안내 크기로 둔다. */
-  font-size: 10px;
+  /* 바로 위 동의 문구(12px)보다 확실히 작게. */
+  font-size: 10.5px;
+  font-weight: 600;
   text-underline-offset: 2px;
 }
 
@@ -1095,12 +1096,40 @@
   gap: 5px;
 }
 
+.gsf-photo-thumb {
+  position: relative;
+}
+
 .gsf-photo-preview img {
+  display: block;
   width: 100%;
   aspect-ratio: 1;
   border-radius: 10px;
   background: #ffffff;
   object-fit: cover;
+}
+
+.gsf-photo-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 23px;
+  height: 23px;
+  padding: 0;
+  border: 1px solid var(--gsf-line);
+  border-radius: 50%;
+  background: #ffffff;
+  color: var(--gsf-ink);
+  box-shadow: 0 2px 6px rgba(43, 35, 32, 0.16);
+  cursor: pointer;
+}
+
+.gsf-photo-remove svg {
+  width: 13px;
+  height: 13px;
 }
 
 .gsf-file-name {

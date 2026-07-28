@@ -91,9 +91,19 @@ describe("굿즈 제작 정보 화면", () => {
     expect(landingSource).toContain("clearInterval");
   });
 
-  it("첨부한 사진을 미리 보여준다", () => {
+  it("첨부한 사진을 미리 보여주고 장별로 취소할 수 있다", () => {
     expect(formSource).toContain("createObjectURL");
     expect(formSource).toContain("revokeObjectURL");
     expect(formSource).toContain("gsf-photo-preview");
+    expect(formSource).toContain("gsf-photo-remove");
+    expect(formSource).toContain("첨부 취소");
+    // 같은 파일을 다시 고를 수 있어야 하므로 input 값을 비운다.
+    expect(formSource).toContain("photoInputRef");
+  });
+
+  it("동의 질문은 legend 대신 일반 요소로 둬 한 줄에 배치한다", () => {
+    // legend는 flex 아이템이 되지 않아 항상 줄이 나뉜다.
+    expect(formSource).toContain("gsf-consent-question-label");
+    expect(formSource).not.toMatch(/<legend>\s*\{label\}/);
   });
 });
