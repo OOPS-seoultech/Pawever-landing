@@ -5,6 +5,7 @@ import { QuestionScreen } from "./GoodsSurveyForm";
 import {
   getQuestionOptions,
   getQuestionTitle,
+  isSurveyTerminated,
   surveyQuestions,
   type SurveyAnswers,
 } from "./goodsSurveySchema";
@@ -44,6 +45,17 @@ describe("노션 설문 원문", () => {
       ["q29_departed", 6],
       ["q33", 7],
     ]);
+  });
+
+  it("Q1은 개정본대로 네 개만 보여주되 예전 prefer_not 응답도 종료로 처리한다", () => {
+    expect(copyOf("q1").options).toEqual([
+      "반려견과 살고 있으며 이별 경험은 없어요",
+      "반려견과 살고 있으며 이별 경험도 있어요",
+      "함께 사는 반려견은 없지만 이별 경험이 있어요",
+      "반려견을 돌본 경험이 없다",
+    ]);
+    expect(isSurveyTerminated({ q1: "prefer_not" })).toBe(true);
+    expect(isSurveyTerminated({ q1: "no_experience" })).toBe(true);
   });
 
   it("Q18-1은 이별 무렵 응답에만 보이고 예전 late_or_never 응답도 받아준다", () => {
