@@ -6,6 +6,7 @@ import {
   pruneHiddenAnswers,
   getSurveyProgress,
   getVisibleQuestionIds,
+  getVisibleScreens,
   surveyQuestions,
   type SurveyAnswers,
 } from "./goodsSurveySchema";
@@ -234,6 +235,61 @@ describe("굿즈 설문 분기", () => {
     ).toEqual({
       q1: "loss_only",
     });
+  });
+
+  it("노션 구분선대로 13페이지에 문항을 나눠 담는다", () => {
+    // 페이지 번호가 빠진 문항이 있으면 화면 묶기가 어긋난다.
+    expect(surveyQuestions.every(question => question.page >= 1)).toBe(true);
+
+    const pages = new Map<number, string[]>();
+    for (const question of surveyQuestions) {
+      pages.set(question.page, [
+        ...(pages.get(question.page) ?? []),
+        question.id,
+      ]);
+    }
+    expect([...pages.keys()].sort((a, b) => a - b)).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
+    ]);
+    expect(pages.get(1)).toEqual(["q1", "q2", "q3", "q4"]);
+    expect(pages.get(13)).toEqual(["q31", "q32", "q33"]);
+
+    // 페이지 번호는 문항 순서와 어긋나면 안 된다(뒤로 돌아가는 페이지 금지).
+    const order = surveyQuestions.map(question => question.page);
+    expect(order).toEqual([...order].sort((a, b) => a - b));
+  });
+
+  it("한 화면에 같은 페이지의 보이는 문항을 모두 담는다", () => {
+    const screens = getVisibleScreens({
+      q1: "current_only",
+      q2: "current",
+      q4: ["small_change", "diagnosed"],
+    });
+
+    const page2 = screens.find(screen => screen.page === 2);
+    // Q4에서 두 상태를 골랐으므로 꼬리 문항 둘 다 같은 화면에 들어온다.
+    expect(page2?.questions.map(item => item.id)).toEqual([
+      "q4_1",
+      "q4_2",
+      "q5",
+      "q6",
+      "q7",
+      "q8",
+    ]);
+
+    // 조건에 맞지 않는 꼬리 문항은 그 화면에서 빠진다.
+    const onlyOne = getVisibleScreens({
+      q1: "current_only",
+      q2: "current",
+      q4: ["small_change"],
+    }).find(screen => screen.page === 2);
+    expect(onlyOne?.questions.map(item => item.id)).toEqual([
+      "q4_1",
+      "q5",
+      "q6",
+      "q7",
+      "q8",
+    ]);
   });
 
   it("Q29는 Q2에서 고른 아이 기준으로 A·B 한쪽만 보여준다", () => {

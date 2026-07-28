@@ -13,6 +13,8 @@ export interface SurveyNotice {
 
 export interface SurveyQuestion {
   id: string;
+  /** 노션 구분선(--- ---)이 나눈 페이지. 같은 값끼리 한 화면에 묶인다. */
+  page: number;
   number: string;
   section: string;
   title: string | ((answers: SurveyAnswers) => string);
@@ -141,6 +143,7 @@ const finalStepNotice: SurveyNotice = {
 export const surveyQuestions: SurveyQuestion[] = [
   {
     id: "q1",
+    page: 1,
     number: "Q1",
     section: "A. 아이와 함께하는 지금",
     title: "현재 어떤 양육 경험을 하고 계신가요?",
@@ -155,6 +158,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q2",
+    page: 1,
     number: "Q2",
     section: "A. 아이와 함께하는 지금",
     title: "이번 설문에서 어떤 아이를 떠올리며 답하시겠어요?",
@@ -177,6 +181,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q3",
+    page: 1,
     number: "Q3",
     section: "A. 아이와 함께하는 지금",
     title: "아이의 현재 나이 또는 이별 당시 나이는 몇 살인가요?",
@@ -191,6 +196,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q4",
+    page: 1,
     number: "Q4",
     section: "A. 아이와 함께하는 지금",
     title: "현재 또는 이별 6개월 전, 아이가 가장 가까웠던 상태는 어땠나요?",
@@ -206,6 +212,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q4_1",
+    page: 2,
     number: "Q4-1",
     section: "A. 아이와 함께하는 지금",
     title: "가장 먼저 눈에 들어온 변화는 무엇이었나요?",
@@ -220,6 +227,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q4_2",
+    page: 2,
     number: "Q4-2",
     section: "A. 아이와 함께하는 지금",
     title: "당시 돌봄에서 가장 큰 비중을 차지한 것은 무엇이었나요?",
@@ -236,6 +244,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q5",
+    page: 2,
     number: "Q5",
     section: "A. 아이와 함께하는 지금",
     title: "아이와 함께한 기간은 얼마나 되나요?",
@@ -243,6 +252,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q6",
+    page: 2,
     number: "Q6",
     section: "A. 아이와 함께하는 지금",
     title:
@@ -257,6 +267,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q7",
+    page: 2,
     number: "Q7",
     section: "A. 아이와 함께하는 지금",
     title: "아이와 일상에서 무엇을 가장 꾸준히 하고 있나요?",
@@ -273,6 +284,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q8",
+    page: 2,
     number: "Q8",
     section: "B. 아이와의 시간이 조금 다르게 보이기 시작한 순간",
     title:
@@ -290,6 +302,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q8_1a",
+    page: 3,
     number: "Q8-1A",
     section: "B. 아이와의 시간이 조금 다르게 보이기 시작한 순간",
     title: "그중 가장 기억에 남는 순간은 무엇인가요?",
@@ -304,6 +317,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q8_1b",
+    page: 3,
     number: "Q8-1B",
     section: "B. 아이와의 시간이 조금 다르게 보이기 시작한 순간",
     title: "어떤 변화가 그런 생각을 불러왔나요?",
@@ -318,6 +332,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q8_1c",
+    page: 3,
     number: "Q8-1C",
     section: "B. 아이와의 시간이 조금 다르게 보이기 시작한 순간",
     title: "어떤 의료 경험이 가장 크게 다가왔나요?",
@@ -332,6 +347,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q8_1d",
+    page: 3,
     number: "Q8-1D",
     section: "B. 아이와의 시간이 조금 다르게 보이기 시작한 순간",
     title: "어떤 경로의 이야기가 가장 크게 다가왔나요?",
@@ -346,6 +362,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q9",
+    page: 3,
     number: "Q9",
     section: "B. 아이와의 시간이 조금 다르게 보이기 시작한 순간",
     title: "그 계기 전에는 아이와의 이별 가능성을 얼마나 자주 떠올렸나요?",
@@ -360,6 +377,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q10",
+    page: 3,
     number: "Q10",
     section: "B. 아이와의 시간이 조금 다르게 보이기 시작한 순간",
     title: "그 순간 어떤 마음이 가장 먼저 들었나요?",
@@ -374,6 +392,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q11",
+    page: 3,
     number: "Q11",
     section: "B. 아이와의 시간이 조금 다르게 보이기 시작한 순간",
     title: answers =>
@@ -390,6 +409,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q11_1a",
+    page: 4,
     number: "Q11-1A",
     section: "B. 아이와의 시간이 조금 다르게 보이기 시작한 순간",
     title: "무엇을 가장 먼저 관찰하거나 기록했나요?",
@@ -406,6 +426,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q11_1b",
+    page: 4,
     number: "Q11-1B",
     section: "B. 아이와의 시간이 조금 다르게 보이기 시작한 순간",
     title: "처음 찾아본 정보는 어느 내용이었나요?",
@@ -419,21 +440,8 @@ export const surveyQuestions: SurveyQuestion[] = [
     when: answers => answerIs(answers, "q11", "search"),
   },
   {
-    id: "q11_2b",
-    number: "Q11-2B",
-    section: "B. 아이와의 시간이 조금 다르게 보이기 시작한 순간",
-    title: "그중 가장 먼저 찾아본 것은 무엇인가요?",
-    options: numbered(
-      "마지막 시기의 변화와 돌봄 방법",
-      "아이를 치료하거나 완화하는 방법",
-      "장례업체의 절차 등 정보",
-      "사진·발도장·털 등 추억을 남기는 방법",
-      "펫로스와 이별 후 마음을 돌보는 방법"
-    ),
-    when: answers => answerIs(answers, "q11_1b", "farewell"),
-  },
-  {
     id: "q11_1c",
+    page: 4,
     number: "Q11-1C",
     section: "B. 아이와의 시간이 조금 다르게 보이기 시작한 순간",
     title: "가장 먼저 누구에게 이야기했나요?",
@@ -448,6 +456,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q11_1d",
+    page: 4,
     number: "Q11-1D",
     section: "B. 아이와의 시간이 조금 다르게 보이기 시작한 순간",
     title: "가장 먼저 구매하거나 준비한 것은 무엇인가요?",
@@ -462,6 +471,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q11_1e",
+    page: 4,
     number: "Q11-1E",
     section: "B. 아이와의 시간이 조금 다르게 보이기 시작한 순간",
     title: "행동으로 옮기지 않은 가장 큰 이유는 무엇인가요?",
@@ -475,7 +485,23 @@ export const surveyQuestions: SurveyQuestion[] = [
     when: answers => answerIs(answers, "q11", "none"),
   },
   {
+    id: "q11_2b",
+    page: 5,
+    number: "Q11-2B",
+    section: "B. 아이와의 시간이 조금 다르게 보이기 시작한 순간",
+    title: "그중 가장 먼저 찾아본 것은 무엇인가요?",
+    options: numbered(
+      "마지막 시기의 변화와 돌봄 방법",
+      "아이를 치료하거나 완화하는 방법",
+      "장례업체의 절차 등 정보",
+      "사진·발도장·털 등 추억을 남기는 방법",
+      "펫로스와 이별 후 마음을 돌보는 방법"
+    ),
+    when: answers => answerIs(answers, "q11_1b", "farewell"),
+  },
+  {
     id: "q12",
+    page: 5,
     number: "Q12",
     section: "B. 아이와의 시간이 조금 다르게 보이기 시작한 순간",
     title: "이 행동들은 계기를 느낀 얼마 뒤에 시작했나요?",
@@ -490,6 +516,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q13",
+    page: 5,
     number: "Q13",
     section: "B. 아이와의 시간이 조금 다르게 보이기 시작한 순간",
     title: "이 행동은 어느 정도 이어졌나요?",
@@ -503,6 +530,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q14",
+    page: 5,
     number: "Q14",
     section: "C. 실제로 찾은 정보와 준비",
     title: "아이와 관련된 정보를 찾아본 경험을 공유해주세요.",
@@ -519,6 +547,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q14_1h",
+    page: 6,
     number: "Q14-1H",
     section: "C. 실제로 찾은 정보와 준비",
     title: "건강·질환 정보 중 가장 먼저 찾아본 것은 무엇인가요?",
@@ -533,6 +562,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q14_1f",
+    page: 6,
     number: "Q14-1F",
     section: "C. 실제로 찾은 정보와 준비",
     title: "앞으로의 돌봄·이별 정보 중 가장 먼저 찾아본 것은 무엇인가요?",
@@ -547,6 +577,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q15",
+    page: 6,
     number: "Q15",
     section: "C. 실제로 찾은 정보와 준비",
     title: "정보를 처음 찾을 때 가장 먼저 이용한 곳은 어디였나요?",
@@ -561,6 +592,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q16",
+    page: 6,
     number: "Q16",
     section: "C. 실제로 찾은 정보와 준비",
     title: "다음중 어떤 정보를 집중해서 살펴보셨나요?",
@@ -574,6 +606,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q16_1a",
+    page: 7,
     number: "Q16-1A",
     section: "C. 실제로 찾은 정보와 준비",
     title: "가장 집중해서 알아본 것은 무엇인가요?",
@@ -589,6 +622,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q16_1b",
+    page: 7,
     number: "Q16-1B",
     section: "C. 실제로 찾은 정보와 준비",
     title: "가장 집중해서 알아본 것은 무엇인가요?",
@@ -604,6 +638,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q16_1c",
+    page: 7,
     number: "Q16-1C",
     section: "C. 실제로 찾은 정보와 준비",
     title: "가장 집중해서 알아본 것은 무엇인가요?",
@@ -619,6 +654,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q16_1d",
+    page: 7,
     number: "Q16-1D",
     section: "C. 실제로 찾은 정보와 준비",
     title: "가장 집중해서 알아본 것은 무엇인가요?",
@@ -634,6 +670,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q17",
+    page: 7,
     number: "Q17",
     section: "C. 실제로 찾은 정보와 준비",
     title: "다음중 실제로 구매했거나 구체적으로 준비한 게 있나요?",
@@ -656,6 +693,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q18",
+    page: 7,
     number: "Q18",
     section: "C. 실제로 찾은 정보와 준비",
     title:
@@ -671,6 +709,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q18_1",
+    page: 8,
     number: "Q18-1",
     section: "C. 실제로 찾은 정보와 준비",
     title: "조금 더 가까운 답을 골라 주세요.",
@@ -687,6 +726,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q19",
+    page: 8,
     number: "Q19",
     section: "C. 실제로 찾은 정보와 준비",
     title: "관련 정보를 더 일찍 접하기 어려웠던 가장 큰 이유는 무엇인가요?",
@@ -700,6 +740,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q19_1a",
+    page: 9,
     number: "Q19-1A",
     section: "C. 실제로 찾은 정보와 준비",
     title: "어떤 마음이 가장 컸나요?",
@@ -715,6 +756,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q19_1b",
+    page: 9,
     number: "Q19-1B",
     section: "C. 실제로 찾은 정보와 준비",
     title: "왜 아직 이르다고 느꼈나요?",
@@ -729,6 +771,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q19_1c",
+    page: 9,
     number: "Q19-1C",
     section: "C. 실제로 찾은 정보와 준비",
     title: "무엇이 가장 어려웠나요?",
@@ -743,6 +786,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q19_1d",
+    page: 9,
     number: "Q19-1D",
     section: "C. 실제로 찾은 정보와 준비",
     title: "가장 걱정된 부분은 무엇이었나요?",
@@ -757,6 +801,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q19_1e",
+    page: 9,
     number: "Q19-1E",
     section: "C. 실제로 찾은 정보와 준비",
     title: "가장 가까운 답을 골라 주세요.",
@@ -771,6 +816,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q20",
+    page: 9,
     number: "Q20",
     section: "D. 부담 없이 시작할 수 있는 서비스",
     title: "어떤 표현이 제일 편안하게 느껴지나요?",
@@ -785,6 +831,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q21",
+    page: 9,
     number: "Q21",
     section: "D. 부담 없이 시작할 수 있는 서비스",
     title: "이 서비스, 언제쯤이면 편하게 써볼 수 있을까요?",
@@ -798,6 +845,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q21_1",
+    page: 10,
     number: "Q21-1",
     section: "D. 부담 없이 시작할 수 있는 서비스",
     title: "가장 가까운 시점은 언제인가요?",
@@ -819,6 +867,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   ].map(
     (row, index): SurveyQuestion => ({
       id: `q22_${index + 1}`,
+      page: 10,
       number: "Q22",
       section: "D. 부담 없이 시작할 수 있는 서비스",
       title:
@@ -835,6 +884,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   ),
   {
     id: "q23",
+    page: 10,
     number: "Q23",
     section: "D. 부담 없이 시작할 수 있는 서비스",
     title: "건강할 때도 자연스럽게 쓰게 될 기능은 무엇인가요?",
@@ -848,6 +898,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q23_1a",
+    page: 11,
     number: "Q23-1A",
     section: "D. 부담 없이 시작할 수 있는 서비스",
     title: "가장 필요한 추억 기능은 무엇인가요?",
@@ -864,6 +915,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q23_1b",
+    page: 11,
     number: "Q23-1B",
     section: "D. 부담 없이 시작할 수 있는 서비스",
     title: "가장 필요한 건강 기록 기능은 무엇인가요?",
@@ -880,6 +932,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q23_1c",
+    page: 11,
     number: "Q23-1C",
     section: "D. 부담 없이 시작할 수 있는 서비스",
     title: "가장 필요한 일상 관리 기능은 무엇인가요?",
@@ -896,6 +949,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q23_1d",
+    page: 11,
     number: "Q23-1D",
     section: "D. 부담 없이 시작할 수 있는 서비스",
     title: "가장 필요한 정보 기능은 무엇인가요?",
@@ -912,6 +966,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q24",
+    page: 11,
     number: "Q24",
     section: "D. 부담 없이 시작할 수 있는 서비스",
     title: "마지막 돌봄과 장례 정보는 앱에서 어떻게 보이면 편안할까요?",
@@ -925,6 +980,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q25",
+    page: 11,
     number: "Q25",
     section: "D. 부담 없이 시작할 수 있는 서비스",
     title:
@@ -939,6 +995,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q26",
+    page: 11,
     number: "Q26",
     section: "D. 부담 없이 시작할 수 있는 서비스",
     title:
@@ -953,6 +1010,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q27",
+    page: 11,
     number: "Q27",
     section: "D. 부담 없이 시작할 수 있는 서비스",
     title: "이 서비스에서 가장 중요한 신뢰 조건을 두 개까지 골라 주세요.",
@@ -976,6 +1034,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   ].map(
     (row, index): SurveyQuestion => ({
       id: `q28_${index + 1}`,
+      page: 11,
       number: "Q28",
       section: "D. 부담 없이 시작할 수 있는 서비스",
       title:
@@ -991,6 +1050,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   ),
   {
     id: "q29_current",
+    page: 12,
     number: "Q29-A",
     section: "E. 지금 보니 필요했던 것들",
     title: "알고 싶지만 마음이 무거워 충분히 알아보지 못한 것은 무엇인가요?",
@@ -1007,6 +1067,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q29_departed",
+    page: 12,
     number: "Q29-B",
     section: "E. 지금 보니 필요했던 것들",
     title: "조금 더 일찍 알았더라면 덜 힘들었을 것은 무엇인가요?",
@@ -1023,6 +1084,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q29_1a",
+    page: 12,
     number: "Q29-1A",
     section: "E. 지금 보니 필요했던 것들",
     title: "가장 필요했던 내용은 무엇인가요?",
@@ -1039,6 +1101,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q29_1b",
+    page: 12,
     number: "Q29-1B",
     section: "E. 지금 보니 필요했던 것들",
     title: "가장 필요했던 내용은 무엇인가요?",
@@ -1055,6 +1118,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q29_1c",
+    page: 12,
     number: "Q29-1C",
     section: "E. 지금 보니 필요했던 것들",
     title: "가장 필요했던 내용은 무엇인가요?",
@@ -1071,6 +1135,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q29_1d",
+    page: 12,
     number: "Q29-1D",
     section: "E. 지금 보니 필요했던 것들",
     title: "가장 필요했던 내용은 무엇인가요?",
@@ -1087,6 +1152,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q29_1e",
+    page: 12,
     number: "Q29-1E",
     section: "E. 지금 보니 필요했던 것들",
     title: "가장 가까운 답을 골라 주세요.",
@@ -1103,6 +1169,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q30",
+    page: 12,
     number: "Q30",
     section: "E. 지금 보니 필요했던 것들",
     title: "이 내용들을 누가 알려주는 게 나을까요?",
@@ -1119,6 +1186,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q31",
+    page: 13,
     number: "Q31",
     section: "F. 통계 분류",
     title: "응답자의 연령대는 어떻게 되나요?",
@@ -1133,6 +1201,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q32",
+    page: 13,
     number: "Q32",
     section: "F. 통계 분류",
     title: "현재 가구 형태와 가장 가까운 것은 무엇인가요?",
@@ -1147,6 +1216,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   },
   {
     id: "q33",
+    page: 13,
     number: "Q33",
     section: "F. 통계 분류",
     title: "현재 거주 지역은 어디인가요?",
@@ -1249,13 +1319,14 @@ export const getVisibleQuestionIds = (answers: SurveyAnswers) =>
   getVisibleQuestions(answers).map(question => question.id);
 
 /**
- * 화면 단위. 같은 매트릭스에 속한 문항들은 한 화면에 함께 놓는다.
- * (Q22·Q28은 5행을 한 번에 보고 바로바로 고를 수 있어야 한다)
+ * 한 화면 = 노션 구분선이 나눈 한 페이지.
+ * 조건에 맞아 보이는 문항만 담기므로 페이지마다 문항 수가 달라진다.
  */
 export type SurveyScreen = {
+  /** 첫 문항 id. 임시저장의 currentQuestionId와 호환된다. */
   id: string;
+  page: number;
   questions: SurveyQuestion[];
-  matrixTitle?: string;
 };
 
 export const getVisibleScreens = (answers: SurveyAnswers): SurveyScreen[] => {
@@ -1263,18 +1334,45 @@ export const getVisibleScreens = (answers: SurveyAnswers): SurveyScreen[] => {
 
   for (const question of getVisibleQuestions(answers)) {
     const last = screens[screens.length - 1];
-    if (question.matrix && last && last.matrixTitle === question.matrix.title) {
+    if (last && last.page === question.page) {
       last.questions.push(question);
       continue;
     }
     screens.push({
       id: question.id,
+      page: question.page,
       questions: [question],
-      matrixTitle: question.matrix?.title,
     });
   }
 
   return screens;
+};
+
+/** 페이지 안에서 같은 매트릭스에 속한 문항들은 한 블록으로 묶어 그린다. */
+export type ScreenBlock =
+  | { kind: "question"; question: SurveyQuestion }
+  | { kind: "matrix"; questions: SurveyQuestion[] };
+
+export const getScreenBlocks = (screen: SurveyScreen): ScreenBlock[] => {
+  const blocks: ScreenBlock[] = [];
+
+  for (const question of screen.questions) {
+    const last = blocks[blocks.length - 1];
+    if (question.matrix) {
+      if (
+        last?.kind === "matrix" &&
+        last.questions[0].matrix?.title === question.matrix.title
+      ) {
+        last.questions.push(question);
+        continue;
+      }
+      blocks.push({ kind: "matrix", questions: [question] });
+      continue;
+    }
+    blocks.push({ kind: "question", question });
+  }
+
+  return blocks;
 };
 
 export const findScreenIndex = (screens: SurveyScreen[], questionId: string) =>

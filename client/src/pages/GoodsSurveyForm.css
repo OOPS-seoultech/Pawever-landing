@@ -392,11 +392,23 @@
   text-overflow: ellipsis;
 }
 
-.gsf-question > h1 {
-  margin-bottom: 20px;
-  font-size: 24px;
+/* 한 화면에 여러 문항이 놓이므로 제목은 24px보다 낮춰 밀도를 확보한다. */
+.gsf-question > h2 {
+  margin: 0 0 16px;
+  font-size: 19px;
   font-weight: 900;
-  line-height: 1.36;
+  line-height: 1.38;
+}
+
+/* 노션 구분선이 나눈 한 페이지 = 한 화면. */
+.gsf-page {
+  display: grid;
+  gap: 26px;
+}
+
+.gsf-page > .gsf-question + .gsf-question {
+  padding-top: 26px;
+  border-top: 1px solid var(--gsf-line);
 }
 
 .gsf-helper {
@@ -976,68 +988,14 @@
   text-overflow: ellipsis;
 }
 
-/* 한 화면에 행 5개 × 5점. 라벨은 양끝에만 두고 가운데는 점으로 잇는다. */
-.gsf-matrix {
+/* 아코디언형 단계 스케일.
+   답할 항목 하나만 펼쳐 큰 트랙으로 응답하고, 끝난 항목은 단어 칩으로 접는다. */
+.gsf-scale-list {
   display: grid;
-  gap: 9px;
-}
-
-.gsf-matrix-scale {
-  display: flex;
-  justify-content: space-between;
   gap: 10px;
-  margin: 0 2px 1px;
-  color: var(--gsf-ink-soft);
-  font-size: 10px;
-  font-weight: 700;
 }
 
-.gsf-matrix-row {
-  min-width: 0;
-  display: grid;
-  gap: 6px;
-  margin: 0;
-  padding: 11px 12px 8px;
-  border: 1px solid var(--gsf-line);
-  border-radius: 13px;
-  background: #ffffff;
-}
-
-.gsf-matrix-row legend {
-  padding: 0;
-  color: var(--gsf-ink);
-  font-size: 12.5px;
-  font-weight: 750;
-  line-height: 1.4;
-}
-
-.gsf-matrix-row > div {
-  position: relative;
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  align-items: center;
-}
-
-/* 점들을 잇는 가로선 */
-.gsf-matrix-row > div::before {
-  position: absolute;
-  top: 50%;
-  right: 10%;
-  left: 10%;
-  height: 1px;
-  background: var(--gsf-line);
-  content: "";
-}
-
-.gsf-matrix-row label {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  padding: 7px 0;
-  cursor: pointer;
-}
-
-.gsf-matrix-row label > span {
+.gsf-sr-only {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -1046,11 +1004,161 @@
   white-space: nowrap;
 }
 
-.gsf-matrix-row input[type="radio"] {
-  width: 19px;
-  height: 19px;
+.gsf-scale-card {
+  width: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  border-radius: 18px;
+  background: #ffffff;
+  text-align: left;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.gsf-scale-card.is-collapsed {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  cursor: pointer;
+}
+
+.gsf-scale-card.is-open {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border-width: 1.5px;
+  border-color: var(--gsf-accent);
+  box-shadow: 0 6px 20px rgba(217, 86, 29, 0.12);
+}
+
+.gsf-scale-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gsf-scale-badge {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
+  background: #f0ece8;
+  color: #8a807a;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.gsf-scale-card.is-open .gsf-scale-badge {
+  background: var(--gsf-accent);
+  color: #ffffff;
+}
+
+.gsf-scale-row {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: #9a8f88;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.gsf-scale-card.is-done .gsf-scale-row {
+  color: #6b615b;
+}
+
+.gsf-scale-card.is-open .gsf-scale-row {
+  color: #2b2422;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.gsf-scale-chip {
+  flex: none;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f9e4d6;
+  color: #b5511f;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* 점 5개를 한 줄로. 연결선은 첫·마지막 점 중심까지만 긋는다. */
+.gsf-scale-track {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+}
+
+.gsf-scale-track::before {
+  position: absolute;
+  top: 50%;
+  right: 17px;
+  left: 17px;
+  height: 2px;
+  background: rgba(0, 0, 0, 0.09);
+  content: "";
+}
+
+.gsf-scale-track button {
+  position: relative;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 2px solid rgba(0, 0, 0, 0.16);
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  transition:
+    width 0.16s ease,
+    height 0.16s ease,
+    background-color 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.gsf-scale-track button.is-selected {
+  width: 34px;
+  height: 34px;
+  border-color: var(--gsf-accent);
+  background: var(--gsf-accent);
+}
+
+.gsf-scale-anchors {
+  display: flex;
+  justify-content: space-between;
+  margin: -2px 0 0;
+  color: #8a807a;
+  font-size: 13px;
+}
+
+.gsf-scale-value {
   margin: 0;
-  accent-color: var(--gsf-accent);
+  color: var(--gsf-accent);
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.gsf-scale-card.is-open .gsf-scale-value:not(:has(+ *)) {
+  min-height: 18px;
+}
+
+@media (max-width: 340px) {
+  .gsf-scale-track button {
+    width: 24px;
+    height: 24px;
+  }
+  .gsf-scale-track button.is-selected {
+    width: 29px;
+    height: 29px;
+  }
 }
 
 .gsf-free-text {

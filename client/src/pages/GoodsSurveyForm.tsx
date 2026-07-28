@@ -43,11 +43,12 @@ import {
   getQuestionTitle,
   isFreeTextOpen,
   pruneHiddenAnswers,
+  type SurveyOption,
   findScreenIndex,
+  getScreenBlocks,
   getSurveyProgress,
   getVisibleQuestions,
   getVisibleScreens,
-  type SurveyScreen,
   hasMinimumAnswers,
   isSurveyTerminated,
   type SurveyAnswers,
@@ -91,6 +92,16 @@ type StoryFields = {
 
 // 굿즈 발송 안내를 문자로 보내므로 휴대폰 번호만 받는다.
 const PHONE_PATTERN = /^01[016789][-\s]?\d{3,4}[-\s]?\d{4}$/;
+
+// 접힌 카드의 요약 칩과 트랙 양끝 라벨. 저장값은 1~5 그대로이며
+// 문장형 전체 표기는 문항이 가진 선택지 라벨을 쓴다.
+const SCALE_SHORT_LABELS = [
+  "전혀 아니다",
+  "아니다",
+  "보통",
+  "그렇다",
+  "매우 그렇다",
+];
 
 type ConsentValue = boolean | null;
 
@@ -315,7 +326,7 @@ export function QuestionScreen({
   };
 
   return (
-    <section className="gsf-question" aria-labelledby="survey-question-title">
+    <section className="gsf-question" aria-labelledby={`title-${question.id}`}>
       {notice && (
         <div className="gsf-notice">
           <Info aria-hidden="true" />
@@ -333,16 +344,10 @@ export function QuestionScreen({
         <small>{question.section}</small>
       </div>
 
-      <h1 id="survey-question-title">{getQuestionTitle(question, answers)}</h1>
+      <h2 id={`title-${question.id}`}>{getQuestionTitle(question, answers)}</h2>
       {question.helper && <p className="gsf-helper">{question.helper}</p>}
-
-      {question.matrix && (
-        <div className="gsf-matrix-context">
-          <span>
-            평가 항목 {question.matrix.index}/{question.matrix.total}
-          </span>
-          <strong>{question.matrix.row}</strong>
-        </div>
+      {(question.optional || question.skippable) && (
+        <p className="gsf-helper">답하기 어려우면 건너뛰어도 괜찮아요.</p>
       )}
 
       <div
@@ -402,20 +407,65 @@ export function QuestionScreen({
 
 /** 같은 매트릭스의 행들을 한 화면에 놓고 바로바로 고르게 한다. */
 export function MatrixScreen({
-  screen,
+  questions,
   answers,
   onAnswer,
 }: {
-  screen: SurveyScreen;
+  questions: SurveyQuestion[];
   answers: SurveyAnswers;
   onAnswer: (questionId: string, value: string) => void;
 }) {
-  const first = screen.questions[0];
+  const first = questions[0];
   const notice = getQuestionNotice(first, answers);
   const scale = getQuestionOptions(first, answers);
 
+  const answerOf = (question: SurveyQuestion) => {
+    const value = answers[question.id];
+    return typeof value === "string" ? value : "";
+  };
+  const doneCount = questions.filter(question => answerOf(question)).length;
+
+  // 답할 항목 하나만 펼친다. 처음엔 첫 미응답 항목.
+  const [openId, setOpenId] = useState<string | null>(
+    () => questions.find(question => !answerOf(question))?.id ?? null
+  );
+
+  const select = (question: SurveyQuestion, optionId: string) => {
+    const changed = answerOf(question) !== optionId;
+    onAnswer(question.id, optionId);
+    if (!changed) return;
+    // 값이 바뀔 때만 다음 미응답 항목으로 넘어간다. 남은 게 없으면 모두 접는다.
+    const next = questions.find(
+      item => item.id !== question.id && !answerOf(item)
+    );
+    setOpenId(next?.id ?? null);
+  };
+
+  const moveByKey = (
+    event: React.KeyboardEvent,
+    question: SurveyQuestion,
+    options: SurveyOption[]
+  ) => {
+    const step =
+      event.key === "ArrowRight" || event.key === "ArrowDown"
+        ? 1
+        : event.key === "ArrowLeft" || event.key === "ArrowUp"
+          ? -1
+          : 0;
+    if (step === 0) return;
+    event.preventDefault();
+    const current = options.findIndex(
+      option => option.id === answerOf(question)
+    );
+    const next = Math.min(
+      options.length - 1,
+      Math.max(0, (current < 0 ? 0 : current) + step)
+    );
+    onAnswer(question.id, options[next].id);
+  };
+
   return (
-    <section className="gsf-question" aria-labelledby="survey-question-title">
+    <section className="gsf-question" aria-labelledby={`title-${first.id}`}>
       {notice && (
         <div className="gsf-notice">
           <Info aria-hidden="true" />
@@ -430,39 +480,83 @@ export function MatrixScreen({
 
       <div className="gsf-question-heading">
         <span>{first.number}</span>
-        <small>{first.section}</small>
+        <small>
+          {doneCount} / {questions.length} 완료
+        </small>
       </div>
 
-      <h1 id="survey-question-title">{getQuestionTitle(first, answers)}</h1>
+      <h2 id={`title-${first.id}`}>{getQuestionTitle(first, answers)}</h2>
 
-      <div className="gsf-matrix">
-        <p className="gsf-matrix-scale" aria-hidden="true">
-          <span>{scale[0]?.label}</span>
-          <span>{scale[scale.length - 1]?.label}</span>
-        </p>
+      <div className="gsf-scale-list">
+        {questions.map((question, order) => {
+          const options = getQuestionOptions(question, answers);
+          const value = answerOf(question);
+          const chosen = options.findIndex(option => option.id === value);
+          const open = openId === question.id;
+          const row = question.matrix?.row ?? "";
 
-        {screen.questions.map(question => {
-          const value = answers[question.id];
+          if (!open) {
+            return (
+              <button
+                type="button"
+                key={question.id}
+                className={`gsf-scale-card is-collapsed${value ? " is-done" : ""}`}
+                onClick={() => setOpenId(question.id)}
+              >
+                <span className="gsf-scale-badge">{order + 1}</span>
+                <span className="gsf-scale-row">{row}</span>
+                {value && (
+                  <span className="gsf-scale-chip">
+                    {SCALE_SHORT_LABELS[chosen] ?? ""}
+                  </span>
+                )}
+              </button>
+            );
+          }
+
           return (
-            <fieldset className="gsf-matrix-row" key={question.id}>
-              <legend>{question.matrix?.row}</legend>
-              <div>
-                {getQuestionOptions(question, answers).map(option => (
-                  <label key={option.id} title={option.label}>
-                    <input
-                      type="radio"
-                      name={`matrix-${question.id}`}
-                      checked={value === option.id}
-                      onChange={() => onAnswer(question.id, option.id)}
-                    />
-                    <span>{option.label}</span>
-                  </label>
+            <div className="gsf-scale-card is-open" key={question.id}>
+              <div className="gsf-scale-head">
+                <span className="gsf-scale-badge">{order + 1}</span>
+                <span className="gsf-scale-row">{row}</span>
+              </div>
+
+              <div
+                className="gsf-scale-track"
+                role="radiogroup"
+                aria-label={row}
+                onKeyDown={event => moveByKey(event, question, options)}
+              >
+                {options.map((option, index) => (
+                  <button
+                    type="button"
+                    key={option.id}
+                    role="radio"
+                    aria-checked={value === option.id}
+                    aria-label={`${row} — ${option.label}`}
+                    tabIndex={index === (chosen < 0 ? 0 : chosen) ? 0 : -1}
+                    className={value === option.id ? "is-selected" : ""}
+                    onClick={() => select(question, option.id)}
+                  />
                 ))}
               </div>
-            </fieldset>
+
+              <p className="gsf-scale-anchors" aria-hidden="true">
+                <span>{SCALE_SHORT_LABELS[0]}</span>
+                <span>{SCALE_SHORT_LABELS[SCALE_SHORT_LABELS.length - 1]}</span>
+              </p>
+
+              <p className="gsf-scale-value" aria-live="polite">
+                {chosen >= 0 ? options[chosen].label : "탭해서 선택하세요"}
+              </p>
+            </div>
           );
         })}
       </div>
+
+      <p className="gsf-sr-only">
+        {scale.length}단계 중 하나를 고르는 문항입니다.
+      </p>
     </section>
   );
 }
@@ -545,14 +639,37 @@ export default function GoodsSurveyForm() {
     findScreenIndex(visibleScreens, currentQuestionId)
   );
   const currentScreen = visibleScreens[currentIndex] ?? visibleScreens[0];
+
+  const setAnswer = (questionId: string, value: string | string[]) =>
+    setAnswers(previous => {
+      const next = { ...previous };
+      // 복수선택을 모두 해제하면 답하지 않은 것으로 되돌린다.
+      // 빈 배열을 그대로 두면 "다음"이 열린 채로 저장이 거부된다.
+      if (Array.isArray(value) && value.length === 0) delete next[questionId];
+      else next[questionId] = value;
+      return next;
+    });
+
+  const setFreeText = (questionId: string, value: string) =>
+    setAnswers(previous => {
+      const next = { ...previous };
+      const key = freeTextKey(questionId);
+      if (value.trim() === "") delete next[key];
+      else next[key] = value.slice(0, FREE_TEXT_MAX_LENGTH);
+      return next;
+    });
   // 매트릭스 화면은 문항이 여럿이지만 진행·타이밍 기준은 첫 문항으로 잡는다.
   const currentQuestion = currentScreen?.questions[0];
   const answered = (question: SurveyQuestion) => {
     const value = answers[question.id];
     return Array.isArray(value) ? value.length > 0 : Boolean(value);
   };
+  // 선택 응답(optional)과 건너뛸 수 있는 문항은 "다음"을 막지 않는다.
   const hasAnswer =
-    Boolean(currentScreen) && currentScreen.questions.every(answered);
+    Boolean(currentScreen) &&
+    currentScreen.questions
+      .filter(question => !question.optional && !question.skippable)
+      .every(answered);
   const terminatingAnswerSelected = isSurveyTerminated(answers);
   const progress = getSurveyProgress({
     currentIndex,
@@ -1216,46 +1333,28 @@ export default function GoodsSurveyForm() {
             </section>
           )}
 
-          {stage === "questions" && currentScreen?.matrixTitle && (
-            <MatrixScreen
-              screen={currentScreen}
-              answers={answers}
-              onAnswer={(questionId, value) =>
-                setAnswers(previous => ({ ...previous, [questionId]: value }))
-              }
-            />
+          {stage === "questions" && currentScreen && (
+            <div className="gsf-page">
+              {getScreenBlocks(currentScreen).map(block =>
+                block.kind === "matrix" ? (
+                  <MatrixScreen
+                    key={block.questions[0].id}
+                    questions={block.questions}
+                    answers={answers}
+                    onAnswer={setAnswer}
+                  />
+                ) : (
+                  <QuestionScreen
+                    key={block.question.id}
+                    question={block.question}
+                    answers={answers}
+                    onAnswer={value => setAnswer(block.question.id, value)}
+                    onFreeText={value => setFreeText(block.question.id, value)}
+                  />
+                )
+              )}
+            </div>
           )}
-
-          {stage === "questions" &&
-            currentQuestion &&
-            !currentScreen?.matrixTitle && (
-              <QuestionScreen
-                question={currentQuestion}
-                answers={answers}
-                onAnswer={value =>
-                  setAnswers(previous => {
-                    const next = { ...previous };
-                    // 복수선택을 모두 해제하면 답하지 않은 것으로 되돌린다.
-                    // 빈 배열을 그대로 두면 "다음"이 열린 채로 저장이 거부된다.
-                    if (Array.isArray(value) && value.length === 0) {
-                      delete next[currentQuestion.id];
-                    } else {
-                      next[currentQuestion.id] = value;
-                    }
-                    return next;
-                  })
-                }
-                onFreeText={value =>
-                  setAnswers(previous => {
-                    const next = { ...previous };
-                    const key = freeTextKey(currentQuestion.id);
-                    if (value.trim() === "") delete next[key];
-                    else next[key] = value.slice(0, FREE_TEXT_MAX_LENGTH);
-                    return next;
-                  })
-                }
-              />
-            )}
 
           {stage === "terminated" && (
             <section className="gsf-message">
@@ -1819,16 +1918,6 @@ export default function GoodsSurveyForm() {
               {terminatingAnswerSelected ? "설문 종료" : "다음"}
               <ArrowRight aria-hidden="true" />
             </button>
-            {currentQuestion.skippable && (
-              <button
-                type="button"
-                className="gsf-skip"
-                onClick={skipQuestion}
-                disabled={apiBusy}
-              >
-                이 문항 건너뛰기
-              </button>
-            )}
           </div>
         )}
       </div>
