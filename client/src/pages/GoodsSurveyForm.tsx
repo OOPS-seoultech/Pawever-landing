@@ -43,6 +43,7 @@ import {
   getQuestionTitle,
   isFreeTextOpen,
   pruneHiddenAnswers,
+  type SurveyOption,
   findScreenIndex,
   getScreenBlocks,
   getSurveyProgress,
@@ -91,6 +92,16 @@ type StoryFields = {
 
 // 굿즈 발송 안내를 문자로 보내므로 휴대폰 번호만 받는다.
 const PHONE_PATTERN = /^01[016789][-\s]?\d{3,4}[-\s]?\d{4}$/;
+
+// 접힌 카드의 요약 칩과 트랙 양끝 라벨. 저장값은 1~5 그대로이며
+// 문장형 전체 표기는 문항이 가진 선택지 라벨을 쓴다.
+const SCALE_SHORT_LABELS = [
+  "전혀 아니다",
+  "아니다",
+  "보통",
+  "그렇다",
+  "매우 그렇다",
+];
 
 type ConsentValue = boolean | null;
 
@@ -408,6 +419,51 @@ export function MatrixScreen({
   const notice = getQuestionNotice(first, answers);
   const scale = getQuestionOptions(first, answers);
 
+  const answerOf = (question: SurveyQuestion) => {
+    const value = answers[question.id];
+    return typeof value === "string" ? value : "";
+  };
+  const doneCount = questions.filter(question => answerOf(question)).length;
+
+  // 답할 항목 하나만 펼친다. 처음엔 첫 미응답 항목.
+  const [openId, setOpenId] = useState<string | null>(
+    () => questions.find(question => !answerOf(question))?.id ?? null
+  );
+
+  const select = (question: SurveyQuestion, optionId: string) => {
+    const changed = answerOf(question) !== optionId;
+    onAnswer(question.id, optionId);
+    if (!changed) return;
+    // 값이 바뀔 때만 다음 미응답 항목으로 넘어간다. 남은 게 없으면 모두 접는다.
+    const next = questions.find(
+      item => item.id !== question.id && !answerOf(item)
+    );
+    setOpenId(next?.id ?? null);
+  };
+
+  const moveByKey = (
+    event: React.KeyboardEvent,
+    question: SurveyQuestion,
+    options: SurveyOption[]
+  ) => {
+    const step =
+      event.key === "ArrowRight" || event.key === "ArrowDown"
+        ? 1
+        : event.key === "ArrowLeft" || event.key === "ArrowUp"
+          ? -1
+          : 0;
+    if (step === 0) return;
+    event.preventDefault();
+    const current = options.findIndex(
+      option => option.id === answerOf(question)
+    );
+    const next = Math.min(
+      options.length - 1,
+      Math.max(0, (current < 0 ? 0 : current) + step)
+    );
+    onAnswer(question.id, options[next].id);
+  };
+
   return (
     <section className="gsf-question" aria-labelledby={`title-${first.id}`}>
       {notice && (
@@ -424,39 +480,83 @@ export function MatrixScreen({
 
       <div className="gsf-question-heading">
         <span>{first.number}</span>
-        <small>{first.section}</small>
+        <small>
+          {doneCount} / {questions.length} 완료
+        </small>
       </div>
 
       <h2 id={`title-${first.id}`}>{getQuestionTitle(first, answers)}</h2>
 
-      <div className="gsf-matrix">
-        <p className="gsf-matrix-scale" aria-hidden="true">
-          <span>{scale[0]?.label}</span>
-          <span>{scale[scale.length - 1]?.label}</span>
-        </p>
+      <div className="gsf-scale-list">
+        {questions.map((question, order) => {
+          const options = getQuestionOptions(question, answers);
+          const value = answerOf(question);
+          const chosen = options.findIndex(option => option.id === value);
+          const open = openId === question.id;
+          const row = question.matrix?.row ?? "";
 
-        {questions.map(question => {
-          const value = answers[question.id];
+          if (!open) {
+            return (
+              <button
+                type="button"
+                key={question.id}
+                className={`gsf-scale-card is-collapsed${value ? " is-done" : ""}`}
+                onClick={() => setOpenId(question.id)}
+              >
+                <span className="gsf-scale-badge">{order + 1}</span>
+                <span className="gsf-scale-row">{row}</span>
+                {value && (
+                  <span className="gsf-scale-chip">
+                    {SCALE_SHORT_LABELS[chosen] ?? ""}
+                  </span>
+                )}
+              </button>
+            );
+          }
+
           return (
-            <fieldset className="gsf-matrix-row" key={question.id}>
-              <legend>{question.matrix?.row}</legend>
-              <div>
-                {getQuestionOptions(question, answers).map(option => (
-                  <label key={option.id} title={option.label}>
-                    <input
-                      type="radio"
-                      name={`matrix-${question.id}`}
-                      checked={value === option.id}
-                      onChange={() => onAnswer(question.id, option.id)}
-                    />
-                    <span>{option.label}</span>
-                  </label>
+            <div className="gsf-scale-card is-open" key={question.id}>
+              <div className="gsf-scale-head">
+                <span className="gsf-scale-badge">{order + 1}</span>
+                <span className="gsf-scale-row">{row}</span>
+              </div>
+
+              <div
+                className="gsf-scale-track"
+                role="radiogroup"
+                aria-label={row}
+                onKeyDown={event => moveByKey(event, question, options)}
+              >
+                {options.map((option, index) => (
+                  <button
+                    type="button"
+                    key={option.id}
+                    role="radio"
+                    aria-checked={value === option.id}
+                    aria-label={`${row} — ${option.label}`}
+                    tabIndex={index === (chosen < 0 ? 0 : chosen) ? 0 : -1}
+                    className={value === option.id ? "is-selected" : ""}
+                    onClick={() => select(question, option.id)}
+                  />
                 ))}
               </div>
-            </fieldset>
+
+              <p className="gsf-scale-anchors" aria-hidden="true">
+                <span>{SCALE_SHORT_LABELS[0]}</span>
+                <span>{SCALE_SHORT_LABELS[SCALE_SHORT_LABELS.length - 1]}</span>
+              </p>
+
+              <p className="gsf-scale-value" aria-live="polite">
+                {chosen >= 0 ? options[chosen].label : "탭해서 선택하세요"}
+              </p>
+            </div>
           );
         })}
       </div>
+
+      <p className="gsf-sr-only">
+        {scale.length}단계 중 하나를 고르는 문항입니다.
+      </p>
     </section>
   );
 }

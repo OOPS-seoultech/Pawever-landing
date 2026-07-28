@@ -192,11 +192,37 @@ describe("노션 설문 원문", () => {
       })
     );
 
-    // 다섯 행이 한 화면에 모두 있고, 척도 라벨은 양끝에만 노출한다.
+    // 다섯 항목이 모두 카드로 있고, 첫 미응답 항목만 펼쳐진다.
     expect(markup).toContain("건강하고 특별한 변화가 없던 때");
     expect(markup).toContain("앞으로의 시간을 설명 들은 때");
-    expect(markup).toContain("전혀 설치하지 않았을 것");
-    expect(markup).toContain("반드시 설치했을 것");
-    expect(markup).toContain("gsf-matrix-row");
+    expect(markup).toContain("0 / 5 완료");
+    expect((markup.match(/gsf-scale-card/g) ?? []).length).toBe(5);
+    expect((markup.match(/is-open/g) ?? []).length).toBe(1);
+
+    // 펼친 카드에만 트랙과 양끝 앵커가 나온다.
+    expect(markup).toContain("gsf-scale-track");
+    expect(markup).toContain("전혀 아니다");
+    expect(markup).toContain("매우 그렇다");
+  });
+
+  it("응답한 항목은 접히고 고른 값을 단어 칩으로 보여준다", () => {
+    const answers = { q1: "current_only", q2: "current", q22_1: "2" };
+    const screen = getVisibleScreens(answers).find(item => item.page === 10);
+    const block = getScreenBlocks(screen!).find(item => item.kind === "matrix");
+    const questions = block?.kind === "matrix" ? block.questions : [];
+
+    const markup = renderToStaticMarkup(
+      createElement(MatrixScreen, {
+        questions,
+        answers,
+        onAnswer: () => undefined,
+      })
+    );
+
+    expect(markup).toContain("1 / 5 완료");
+    expect(markup).toContain("gsf-scale-chip");
+    expect(markup).toContain("아니다");
+    // 첫 항목은 답했으므로 두 번째 항목이 펼쳐진다.
+    expect((markup.match(/is-open/g) ?? []).length).toBe(1);
   });
 });
