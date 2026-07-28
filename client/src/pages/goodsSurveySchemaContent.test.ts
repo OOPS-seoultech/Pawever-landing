@@ -6,6 +6,7 @@ import {
   getQuestionNotice,
   getQuestionOptions,
   getQuestionTitle,
+  getScreenBlocks,
   getVisibleScreens,
   isSurveyTerminated,
   surveyQuestions,
@@ -162,26 +163,30 @@ describe("노션 설문 원문", () => {
     }
   });
 
-  it("Q22·Q28은 다섯 행을 한 화면에 모아 보여준다", () => {
-    const screens = getVisibleScreens({
-      q1: "current_only",
-      q2: "current",
-    });
+  it("Q22·Q28은 페이지 안에서 다섯 행을 한 블록으로 묶는다", () => {
+    const answers = { q1: "current_only", q2: "current" };
+    const screens = getVisibleScreens(answers);
 
-    const q22Screen = screens.find(screen => screen.id === "q22_1");
-    const q28Screen = screens.find(screen => screen.id === "q28_1");
-    expect(q22Screen?.questions.map(item => item.id)).toEqual([
+    const matrixOf = (page: number) => {
+      const screen = screens.find(item => item.page === page);
+      const block = getScreenBlocks(screen!).find(
+        item => item.kind === "matrix"
+      );
+      return block?.kind === "matrix" ? block.questions : [];
+    };
+
+    expect(matrixOf(10).map(item => item.id)).toEqual([
       "q22_1",
       "q22_2",
       "q22_3",
       "q22_4",
       "q22_5",
     ]);
-    expect(q28Screen?.questions).toHaveLength(5);
+    expect(matrixOf(11)).toHaveLength(5);
 
     const markup = renderToStaticMarkup(
       createElement(MatrixScreen, {
-        screen: q22Screen!,
+        questions: matrixOf(10),
         answers: {},
         onAnswer: () => undefined,
       })

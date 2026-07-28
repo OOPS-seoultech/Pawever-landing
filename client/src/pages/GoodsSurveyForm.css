@@ -392,11 +392,23 @@
   text-overflow: ellipsis;
 }
 
-.gsf-question > h1 {
-  margin-bottom: 20px;
-  font-size: 24px;
+/* 한 화면에 여러 문항이 놓이므로 제목은 24px보다 낮춰 밀도를 확보한다. */
+.gsf-question > h2 {
+  margin: 0 0 16px;
+  font-size: 19px;
   font-weight: 900;
-  line-height: 1.36;
+  line-height: 1.38;
+}
+
+/* 노션 구분선이 나눈 한 페이지 = 한 화면. */
+.gsf-page {
+  display: grid;
+  gap: 26px;
+}
+
+.gsf-page > .gsf-question + .gsf-question {
+  padding-top: 26px;
+  border-top: 1px solid var(--gsf-line);
 }
 
 .gsf-helper {
