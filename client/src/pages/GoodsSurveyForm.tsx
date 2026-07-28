@@ -50,6 +50,7 @@ import {
   goodsSurveyClosingContent,
   goodsSurveyIntroContent,
   goodsSurveyPrivacyContent,
+  goodsSurveyProductionContent,
   goodsSurveyStoryContent,
 } from "./goodsSurveyContent";
 import "./GoodsSurveyForm.css";
@@ -80,6 +81,9 @@ type StoryFields = {
   finalHelp: string;
   oneLine: string;
 };
+
+// 굿즈 발송 안내를 문자로 보내므로 휴대폰 번호만 받는다.
+const PHONE_PATTERN = /^01[016789][-\s]?\d{3,4}[-\s]?\d{4}$/;
 
 type ConsentValue = boolean | null;
 
@@ -404,6 +408,7 @@ export default function GoodsSurveyForm() {
     addressDetail: "",
   });
   const [photos, setPhotos] = useState<File[]>([]);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [privacyConsent, setPrivacyConsent] = useState(false);
   const [shippingConsent, setShippingConsent] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
@@ -803,10 +808,21 @@ export default function GoodsSurveyForm() {
   const updateStory = (field: keyof StoryFields, value: string) =>
     setStory(previous => ({ ...previous, [field]: value }));
 
+  // 첨부한 사진을 그대로 보여준다. 미리보기 URL은 사진이 바뀌면 바로 회수한다.
+  useEffect(() => {
+    const urls = photos.map(file => URL.createObjectURL(file));
+    setPhotoPreviews(urls);
+    return () => urls.forEach(url => URL.revokeObjectURL(url));
+  }, [photos]);
+
   const storyReady =
     Boolean(
       story.status && story.age && story.condition && story.scene.trim()
     ) && storyConsent.analysis;
+
+  const phoneInvalid =
+    production.phone.trim().length > 0 &&
+    !PHONE_PATTERN.test(production.phone.trim());
 
   const productionReady =
     photos.length > 0 &&
@@ -814,20 +830,13 @@ export default function GoodsSurveyForm() {
       production.goods &&
         production.petName.trim() &&
         production.guardianName.trim() &&
-        production.phone.trim() &&
+        PHONE_PATTERN.test(production.phone.trim()) &&
         production.postalCode.trim() &&
         production.address.trim()
     ) &&
     (production.goods !== "custom" || Boolean(production.customGoods.trim())) &&
     privacyConsent &&
     shippingConsent;
-  const reservationDeadline = draftSession?.reservationExpiresAt
-    ? new Intl.DateTimeFormat("ko-KR", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      }).format(new Date(draftSession.reservationExpiresAt))
-    : null;
 
   const continueToProduction = () => {
     if (draftSession) {
@@ -1371,11 +1380,9 @@ export default function GoodsSurveyForm() {
               }}
             >
               <span className="gsf-eyebrow">마지막 단계</span>
-              <h1>우리 아이 굿즈 제작 정보를 알려주세요.</h1>
+              <h1>{goodsSurveyProductionContent.title}</h1>
               <p className="gsf-form-lead">
-                설문 응답과 제작·배송 정보는 무작위 응답 ID로만 연결됩니다.
-                {reservationDeadline &&
-                  ` 선착순 자리는 오늘 ${reservationDeadline}까지 보관됩니다.`}
+                {goodsSurveyProductionContent.lead}
               </p>
 
               <section className="gsf-form-section">
@@ -1417,6 +1424,9 @@ export default function GoodsSurveyForm() {
                     />
                   </label>
                 )}
+                <p className="gsf-field-help">
+                  {goodsSurveyProductionContent.goodsSubstitution}
+                </p>
               </section>
 
               <section className="gsf-form-section">
@@ -1453,11 +1463,16 @@ export default function GoodsSurveyForm() {
                   />
                 </label>
                 {photos.length > 0 && (
-                  <ul className="gsf-photo-list">
-                    {photos.map(file => (
-                      <li className="gsf-file-name" key={getFileKey(file)}>
-                        <Check aria-hidden="true" />
-                        {file.name}
+                  <ul className="gsf-photo-preview">
+                    {photos.map((file, index) => (
+                      <li key={getFileKey(file)}>
+                        {photoPreviews[index] && (
+                          <img src={photoPreviews[index]} alt="" />
+                        )}
+                        <span className="gsf-file-name">
+                          <Check aria-hidden="true" />
+                          {file.name}
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -1492,7 +1507,13 @@ export default function GoodsSurveyForm() {
                       }
                       placeholder={placeholder}
                       inputMode={field === "phone" ? "tel" : "text"}
+                      aria-invalid={field === "phone" && phoneInvalid}
                     />
+                    {field === "phone" && phoneInvalid && (
+                      <span className="gsf-field-error" role="alert">
+                        {goodsSurveyProductionContent.phoneFormatError}
+                      </span>
+                    )}
                   </label>
                 ))}
               </section>
@@ -1501,10 +1522,7 @@ export default function GoodsSurveyForm() {
                 <ShieldCheck aria-hidden="true" />
                 <div>
                   <h2>제품 안전 안내</h2>
-                  <p>
-                    본 굿즈는 보호자용 키링 또는 전시용입니다. 반려견이 물거나
-                    삼키지 않도록 손이 닿지 않는 곳에서 사용해 주세요.
-                  </p>
+                  <p>{goodsSurveyProductionContent.safety}</p>
                 </div>
               </section>
 

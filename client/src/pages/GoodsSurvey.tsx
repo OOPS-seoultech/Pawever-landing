@@ -9,10 +9,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { trackEvent } from "@/lib/analytics/analytics";
 import { usePageEngagement } from "@/lib/analytics/react";
-import {
-  getSurveyCampaign,
-  type SurveyCampaign,
-} from "@/lib/goodsSurveyApi";
+import { getSurveyCampaign, type SurveyCampaign } from "@/lib/goodsSurveyApi";
 import "./GoodsSurvey.css";
 
 const CAMPAIGN = {
@@ -234,11 +231,32 @@ export default function GoodsSurvey() {
   };
 
   useEffect(() => {
-    void getSurveyCampaign()
-      .then(setCampaign)
-      .catch(() => {
-        // 서버 상태 조회 실패 시 대화에서 확정한 초기 수치(27/100)를 유지한다.
-      });
+    let cancelled = false;
+
+    const refresh = () => {
+      void getSurveyCampaign()
+        .then(next => {
+          if (!cancelled) setCampaign(next);
+        })
+        .catch(() => {
+          // 서버 상태 조회 실패 시 대화에서 확정한 초기 수치(27/100)를 유지한다.
+        });
+    };
+
+    // 남은 자리는 다른 사람의 제출로 계속 줄어든다. 화면을 열어둔 동안에도
+    // 최신 수치를 보여주려고 주기적으로, 그리고 탭이 다시 보일 때 다시 조회한다.
+    refresh();
+    const timer = window.setInterval(refresh, 30_000);
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
   }, []);
 
   useEffect(() => {
@@ -355,7 +373,9 @@ export default function GoodsSurvey() {
             검색하면 정말 많죠
           </h2>
           <p className="gs-copy">
-            {"그런데 표정과 털무늬까지 닮게 만들고, 얼굴을 3D로 세우거나 전신으로 제작하려면 옵션마다 금액이 붙어 생각보다 비싸집니다."}
+            {
+              "그런데 표정과 털무늬까지 닮게 만들고, 얼굴을 3D로 세우거나 전신으로 제작하려면 옵션마다 금액이 붙어 생각보다 비싸집니다."
+            }
           </p>
 
           <LandingImage
@@ -389,10 +409,14 @@ export default function GoodsSurvey() {
             ‘강아지 굿즈’가 아니니까요.
           </h2>
           <p className="gs-copy">
-            {"한쪽만 접히는 귀, 코 옆의 작은 점, 웃을 때 올라가는 입꼬리처럼 우리 가족만 알아보는 우리 아이의 모습이 남았으면 하는 마음."}
+            {
+              "한쪽만 접히는 귀, 코 옆의 작은 점, 웃을 때 올라가는 입꼬리처럼 우리 가족만 알아보는 우리 아이의 모습이 남았으면 하는 마음."
+            }
           </p>
           <p className="gs-copy">
-            {"사진첩 속에만 있던 그 표정을 매일 손에 잡히는 모습으로 만들어드리고 싶어요."}
+            {
+              "사진첩 속에만 있던 그 표정을 매일 손에 잡히는 모습으로 만들어드리고 싶어요."
+            }
           </p>
           <div className="gs-story-stack">
             <LandingImage
@@ -626,7 +650,9 @@ export default function GoodsSurvey() {
               있습니다.
             </li>
             <li>배송 정보는 굿즈 발송과 문의 대응에만 사용합니다.</li>
-            <li>사진은 굿즈 제작을 위해서만 쓰고 배송 완료 3개월 뒤 삭제합니다.</li>
+            <li>
+              사진은 굿즈 제작을 위해서만 쓰고 배송 완료 3개월 뒤 삭제합니다.
+            </li>
             <li>
               사연 공개에 별도 동의하고 선정된 경우에만 추가 상품 제공 및
               인스타그램 익명 소개를 진행합니다.

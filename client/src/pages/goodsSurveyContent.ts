@@ -120,9 +120,18 @@ export const goodsSurveyStoryContent = {
   },
 } as const;
 
+export const goodsSurveyProductionContent = {
+  title: "굿즈 제작 정보를 알려주세요.",
+  lead: "수작업 3D 굿즈 특성상 5일에서 최대 3주까지 시간이 소요될 수 있어요. 제공하신 정보는 굿즈 발송일로부터 3주 뒤 모두 삭제됩니다.",
+  goodsSubstitution: "신청자가 적은 굿즈는 비슷한 형태로 대체될 수 있어요.",
+  phoneFormatError: "형식에 맞춰 작성해주세요",
+  safety:
+    "본 굿즈는 보호자용 키링 또는 전시용입니다. 제품 소재 특성상 반려견이 물거나 삼키지 않도록 각별히 주의해 주세요.",
+} as const;
+
 export const goodsSurveyPrivacyContent = [
   ["수집 항목", "반려견 사진, 이름/연락처, 배송지"],
   ["이용 목적", "굿즈 제작·발송, 문의 대응"],
-  ["보유·파기", "배송 완료 후 3개월 뒤 삭제"],
+  ["보유·파기", "굿즈 발송일로부터 3주 뒤 삭제"],
   ["동의 거부", "동의를 거부할 수 있으며, 거부 시 제작 및 배송이 어렵습니다."],
 ] as const;
