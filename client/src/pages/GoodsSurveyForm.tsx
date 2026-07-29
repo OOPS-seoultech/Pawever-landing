@@ -429,6 +429,40 @@ export function MatrixScreen({
   const [openId, setOpenId] = useState<string | null>(
     () => questions.find(question => !answerOf(question))?.id ?? null
   );
+  // 자동으로 펼친 항목만 스크롤 보정 대상이다.
+  // 사용자가 직접 접힌 카드를 누른 경우는 이미 눈에 보이는 위치라 건드리지 않는다.
+  const [autoOpened, setAutoOpened] = useState<string | null>(null);
+  const cardRefs = useRef(new Map<string, HTMLElement>());
+
+  useEffect(() => {
+    if (!autoOpened) return;
+    setAutoOpened(null);
+
+    const node = cardRefs.current.get(autoOpened);
+    if (!node) return;
+
+    // 화면 안에 다 보이면 아무것도 하지 않는다. 밀려난 만큼만 움직인다.
+    const margin = 16;
+    const bottomBar = document.querySelector(".gsf-bottom-actions");
+    const reserved = bottomBar?.getBoundingClientRect().height ?? 0;
+    const rect = node.getBoundingClientRect();
+    const limit = window.innerHeight - reserved - margin;
+
+    let delta = 0;
+    if (rect.bottom > limit) delta = rect.bottom - limit;
+    else if (rect.top < margin) delta = rect.top - margin;
+    if (delta === 0) return;
+
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+    window.scrollBy({ top: delta, behavior: reduceMotion ? "auto" : "smooth" });
+  }, [autoOpened]);
+
+  const openCard = (questionId: string) => {
+    setOpenId(questionId);
+    setAutoOpened(null);
+  };
 
   const select = (question: SurveyQuestion, optionId: string) => {
     const changed = answerOf(question) !== optionId;
@@ -439,6 +473,7 @@ export function MatrixScreen({
       item => item.id !== question.id && !answerOf(item)
     );
     setOpenId(next?.id ?? null);
+    setAutoOpened(next?.id ?? null);
   };
 
   const moveByKey = (
@@ -500,8 +535,12 @@ export function MatrixScreen({
               <button
                 type="button"
                 key={question.id}
+                ref={node => {
+                  if (node) cardRefs.current.set(question.id, node);
+                  else cardRefs.current.delete(question.id);
+                }}
                 className={`gsf-scale-card is-collapsed${value ? " is-done" : ""}`}
-                onClick={() => setOpenId(question.id)}
+                onClick={() => openCard(question.id)}
               >
                 <span className="gsf-scale-badge">{order + 1}</span>
                 <span className="gsf-scale-row">{row}</span>
@@ -515,7 +554,14 @@ export function MatrixScreen({
           }
 
           return (
-            <div className="gsf-scale-card is-open" key={question.id}>
+            <div
+              className="gsf-scale-card is-open"
+              key={question.id}
+              ref={node => {
+                if (node) cardRefs.current.set(question.id, node);
+                else cardRefs.current.delete(question.id);
+              }}
+            >
               <div className="gsf-scale-head">
                 <span className="gsf-scale-badge">{order + 1}</span>
                 <span className="gsf-scale-row">{row}</span>
