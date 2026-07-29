@@ -43,6 +43,7 @@ import {
   FREE_TEXT_MAX_LENGTH,
   freeTextKey,
   getNextMultiSelection,
+  getNextSingleSelection,
   getQuestionNotice,
   getQuestionOptions,
   getQuestionTitle,
@@ -316,7 +317,9 @@ export function QuestionScreen({
 
   const toggleOption = (optionId: string) => {
     if (question.kind !== "multi") {
-      onAnswer(optionId);
+      // 고른 항목을 다시 누르면 취소된다. 버튼이 aria-pressed를 쓰는 토글이라
+      // 눌러서 끄는 동작이 자연스럽고, 건너뛸 문항에서 실수를 되돌릴 수 있다.
+      onAnswer(getNextSingleSelection(selected, optionId));
       return;
     }
 
