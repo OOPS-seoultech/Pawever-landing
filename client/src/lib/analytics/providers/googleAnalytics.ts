@@ -56,9 +56,15 @@ let configured = false;
 
 const ensureGtag = () => {
   window.dataLayer ??= [];
-  window.gtag ??= (...args: unknown[]) => {
-    window.dataLayer?.push(args);
-  };
+  // gtag.js는 dataLayer에 담긴 것이 arguments 객체일 때만 명령으로 읽는다.
+  // 화살표 함수로 배열을 밀어 넣으면 명령이 조용히 무시돼 이벤트가 사라진다.
+  // 구글 공식 스니펫이 function 선언과 arguments를 쓰는 이유가 이것이다.
+  if (!window.gtag) {
+    window.gtag = function gtag() {
+      // eslint-disable-next-line prefer-rest-params
+      window.dataLayer?.push(arguments);
+    };
+  }
 };
 
 export const setGoogleConsent = (analytics: boolean, marketing: boolean) => {
