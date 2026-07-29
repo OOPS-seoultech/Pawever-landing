@@ -73,6 +73,18 @@ const answerHas = (
   return typeof answer === "string" && values.includes(answer);
 };
 
+/**
+ * 단일선택에서 이미 고른 항목을 다시 누르면 선택을 지운다.
+ *
+ * 건너뛸 수 있는 문항(Q19-1A)이나 선택 응답(Q31~33)에서 실수로 눌렀을 때
+ * 되돌릴 방법이 없으면 답하지 않은 상태로 돌아갈 수가 없다.
+ * 빈 배열은 setAnswer가 "답하지 않음"으로 받아 키를 지운다.
+ */
+export const getNextSingleSelection = (
+  selected: string[],
+  optionId: string
+): string | string[] => (selected.includes(optionId) ? [] : optionId);
+
 export const getNextMultiSelection = ({
   selected,
   optionId,

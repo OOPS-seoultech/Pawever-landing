@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   FREE_TEXT_MAX_LENGTH,
   getNextMultiSelection,
+  getNextSingleSelection,
   hasMinimumAnswers,
   pruneHiddenAnswers,
   getSurveyProgress,
@@ -24,6 +25,28 @@ describe("굿즈 설문 분기", () => {
         maxSelections: 5,
       })
     ).toEqual([]);
+  });
+
+  it("단일선택도 고른 항목을 다시 누르면 취소된다", () => {
+    // 건너뛸 수 있는 문항에서 실수로 누르면 되돌릴 방법이 있어야 한다.
+    expect(getNextSingleSelection([], "2")).toBe("2");
+    expect(getNextSingleSelection(["3"], "2")).toBe("2");
+    expect(getNextSingleSelection(["2"], "2")).toEqual([]);
+  });
+
+  it("단일선택을 취소하면 응답과 직접 입력값이 함께 지워진다", () => {
+    // Q17의 6번은 자유 입력칸을 여는 선택지다.
+    const answered: SurveyAnswers = {
+      q1: "current_only",
+      q17: ["6"],
+      q17_text: "직접 적은 내용",
+    };
+    expect(pruneHiddenAnswers(answered).q17_text).toBe("직접 적은 내용");
+
+    const cleared = { ...answered, q17: getNextSingleSelection(["6"], "6") };
+    const pruned = pruneHiddenAnswers(cleared);
+    expect(pruned.q17).toBeUndefined();
+    expect(pruned.q17_text).toBeUndefined();
   });
 
   it("양육 경험이 없거나 응답을 원하지 않으면 첫 문항에서 종료한다", () => {

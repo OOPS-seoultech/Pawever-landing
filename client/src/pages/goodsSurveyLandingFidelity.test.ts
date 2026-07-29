@@ -110,6 +110,14 @@ describe("굿즈 제작 정보 화면", () => {
     expect(formSource).toContain("autoOpened");
   });
 
+  it("단일선택도 고른 항목을 다시 눌러 취소할 수 있다", () => {
+    // 건너뛸 수 있는 문항에서 실수로 누르면 되돌릴 방법이 필요하다.
+    expect(formSource).toContain("getNextSingleSelection(selected, optionId)");
+    expect(formSource).not.toMatch(
+      /kind !== "multi"\) \{\s*onAnswer\(optionId\)/
+    );
+  });
+
   it("동의 질문은 legend 대신 일반 요소로 둬 한 줄에 배치한다", () => {
     // legend는 flex 아이템이 되지 않아 항상 줄이 나뉜다.
     expect(formSource).toContain("gsf-consent-question-label");

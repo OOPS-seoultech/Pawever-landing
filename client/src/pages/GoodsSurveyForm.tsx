@@ -43,6 +43,7 @@ import {
   FREE_TEXT_MAX_LENGTH,
   freeTextKey,
   getNextMultiSelection,
+  getNextSingleSelection,
   getQuestionNotice,
   getQuestionOptions,
   getQuestionTitle,
@@ -316,7 +317,9 @@ export function QuestionScreen({
 
   const toggleOption = (optionId: string) => {
     if (question.kind !== "multi") {
-      onAnswer(optionId);
+      // 고른 항목을 다시 누르면 취소된다. 버튼이 aria-pressed를 쓰는 토글이라
+      // 눌러서 끄는 동작이 자연스럽고, 건너뛸 문항에서 실수를 되돌릴 수 있다.
+      onAnswer(getNextSingleSelection(selected, optionId));
       return;
     }
 
@@ -1365,6 +1368,11 @@ export default function GoodsSurveyForm() {
     idempotencyKey.current = createClientId();
     setSurveyRun(previous => previous + 1);
     surveyCompletionTracked.current = false;
+    // 새 응답은 새 세션이다. 단계 기록과 전환 표시를 비우지 않으면
+    // 두 번째 신청이 전환으로 세지 않고, 단계 방문 횟수도 앞 응답 것이 이어진다.
+    stepVisits.current.reset();
+    applicationTracked.current = false;
+    abandonTracked.current = false;
     setStage("intro");
   };
 
