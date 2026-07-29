@@ -9,12 +9,16 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { trackEvent } from "@/lib/analytics/analytics";
 import { usePageEngagement, useScrollDepth } from "@/lib/analytics/react";
-import { getSurveyCampaign, type SurveyCampaign } from "@/lib/goodsSurveyApi";
+import {
+  GOODS_SURVEY_CAPACITY,
+  getSurveyCampaign,
+  type SurveyCampaign,
+} from "@/lib/goodsSurveyApi";
 import "./GoodsSurvey.css";
 
 const CAMPAIGN = {
   duration: "약 15분",
-  capacity: 100,
+  capacity: GOODS_SURVEY_CAPACITY,
   // 서버 응답이 오기 전에 쓰는 값이다. 실제 신청 수를 그대로 보여주기로 했으므로
   // 여기에 임의의 숫자를 두면 화면이 잠깐 사실과 다른 수를 보여준다.
   completed: 0,
@@ -255,7 +259,8 @@ export default function GoodsSurvey() {
           if (!cancelled) setCampaign(next);
         })
         .catch(() => {
-          // 서버 상태 조회 실패 시 대화에서 확정한 초기 수치(27/100)를 유지한다.
+          // 조회에 실패하면 아직 아무도 신청하지 않은 상태(0/100)를 그대로 둔다.
+          // 실패했다고 임의의 수치를 보여주면 사실과 다른 숫자가 나간다.
         });
     };
 

@@ -24,6 +24,7 @@ import {
   surveyStepOf,
 } from "@/lib/analytics/surveyStep";
 import {
+  GOODS_SURVEY_CAPACITY,
   GOODS_SURVEY_VERSION,
   GoodsSurveyApiError,
   completeSurvey as completeSurveyRequest,
@@ -671,8 +672,10 @@ export default function GoodsSurveyForm() {
   const [shippingConsent, setShippingConsent] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [reviewId, setReviewId] = useState("");
+  // 서버가 알려주기 전까지 쓰는 값이다. 임의의 숫자를 두면 사실과 다른 수가
+  // 잠깐 보일 수 있으므로 아직 아무도 신청하지 않은 상태로 둔다.
   const [remaining, setRemaining] = useState(
-    () => restoredDraft?.session.remaining ?? 73
+    () => restoredDraft?.session.remaining ?? GOODS_SURVEY_CAPACITY
   );
   const [apiBusy, setApiBusy] = useState(false);
   const [apiError, setApiError] = useState("");
