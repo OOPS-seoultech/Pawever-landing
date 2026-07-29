@@ -1,5 +1,8 @@
 export const GOODS_SURVEY_VERSION = "2026-07-25-v2";
 
+// 실제 정원은 서버 캠페인이 정한다. 이 값은 응답이 오기 전에만 쓰는 자리값이다.
+export const GOODS_SURVEY_CAPACITY = 100;
+
 type ApiEnvelope<T> = {
   success: boolean;
   data?: T;
