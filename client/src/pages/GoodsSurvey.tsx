@@ -8,7 +8,7 @@ import {
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { trackEvent } from "@/lib/analytics/analytics";
-import { usePageEngagement } from "@/lib/analytics/react";
+import { usePageEngagement, useScrollDepth } from "@/lib/analytics/react";
 import { getSurveyCampaign, type SurveyCampaign } from "@/lib/goodsSurveyApi";
 import "./GoodsSurvey.css";
 
@@ -22,6 +22,16 @@ const CAMPAIGN = {
 } as const;
 
 const ASSET_BASE = "/goods-survey";
+
+// 노션 3번: 이동 목적지는 같지만 어느 위치의 버튼이 설문 시작에 효과적인지 봐야 한다.
+// 위에서부터 순서대로 btn_A1~A4, 화면 하단 고정 버튼이 btn_B다.
+const CTA_IDS = {
+  hero: "btn_A1",
+  price_comparison: "btn_A2",
+  goods_options: "btn_A3",
+  final: "btn_A4",
+  sticky: "btn_B",
+} as const;
 
 type GoodsOption = {
   id: string;
@@ -220,13 +230,17 @@ export default function GoodsSurvey() {
   const completedPercent = (completed / capacity) * 100;
   const campaignAvailable = campaign?.open ?? true;
   usePageEngagement("goods_survey_landing", "landing_view");
+  useScrollDepth("goods_survey_landing");
 
-  const startSurvey = (placement: string) => {
+  const startSurvey = (placement: keyof typeof CTA_IDS) => {
     if (!campaignAvailable) return;
     trackEvent("survey_cta_click", {
+      // 노션 3번이 요구한 버튼 식별자. placement는 사람이 읽기 위해 함께 남긴다.
+      cta_id: CTA_IDS[placement],
       cta_placement: placement,
       goods_type: selectedGoods,
     });
+    // wouter는 화면 안에서 경로만 바꾸므로 이 이벤트가 유실될 일은 없다.
     setLocation(`/goods-survey/survey?goods=${selectedGoods}`);
   };
 

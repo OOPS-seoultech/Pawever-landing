@@ -8,6 +8,7 @@ import {
   initializeGoogleConsentDefaults,
   setGoogleConsent,
 } from "./providers/googleAnalytics";
+import { googleTagManagerProvider } from "./providers/googleTagManager";
 import { metaPixelProvider, setMetaConsent } from "./providers/metaPixel";
 import type {
   AnalyticsEvent,
@@ -47,6 +48,13 @@ const dispatchEvent = (event: AnalyticsEvent, consent: ConsentState) => {
   if (consent.analytics && analyticsConfig.ga4MeasurementId) {
     googleAnalyticsProvider.initialize();
     googleAnalyticsProvider.track(event);
+  }
+
+  // GTM 컨테이너는 이후 붙는 서드파티 태그의 통로다.
+  // 컨테이너 ID가 비어 있으면 이 분기째로 빌드에서 사라진다.
+  if (consent.analytics && analyticsConfig.gtmContainerId) {
+    googleTagManagerProvider.initialize();
+    googleTagManagerProvider.track(event);
   }
 
   if (consent.marketing && analyticsConfig.metaPixelId) {

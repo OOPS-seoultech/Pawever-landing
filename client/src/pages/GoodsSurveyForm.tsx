@@ -19,6 +19,11 @@ import {
 } from "@/lib/analytics/analytics";
 import { useActiveTime, usePageEngagement } from "@/lib/analytics/react";
 import {
+  StepVisitLog,
+  surveyStepLabel,
+  surveyStepOf,
+} from "@/lib/analytics/surveyStep";
+import {
   GOODS_SURVEY_VERSION,
   GoodsSurveyApiError,
   completeSurvey as completeSurveyRequest,
@@ -674,6 +679,11 @@ export default function GoodsSurveyForm() {
   const [submissionProgress, setSubmissionProgress] = useState("");
   const [surveyRun, setSurveyRun] = useState(0);
   const surveyCompletionTracked = useRef(false);
+  // 노션 6·8·9번: 단계별 진입/재방문/이탈을 세려면 어디까지 갔는지 들고 있어야 한다.
+  const stepVisits = useRef(new StepVisitLog());
+  const trackedStepEntry = useRef("");
+  const applicationTracked = useRef(false);
+  const abandonTracked = useRef(false);
   const fileClientIds = useRef(new Map<string, string>());
   const idempotencyKey = useRef(createClientId());
   const draftSaveQueue = useRef(Promise.resolve());
@@ -685,6 +695,12 @@ export default function GoodsSurveyForm() {
     findScreenIndex(visibleScreens, currentQuestionId)
   );
   const currentScreen = visibleScreens[currentIndex] ?? visibleScreens[0];
+
+  // 노션 STEP 1~15. 질문 13페이지가 1~13, 사연이 14, 굿즈 제작 정보가 15다.
+  const currentStep =
+    stage === "questions"
+      ? surveyStepOf({ stage, page: currentScreen?.page ?? 0 })
+      : surveyStepOf({ stage });
 
   const setAnswer = (questionId: string, value: string | string[]) =>
     setAnswers(previous => {
@@ -759,6 +775,56 @@ export default function GoodsSurveyForm() {
       goods_type: production.goods,
     });
   }, [stage]);
+
+  // 노션 5번: 안내 화면 방문과 시작 버튼 클릭을 따로 봐야
+  // 열어보기만 하고 시작하지 않은 사람을 구분할 수 있다.
+  useEffect(() => {
+    if (stage !== "intro") return;
+    trackEvent("survey_intro_view", {
+      goods_type: production.goods,
+      resumed: Boolean(restoredDraft),
+    });
+  }, [stage]);
+
+  // 노션 6번: 각 단계에 진입한 사용자 수. 같은 단계를 다시 열면 재진입으로 센다.
+  // 새로고침이나 리렌더로 같은 단계가 연달아 잡히면 한 번만 센다.
+  useEffect(() => {
+    if (currentStep === null) return;
+    const entry = `${surveyRun}:${currentStep}`;
+    if (trackedStepEntry.current === entry) return;
+    trackedStepEntry.current = entry;
+
+    trackEvent("survey_step_view", {
+      step_number: currentStep,
+      step_name: surveyStepLabel(currentStep),
+      step_visit_count: stepVisits.current.enter(currentStep),
+      question_count:
+        stage === "questions" ? currentScreen?.questions.length : undefined,
+      goods_type: production.goods,
+    });
+  }, [currentStep, surveyRun]);
+
+  // 노션 9번: 브라우저 종료나 네트워크 단절은 확실히 잡을 수 없다.
+  // 보고서는 "마지막 진입 STEP + 이후 이벤트 없음"으로 계산하되,
+  // 떠나는 순간을 잡을 수 있으면 beacon으로 한 번 더 남긴다.
+  useEffect(() => {
+    const onPageHide = () => {
+      const log = stepVisits.current;
+      if (abandonTracked.current || applicationTracked.current) return;
+      if (log.last === 0) return;
+      abandonTracked.current = true;
+      trackEvent("survey_abandon", {
+        step_number: log.last,
+        step_name: surveyStepLabel(log.last),
+        furthest_step: log.furthest,
+        survey_completed: surveyCompletionTracked.current,
+        goods_type: production.goods,
+      });
+    };
+
+    window.addEventListener("pagehide", onPageHide);
+    return () => window.removeEventListener("pagehide", onPageHide);
+  }, [production.goods]);
 
   const apiMessage = (error: unknown) =>
     error instanceof GoodsSurveyApiError
@@ -1001,6 +1067,18 @@ export default function GoodsSurveyForm() {
       active_ms: activeMs,
       skipped: false,
     });
+    // 노션 6·7번: 이 화면(STEP)을 끝내고 다음으로 넘어간 기록.
+    // navigationLocked가 "다음" 연속 클릭을 막으므로 두 번 세지 않는다.
+    if (currentStep !== null) {
+      trackEvent("survey_step_complete", {
+        step_number: currentStep,
+        step_name: surveyStepLabel(currentStep),
+        active_ms: activeMs,
+        question_count: currentScreen?.questions.length,
+        step_visit_count: stepVisits.current.visitCount(currentStep),
+        goods_type: production.goods,
+      });
+    }
     try {
       await moveAfterAnswer(answers, timings);
     } finally {
@@ -1031,7 +1109,22 @@ export default function GoodsSurveyForm() {
   };
 
   const goBack = () => {
+    // 노션 8번: 어느 단계에서 어느 단계로 돌아갔고 그 단계에 얼마나 머물렀는지.
+    // to_step 0은 노션 STEP에 없는 화면(closing·intro)으로 돌아갔다는 뜻이다.
+    const trackBack = (toStep: number) => {
+      if (currentStep === null) return;
+      trackEvent("survey_step_back", {
+        step_number: currentStep,
+        step_name: surveyStepLabel(currentStep),
+        to_step: toStep,
+        active_ms: stage === "questions" ? getQuestionActiveMs() : undefined,
+        step_visit_count: stepVisits.current.visitCount(currentStep),
+        goods_type: production.goods,
+      });
+    };
+
     if (stage === "story") {
+      trackBack(0);
       if (draftSession) {
         persistSnapshot(
           draftSession,
@@ -1046,6 +1139,7 @@ export default function GoodsSurveyForm() {
     }
     if (stage === "production") {
       const previousStage = story.scene.trim() ? "story" : "closing";
+      trackBack(previousStage === "story" ? 14 : 0);
       if (draftSession) {
         persistSnapshot(
           draftSession,
@@ -1065,6 +1159,7 @@ export default function GoodsSurveyForm() {
 
     const timings = captureCurrentQuestionTiming();
     const previousQuestion = visibleScreens[currentIndex - 1];
+    trackBack(previousQuestion?.page ?? 0);
     if (previousQuestion) {
       setCurrentQuestionId(previousQuestion.id);
       if (draftSession) {
@@ -1130,6 +1225,16 @@ export default function GoodsSurveyForm() {
     shippingConsent;
 
   const continueToProduction = () => {
+    // 사연 화면(STEP 14)을 거쳐 온 경우에만 그 단계를 끝낸 것으로 센다.
+    // closing에서 바로 넘어온 사람은 STEP 14에 들어간 적이 없다.
+    if (currentStep !== null) {
+      trackEvent("survey_step_complete", {
+        step_number: currentStep,
+        step_name: surveyStepLabel(currentStep),
+        story_written: Boolean(story.scene.trim()),
+        goods_type: production.goods,
+      });
+    }
     if (draftSession) {
       persistSnapshot(
         draftSession,
@@ -1209,15 +1314,28 @@ export default function GoodsSurveyForm() {
         .toUpperCase()}`;
       setReviewId(nextReviewId);
       setRemaining(application.remaining);
-      trackEvent(
-        "application_complete",
-        {
-          goods_type: production.goods,
-          photo_count: photos.length,
-          story_included: Boolean(story.scene.trim()),
-        },
-        { eventId: tracking.conversionEventId }
-      );
+      // 노션 10번: 제출 버튼을 누른 시점이 아니라 서버 저장이 끝난 지금이 완료다.
+      // 여기까지 온 사람은 이탈이 아니므로 pagehide 이탈 기록도 막는다.
+      if (!applicationTracked.current) {
+        applicationTracked.current = true;
+        if (currentStep !== null) {
+          trackEvent("survey_step_complete", {
+            step_number: currentStep,
+            step_name: surveyStepLabel(currentStep),
+            goods_type: production.goods,
+          });
+        }
+        trackEvent(
+          "application_complete",
+          {
+            goods_type: production.goods,
+            photo_count: photos.length,
+            story_included: Boolean(story.scene.trim()),
+            furthest_step: stepVisits.current.furthest,
+          },
+          { eventId: tracking.conversionEventId }
+        );
+      }
       clearGoodsSurveyDraftSnapshot();
       setStage("complete");
     } catch (error) {

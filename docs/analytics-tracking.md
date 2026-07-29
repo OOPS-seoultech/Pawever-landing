@@ -1,5 +1,8 @@
 # 랜딩·설문 측정 운영 가이드
 
+이벤트 목록, STEP 정의, GA4에서 보고서 만드는 방법은 [analytics-events.md](./analytics-events.md)에 있습니다.
+이 문서는 측정 정책과 개인정보 취급 기준을 다룹니다.
+
 ## 측정 범위
 
 - UTM과 클릭 ID는 `sessionStorage`에 첫 유입·마지막 유입으로 나누어 저장합니다. 내부 설문으로 이동해 주소의 UTM이 사라져도 같은 `visit_id`로 이어집니다.
@@ -24,15 +27,12 @@ Meta CAPI 액세스 토큰은 절대로 `VITE_` 환경변수나 프런트엔드 
 
 ## 이벤트 기준
 
-- `landing_view`: 랜딩 진입. GA4 `page_view`, Meta `PageView`
-- `page_engagement`: 페이지별 활성 이용시간. GA4만 전송
-- `goods_preview_select`: 굿즈 미리 선택. GA4만 전송
-- `survey_cta_click`: CTA 위치와 선택 굿즈. GA4 및 Meta `SurveyCtaClick`
-- `survey_start`: 설문 시작. GA4 및 Meta `SurveyStart`
-- `survey_question_view`, `survey_question_answered`: 문항 ID·유형·활성시간·건너뛰기 여부만 전송. 답변값은 제외
-- `survey_complete`: 유효 설문 흐름 완료. GA4 및 Meta `SurveyComplete`
-- `story_start`, `story_skip`, `production_form_view`: 후속 퍼널. GA4만 전송
-- `application_complete`: 서버가 실제 저장을 성공시킨 뒤에만 호출. GA4 `generate_lead` 및 Meta `Lead`
+전체 목록과 파라미터는 [analytics-events.md](./analytics-events.md)를 따릅니다. 여기서는 전송 대상과 개인정보 기준만 정리합니다.
+
+- Meta로도 보내는 이벤트는 `landing_view`(`PageView`), `survey_cta_click`, `survey_start`, `survey_complete`, `application_complete`(`Lead`) 다섯 개뿐입니다. 나머지는 GA4에만 전송합니다.
+- `survey_question_view`, `survey_question_answered`는 문항 ID·유형·활성시간·건너뛰기 여부만 보내고 **답변값은 제외**합니다.
+- `survey_complete`와 `application_complete`는 서버 저장이 성공한 뒤에만 호출합니다.
+- GTM 컨테이너는 서드파티 태그의 통로일 뿐이며, GA4 태그를 GTM 안에서 다시 만들면 이중 집계됩니다.
 
 ## 로컬 검증
 
