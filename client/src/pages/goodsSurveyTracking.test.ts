@@ -134,6 +134,14 @@ describe("설문 단계 추적", () => {
     expect(formSource).toContain("abandonTracked");
   });
 
+  it("새 응답을 시작하면 단계 기록과 전환 표시를 비운다", () => {
+    // 비우지 않으면 두 번째 신청이 전환으로 세지 않고,
+    // 단계 방문 횟수와 최대 도달 단계가 앞 응답 것과 섞인다.
+    expect(formSource).toContain("stepVisits.current.reset()");
+    expect(formSource).toContain("applicationTracked.current = false");
+    expect(formSource).toContain("abandonTracked.current = false");
+  });
+
   it("최종 제출과 단계 진입이 중복 집계되지 않게 막는다", () => {
     // 제출 중복 클릭, 리렌더로 같은 단계가 다시 잡히는 경우를 막는 장치.
     expect(formSource).toContain("if (!applicationTracked.current)");
