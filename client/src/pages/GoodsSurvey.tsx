@@ -15,7 +15,9 @@ import "./GoodsSurvey.css";
 const CAMPAIGN = {
   duration: "약 15분",
   capacity: 100,
-  completed: 27,
+  // 서버 응답이 오기 전에 쓰는 값이다. 실제 신청 수를 그대로 보여주기로 했으므로
+  // 여기에 임의의 숫자를 두면 화면이 잠깐 사실과 다른 수를 보여준다.
+  completed: 0,
   startDate: "2026.07.23",
   endDate: "08.05",
   shipping: "배송비 3,000원",
