@@ -37,6 +37,7 @@ export const surveyStepLabel = (step: number) => {
  */
 export class StepVisitLog {
   private visits = new Map<number, number>();
+  private openToken = "";
   furthest = 0;
   last = 0;
 
@@ -49,12 +50,32 @@ export class StepVisitLog {
     return count;
   }
 
+  /**
+   * 화면이 실제로 바뀐 진입만 센다.
+   *
+   * 같은 단계가 리렌더로 다시 잡히면 null을 돌려 중복 집계를 막고,
+   * 노션 STEP이 아닌 화면(step === null, 안내·전환 화면)으로 나가면
+   * 표시를 지운다. 그래야 "이전 → 안내 화면 → 다시 시작"처럼
+   * 같은 단계로 돌아온 경우를 재진입으로 다시 셀 수 있다.
+   */
+  enterOnce(step: number | null) {
+    if (step === null) {
+      this.openToken = "";
+      return null;
+    }
+    const token = String(step);
+    if (this.openToken === token) return null;
+    this.openToken = token;
+    return this.enter(step);
+  }
+
   visitCount(step: number) {
     return this.visits.get(step) ?? 0;
   }
 
   reset() {
     this.visits.clear();
+    this.openToken = "";
     this.furthest = 0;
     this.last = 0;
   }

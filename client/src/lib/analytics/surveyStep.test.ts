@@ -67,6 +67,28 @@ describe("단계 재방문 기록", () => {
     expect(log.last).toBe(2);
   });
 
+  it("같은 단계가 리렌더로 다시 잡히면 세지 않는다", () => {
+    const log = new StepVisitLog();
+    expect(log.enterOnce(3)).toBe(1);
+    expect(log.enterOnce(3)).toBeNull();
+    expect(log.visitCount(3)).toBe(1);
+  });
+
+  it("다른 단계를 거쳐 돌아오면 재진입으로 센다", () => {
+    const log = new StepVisitLog();
+    log.enterOnce(3);
+    log.enterOnce(4);
+    expect(log.enterOnce(3)).toBe(2);
+  });
+
+  it("안내 화면으로 나갔다가 같은 단계로 돌아와도 재진입으로 센다", () => {
+    // "이전 → 안내 화면 → 다시 시작"이 통째로 빠지던 문제.
+    const log = new StepVisitLog();
+    expect(log.enterOnce(1)).toBe(1);
+    expect(log.enterOnce(null)).toBeNull();
+    expect(log.enterOnce(1)).toBe(2);
+  });
+
   it("설문을 다시 시작하면 기록을 비운다", () => {
     const log = new StepVisitLog();
     log.enter(7);

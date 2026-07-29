@@ -681,7 +681,6 @@ export default function GoodsSurveyForm() {
   const surveyCompletionTracked = useRef(false);
   // 노션 6·8·9번: 단계별 진입/재방문/이탈을 세려면 어디까지 갔는지 들고 있어야 한다.
   const stepVisits = useRef(new StepVisitLog());
-  const trackedStepEntry = useRef("");
   const applicationTracked = useRef(false);
   const abandonTracked = useRef(false);
   const fileClientIds = useRef(new Map<string, string>());
@@ -786,18 +785,16 @@ export default function GoodsSurveyForm() {
     });
   }, [stage]);
 
-  // 노션 6번: 각 단계에 진입한 사용자 수. 같은 단계를 다시 열면 재진입으로 센다.
-  // 새로고침이나 리렌더로 같은 단계가 연달아 잡히면 한 번만 센다.
+  // 노션 6번: 각 단계에 진입한 사용자 수.
+  // enterOnce가 리렌더 중복은 막고, 안내 화면을 거쳐 돌아온 재진입은 다시 센다.
   useEffect(() => {
-    if (currentStep === null) return;
-    const entry = `${surveyRun}:${currentStep}`;
-    if (trackedStepEntry.current === entry) return;
-    trackedStepEntry.current = entry;
+    const visitCount = stepVisits.current.enterOnce(currentStep);
+    if (currentStep === null || visitCount === null) return;
 
     trackEvent("survey_step_view", {
       step_number: currentStep,
       step_name: surveyStepLabel(currentStep),
-      step_visit_count: stepVisits.current.enter(currentStep),
+      step_visit_count: visitCount,
       question_count:
         stage === "questions" ? currentScreen?.questions.length : undefined,
       goods_type: production.goods,

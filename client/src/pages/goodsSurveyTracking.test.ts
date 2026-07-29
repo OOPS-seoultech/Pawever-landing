@@ -137,7 +137,7 @@ describe("설문 단계 추적", () => {
   it("최종 제출과 단계 진입이 중복 집계되지 않게 막는다", () => {
     // 제출 중복 클릭, 리렌더로 같은 단계가 다시 잡히는 경우를 막는 장치.
     expect(formSource).toContain("if (!applicationTracked.current)");
-    expect(formSource).toContain("trackedStepEntry");
+    expect(formSource).toContain("enterOnce");
     expect(formSource).toContain("navigationLocked");
   });
 });
