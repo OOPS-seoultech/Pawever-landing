@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { ActiveTimeCounter } from "./activeTime";
 import { recordFirstPartyEngagement } from "./firstPartyEngagement";
 import { trackEvent } from "./analytics";
+import { computeScrollPercent, reachedScrollThresholds } from "./scrollDepth";
 import type { AnalyticsEventName } from "./types";
 
 const isActivelyViewing = () =>
@@ -57,6 +58,55 @@ export const usePageEngagement = (
       document.removeEventListener("visibilitychange", sync);
     };
   }, [pageName, viewEvent]);
+};
+
+/**
+ * 랜딩페이지에서 어디까지 내려봤는지 25/50/75/90 구간으로 기록한다.
+ * 같은 구간은 한 번만 보낸다.
+ */
+export const useScrollDepth = (pageName: string) => {
+  useEffect(() => {
+    const sent = new Set<number>();
+
+    const measure = () => {
+      const percent = computeScrollPercent(
+        window.scrollY,
+        window.innerHeight,
+        document.documentElement.scrollHeight
+      );
+      for (const threshold of reachedScrollThresholds(percent, sent)) {
+        trackEvent("scroll_depth", {
+          page_name: pageName,
+          percent_scrolled: threshold,
+        });
+      }
+    };
+
+    // 첫 측정은 load 이후에 한다. 이미지가 아직 안 잡힌 상태에서 재면
+    // 문서가 짧아 보여 스크롤도 안 했는데 90%로 잡힌다.
+    const measureInitial = () => measure();
+    if (document.readyState === "complete") measureInitial();
+    else window.addEventListener("load", measureInitial, { once: true });
+
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(() => {
+        ticking = false;
+        measure();
+      });
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+
+    return () => {
+      window.removeEventListener("load", measureInitial);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [pageName]);
 };
 
 export const useActiveTime = (key: string, enabled: boolean) => {

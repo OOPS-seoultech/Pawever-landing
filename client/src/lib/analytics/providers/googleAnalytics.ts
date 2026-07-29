@@ -47,6 +47,9 @@ export const buildGoogleAnalyticsParams = (
       typeof event.properties.active_ms === "number"
         ? event.properties.active_ms
         : undefined,
+    // 이탈 이벤트는 화면이 사라지는 중에 나가므로 일반 요청은 취소된다.
+    // beacon으로 보내야 브라우저가 언로드 뒤에도 전송을 끝낸다.
+    transport_type: event.name === "survey_abandon" ? "beacon" : undefined,
   });
 
 let configured = false;
