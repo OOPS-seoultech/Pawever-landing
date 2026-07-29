@@ -101,6 +101,15 @@ describe("굿즈 제작 정보 화면", () => {
     expect(formSource).toContain("photoInputRef");
   });
 
+  it("아코디언 스케일은 밀려났을 때만 스크롤을 보정한다", () => {
+    // 스펙: scrollIntoView 금지. 화면 밖으로 나간 만큼만 움직인다.
+    expect(formSource).not.toContain("scrollIntoView");
+    expect(formSource).toContain("window.scrollBy");
+    expect(formSource).toContain("prefers-reduced-motion");
+    // 사용자가 직접 펼친 카드는 보정 대상이 아니다.
+    expect(formSource).toContain("autoOpened");
+  });
+
   it("동의 질문은 legend 대신 일반 요소로 둬 한 줄에 배치한다", () => {
     // legend는 flex 아이템이 되지 않아 항상 줄이 나뉜다.
     expect(formSource).toContain("gsf-consent-question-label");
