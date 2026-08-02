@@ -178,14 +178,22 @@ export default function PrivacyPolicy() {
           <section>
             <h2 className="text-2xl font-bold text-foreground mb-4 flex items-center gap-2">
               <span className="w-1 h-8 bg-orange-400 rounded-full"></span>웹
-              분석 및 서비스 개선 측정
+              분석 및 광고 성과 측정
             </h2>
             <div className="space-y-4 text-foreground/80">
               <p>
                 페이지 접속 시 Google Analytics 4를 로드하여 유입 경로(UTM),
                 페이지 활성 이용시간, 설문 진행 이벤트와 기기 범주를 측정합니다.
-                설문 답변, 이름, 연락처, 배송지와 반려견 사진은 Google
-                Analytics로 전송하지 않습니다.
+              </p>
+              <p>
+                광고를 통해 들어온 이용자가 실제로 신청까지 이어졌는지 확인하기
+                위해 Meta Pixel을 로드합니다. 페이지 조회, 설문 시작, 설문 완료,
+                신청 완료 시점과 브라우저 정보, 광고 클릭 식별자가 Meta로
+                전송됩니다.
+              </p>
+              <p>
+                설문 답변, 이름, 연락처, 배송지와 반려견 사진은 Google Analytics
+                와 Meta 어느 쪽으로도 전송하지 않습니다.
               </p>
               <p className="text-sm">
                 설문을 시작하면 자체 연구를 위해 유입 경로, 기기 유형과 응답
@@ -352,7 +360,69 @@ export default function PrivacyPolicy() {
           <section>
             <h2 className="text-2xl font-bold text-foreground mb-4 flex items-center gap-2">
               <span className="w-1 h-8 bg-orange-400 rounded-full"></span>
-              제7조 (마케팅 정보 수신 동의)
+              제7조 (개인정보의 국외 이전)
+            </h2>
+            <div className="space-y-4 text-foreground/80">
+              <p>
+                웹 분석과 광고 성과 측정을 위해 아래와 같이 개인정보가 국외로
+                이전됩니다. 이전은 해당 페이지에 접속하는 시점에 네트워크를 통해
+                자동으로 이루어집니다.
+              </p>
+
+              <div className="bg-background border border-border rounded-lg p-4 space-y-4">
+                <div>
+                  <h3 className="font-semibold text-foreground">
+                    Google LLC (미국)
+                  </h3>
+                  <p className="text-sm">
+                    이전 항목: 유입 경로(UTM), 페이지 이용 기록, 설문 진행 단계,
+                    기기 범주, 브라우저 정보
+                  </p>
+                  <p className="text-sm">
+                    이용 목적: 웹 분석 및 서비스 개선 측정
+                  </p>
+                  <p className="text-sm">
+                    보유 기간: Google Analytics 정책에 따름 (최대 14개월)
+                  </p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">
+                    Meta Platforms, Inc. (미국)
+                  </h3>
+                  <p className="text-sm">
+                    이전 항목: 페이지 조회 및 전환 이벤트, 브라우저 정보, 광고
+                    클릭 식별자
+                  </p>
+                  <p className="text-sm">
+                    이용 목적: 광고 성과 측정 및 광고 최적화
+                  </p>
+                  <p className="text-sm">보유 기간: Meta 정책에 따름</p>
+                </div>
+              </div>
+
+              <div className="bg-background border border-border rounded-lg p-4 space-y-2">
+                <h3 className="font-semibold text-foreground">
+                  이전 거부 방법
+                </h3>
+                <p className="text-sm">
+                  브라우저의 쿠키 차단 설정이나 광고 차단 확장 프로그램을 통해
+                  국외 이전을 거부할 수 있습니다. 거부하더라도 설문 응답과 굿즈
+                  신청에는 아무런 제한이 없습니다.
+                </p>
+              </div>
+
+              <p className="text-sm">
+                설문 답변, 이름, 연락처, 배송지와 반려견 사진은 국외로 이전되지
+                않습니다.
+              </p>
+            </div>
+          </section>
+
+          {/* Section 8 */}
+          <section>
+            <h2 className="text-2xl font-bold text-foreground mb-4 flex items-center gap-2">
+              <span className="w-1 h-8 bg-orange-400 rounded-full"></span>
+              제8조 (마케팅 정보 수신 동의)
             </h2>
             <div className="space-y-4 text-foreground/80">
               <p>
@@ -370,11 +440,11 @@ export default function PrivacyPolicy() {
             </div>
           </section>
 
-          {/* Section 8 */}
+          {/* Section 9 */}
           <section>
             <h2 className="text-2xl font-bold text-foreground mb-4 flex items-center gap-2">
               <span className="w-1 h-8 bg-orange-400 rounded-full"></span>
-              제8조 (책임자 및 고충 처리)
+              제9조 (책임자 및 고충 처리)
             </h2>
             <div className="space-y-4 text-foreground/80">
               <div className="bg-accent/10 border border-accent/20 rounded-lg p-4 space-y-3">
