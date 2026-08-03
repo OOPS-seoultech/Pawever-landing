@@ -110,6 +110,15 @@ describe("굿즈 제작 정보 화면", () => {
     expect(formSource).toContain("autoOpened");
   });
 
+  it("제출 실패 안내를 제출 버튼 옆에도 보여준다", () => {
+    // 화면 맨 위 안내는 긴 양식 끝에 있는 사람에게 보이지 않는다.
+    // 진행 문구만 사라지면 아무 일도 안 일어난 것처럼 보인다.
+    expect(formSource).toContain("{apiError && !apiBusy && (");
+    expect(formSource).toContain(
+      '<p className="gsf-field-error" role="alert">'
+    );
+  });
+
   it("단일선택도 고른 항목을 다시 눌러 취소할 수 있다", () => {
     // 건너뛸 수 있는 문항에서 실수로 누르면 되돌릴 방법이 필요하다.
     expect(formSource).toContain("getNextSingleSelection(selected, optionId)");
