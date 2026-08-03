@@ -2011,6 +2011,13 @@ export default function GoodsSurveyForm() {
                   {submissionProgress}
                 </p>
               )}
+              {/* 화면 맨 위 안내는 긴 양식 끝에 있는 사람에게 보이지 않는다.
+                  제출이 실패하면 진행 문구만 사라져서 아무 일도 안 일어난 것처럼 보인다. */}
+              {apiError && !apiBusy && (
+                <p className="gsf-field-error" role="alert">
+                  {apiError}
+                </p>
+              )}
             </form>
           )}
 
