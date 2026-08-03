@@ -29,6 +29,7 @@ import {
   GoodsSurveyApiError,
   completeSurvey as completeSurveyRequest,
   createSurveyDraft,
+  getSurveyCampaign,
   saveSurveyDraft,
   saveSurveyStory,
   submitSurveyApplication,
@@ -930,6 +931,17 @@ export default function GoodsSurveyForm() {
       });
 
       if (session.status === "RESERVED") {
+        // 정원이 찬 뒤에 이어서 들어온 사람은 여기서 알려준다.
+        // 배송 정보와 사진까지 다 채운 뒤 거절하면 그때 쓴 것이 통째로 날아간다.
+        // 조회에 실패하면 지금까지처럼 진행시킨다. 최종 판정은 어차피 서버가 한다.
+        const campaign = await getSurveyCampaign().catch(() => null);
+        if (campaign && !campaign.open) {
+          clearGoodsSurveyDraftSnapshot();
+          setRemaining(campaign.remaining);
+          setStage("full");
+          return;
+        }
+        if (campaign) setRemaining(campaign.remaining);
         setStage(
           restoredDraft?.stage && restoredDraft.stage !== "questions"
             ? restoredDraft.stage

@@ -110,6 +110,14 @@ describe("굿즈 제작 정보 화면", () => {
     expect(formSource).toContain("autoOpened");
   });
 
+  it("이어서 진행할 때 마감을 먼저 알려준다", () => {
+    // 정원이 찬 뒤에 돌아온 사람에게 배송 정보와 사진까지 다 채우게 한 뒤
+    // 거절하면 그때 쓴 것이 통째로 날아간다.
+    expect(formSource).toContain("await getSurveyCampaign().catch(() => null)");
+    expect(formSource).toContain("if (campaign && !campaign.open)");
+    expect(formSource).toContain('setStage("full")');
+  });
+
   it("제출 실패 안내를 제출 버튼 옆에도 보여준다", () => {
     // 화면 맨 위 안내는 긴 양식 끝에 있는 사람에게 보이지 않는다.
     // 진행 문구만 사라지면 아무 일도 안 일어난 것처럼 보인다.
