@@ -17,18 +17,14 @@ const contentSource = readFileSync(
 );
 
 describe("굿즈 랜딩 기준 문구", () => {
-  it("핵심 문구를 임의로 바꾸지 않는다", () => {
-    // Problem 단락은 11차 회의록 6-3의 문장으로 갈아 끼웠다.
-    // 감성 단락 두 문장은 피그마 원문 그대로 남긴다.
+  it("본문은 11차 회의록이 정한 문장만 쓴다", () => {
+    // 회의록에 대응이 없는 1차 랜딩 문구는 화면에서 걷어냈다.
+    // 근거를 되짚을 수 없는 문장이 화면에 서 있으면 안 된다.
     expect(landingSource).toContain(
       "막상 우리 아이의 귀 모양과 털무늬, 자주 짓는 표정까지 닮게 만들기는 어렵습니다."
     );
-    expect(landingSource).toContain(
-      "한쪽만 접히는 귀, 코 옆의 작은 점, 웃을 때 올라가는 입꼬리처럼 우리 가족만 알아보는 우리 아이의 모습이 남았으면 하는 마음."
-    );
-    expect(landingSource).toContain(
-      "사진첩 속에만 있던 그 표정을 매일 손에 잡히는 모습으로 만들어드리고 싶어요."
-    );
+    expect(landingSource).not.toContain("한쪽만 접히는 귀");
+    expect(landingSource).not.toContain("사진첩 속에만 있던 그 표정을");
   });
 
   it("2차 가격을 한 곳에서만 관리한다", () => {
@@ -59,10 +55,6 @@ describe("굿즈 랜딩 기준 문구", () => {
       "hero-face-keyring.png",
       "hero-fullbody.png",
       "price-comparison.png",
-      "product-acrylic.png",
-      "product-keycap.png",
-      "product-backplate.png",
-      "product-figure.png",
       "process-reference.png",
       "why-free.png",
       "final-banner.png",
@@ -173,10 +165,13 @@ describe("굿즈 제작 정보 화면", () => {
     expect(formSource).toContain("noticeAgreed &&");
   });
 
-  it("고르지 않은 굿즈를 임의의 값으로 채우지 않는다", () => {
-    // 기본값이 붙으면 실제 선호가 아닌 값이 2차 수량 산정에 섞인다.
-    expect(landingSource).toContain('useState("")');
-    expect(landingSource).not.toContain('useState("acrylic")');
+  it("판매 상품이 한 종이라 랜딩에서 굿즈를 고르게 하지 않는다", () => {
+    // 회의록 2번: 판매 페이지는 한 상품에 집중해 가격 판단을 쉽게 만든다.
+    // 여러 종을 고르게 두면 화면의 가격이 무엇에 대한 값인지 흐려진다.
+    expect(landingSource).not.toContain("gs-goods-card");
+    expect(landingSource).not.toContain("goods_preview_select");
+    expect(landingSource).not.toContain("?goods=");
+    // 설문 쪽은 고르지 않은 상태를 그대로 기록한다.
     expect(formSource).toContain("GOODS_UNSELECTED");
   });
 

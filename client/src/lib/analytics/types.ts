@@ -42,7 +42,6 @@ export type AnalyticsEventName =
   | "landing_view"
   | "page_engagement"
   | "scroll_depth"
-  | "goods_preview_select"
   | "survey_cta_click"
   | "survey_intro_view"
   | "survey_start"

@@ -84,13 +84,12 @@ STEP 13과 14 사이에 "설문이 끝났어요 / 사연을 남기시겠어요?"
 
 ### 랜딩페이지
 
-| 이벤트                 | 언제              | 주요 파라미터                           |
-| ---------------------- | ----------------- | --------------------------------------- |
-| `landing_view`         | 랜딩 진입         | `page_name`                             |
-| `scroll_depth`         | 25/50/75/90% 도달 | `percent_scrolled`                      |
-| `goods_preview_select` | 굿즈 미리 선택    | `goods_id`                              |
-| `survey_cta_click`     | CTA 클릭          | `cta_id`, `cta_placement`, `goods_type` |
-| `page_engagement`      | 화면을 떠날 때    | `active_ms`, `report_reason`            |
+| 이벤트             | 언제              | 주요 파라미터                |
+| ------------------ | ----------------- | ---------------------------- |
+| `landing_view`     | 랜딩 진입         | `page_name`                  |
+| `scroll_depth`     | 25/50/75/90% 도달 | `percent_scrolled`           |
+| `survey_cta_click` | CTA 클릭          | `cta_id`, `cta_placement`    |
+| `page_engagement`  | 화면을 떠날 때    | `active_ms`, `report_reason` |
 
 **CTA 식별자** — 이동 목적지는 모두 같지만 위치로 구분합니다.
 
@@ -98,7 +97,7 @@ STEP 13과 14 사이에 "설문이 끝났어요 / 사연을 남기시겠어요?"
 | -------- | -------------- | ------------------ |
 | `btn_A1` | 첫 화면        | `hero`             |
 | `btn_A2` | 가격 비교 아래 | `price_comparison` |
-| `btn_A3` | 굿즈 선택 아래 | `goods_options`    |
+| `btn_A3` | 가격 카드 아래 | `offer`            |
 | `btn_A4` | 마지막 배너    | `final`            |
 | `btn_B`  | 화면 하단 고정 | `sticky`           |
 

@@ -1,6 +1,5 @@
 import {
   ArrowRight,
-  Check,
   ChevronDown,
   Hourglass,
   ShieldCheck,
@@ -12,7 +11,6 @@ import { setSurveyPhaseContext, trackEvent } from "@/lib/analytics/analytics";
 import { usePageEngagement, useScrollDepth } from "@/lib/analytics/react";
 import {
   GOODS_SURVEY_CAPACITY,
-  GOODS_UNSELECTED,
   getSurveyCampaign,
   type SurveyCampaign,
 } from "@/lib/goodsSurveyApi";
@@ -43,22 +41,10 @@ const ASSET_BASE = "/goods-survey";
 const CTA_IDS = {
   hero: "btn_A1",
   price_comparison: "btn_A2",
-  goods_options: "btn_A3",
+  offer: "btn_A3",
   final: "btn_A4",
   sticky: "btn_B",
 } as const;
-
-type GoodsOption = {
-  id: string;
-  image?: string;
-  imageAlt?: string;
-  eyebrow: string;
-  name: string;
-  description: string;
-  use?: string;
-  detailLabel?: string;
-  note?: string;
-};
 
 const heroImages = [
   {
@@ -82,64 +68,6 @@ const heroImages = [
     label: "3D 전신",
   },
 ] as const;
-
-const goods: readonly GoodsOption[] = [
-  {
-    id: "acrylic",
-    image: "product-acrylic.png",
-    imageAlt: "아크릴 얼굴 키링 제작 예시",
-    eyebrow: "가장 가벼운",
-    name: "아크릴 얼굴",
-    description:
-      "사진 속 얼굴을 깔끔하게 살린 가장 가벼운 형태예요. 일상의 소지품에 우리 아이의 미소를 더해보세요.",
-    use: "보호자 키링 · 조건 확인 후 네임택",
-    detailLabel: "특징",
-    note: "가볍고 휴대가 편해요",
-  },
-  {
-    id: "face",
-    image: "product-keycap.png",
-    imageAlt: "3D 얼굴 키캡형 제작 예시",
-    eyebrow: "입체감이 귀여운",
-    name: "3D 얼굴 키캡형",
-    description:
-      "우리 아이 얼굴을 입체적으로 표현해요. 기계식 키보드에 장착하거나 전용 고리로 휴대할 수 있어요.",
-    use: "보호자 키링",
-    detailLabel: "주의",
-    note: "키캡이 빠질 수 있으니 키링 활용을 권장해요.",
-  },
-  {
-    id: "backplate",
-    image: "product-backplate.png",
-    imageAlt: "사각 뒷판형 3D 얼굴키링 앞면과 뒷면 제작 예시",
-    eyebrow: "이름·연락처 추가 가능",
-    name: "사각 뒷판형 3D 얼굴키링",
-    description:
-      "앞면엔 얼굴과 이름, 뒷면엔 아이 정보와 연락처를 추가할 수 있어요.",
-    use: "보호자 키링 · 조건 확인 후 네임택",
-    detailLabel: "주의",
-    note: "이름만 / 이름+연락처 / 정보 없이",
-  },
-  {
-    id: "figure",
-    image: "product-figure.png",
-    imageAlt: "3D 전신 피규어 제작 예시",
-    eyebrow: "표정과 자세까지",
-    name: "3D 전신 피규어",
-    description:
-      "사진 속 전체 모습을 약 5-6cm 레진 출력물로 제작해요. 우리 아이의 사랑스러운 포즈를 간직하세요.",
-    use: "책상·선반 위 전시",
-    detailLabel: "주의",
-    note: "작은 돌출부는 충격에 약할 수 있음",
-  },
-  {
-    id: "custom",
-    eyebrow: "자유 요청",
-    name: "“이런 모양도 될까요?”",
-    description:
-      "원하시는 형태를 말씀해주시면 제작 가능 여부를 확인해드려요. 제작이 힘들다면 가까운 방안으로 제안드릴게요.",
-  },
-];
 
 // 회의록 6-11번의 FAQ. 1차와 2차의 차이, 구매 의무, 할인 조건, 결제 시점을 다룬다.
 const faqs = [
@@ -232,9 +160,6 @@ function PrimaryCta({
 
 export default function GoodsSurvey() {
   const [, setLocation] = useLocation();
-  // 아무것도 고르지 않은 상태로 시작한다. 특정 굿즈를 미리 골라 두면
-  // 그 값이 실제 선호가 아닌 채로 선호도 집계에 섞인다.
-  const [selectedGoods, setSelectedGoods] = useState("");
   // 열려 있으면 어느 버튼에서 왔는지 담는다. 닫혀 있으면 null이다.
   const [ctaPlacement, setCtaPlacement] = useState<keyof typeof CTA_IDS | null>(
     null
@@ -266,18 +191,13 @@ export default function GoodsSurvey() {
       // 노션 3번이 요구한 버튼 식별자. placement는 사람이 읽기 위해 함께 남긴다.
       cta_id: CTA_IDS[placement],
       cta_placement: placement,
-      goods_type: selectedGoods || GOODS_UNSELECTED,
     });
     setCtaPlacement(placement);
   };
 
   const startSurvey = () => {
     // wouter는 화면 안에서 경로만 바꾸므로 이 이벤트가 유실될 일은 없다.
-    setLocation(
-      selectedGoods
-        ? `/goods-survey/survey?goods=${selectedGoods}`
-        : "/goods-survey/survey"
-    );
+    setLocation("/goods-survey/survey");
   };
 
   useEffect(() => {
@@ -466,16 +386,7 @@ export default function GoodsSurvey() {
             <br />
             우리 가족만 알아보는 ‘우리 아이의 모습’이니까요.
           </h2>
-          <p className="gs-copy">
-            {
-              "한쪽만 접히는 귀, 코 옆의 작은 점, 웃을 때 올라가는 입꼬리처럼 우리 가족만 알아보는 우리 아이의 모습이 남았으면 하는 마음."
-            }
-          </p>
-          <p className="gs-copy">
-            {
-              "사진첩 속에만 있던 그 표정을 매일 손에 잡히는 모습으로 만들어드리고 싶어요."
-            }
-          </p>
+          {/* 회의록 6-4는 이 제목만 정했다. 1차 랜딩의 본문은 걷어냈다. */}
           <div className="gs-story-stack">
             <LandingImage
               src="story-phone-figure.png"
@@ -492,7 +403,7 @@ export default function GoodsSurvey() {
           </div>
         </section>
 
-        <section className="gs-section gs-process">
+        <section className="gs-section gs-process" id="process">
           <h2>사진에서 아이의 특징을 찾아 만듭니다.</h2>
 
           {/* 회의록 6-5가 정한 네 단계. 설명을 덧붙이지 않는다. */}
@@ -524,64 +435,6 @@ export default function GoodsSurvey() {
             <br />
             제작 방식과 사진 상태에 따라 차이가 생길 수 있어요.
           </p>
-        </section>
-
-        {/* 회의록 2번: 판매는 3D 전신 피규어 한 종으로 좁히고, 나머지는
-            선호도 조사 항목으로만 남긴다. */}
-        <section className="gs-section gs-goods-section" id="goods-options">
-          <h2>받고 싶은 굿즈를 골라보세요.</h2>
-
-          <div className="gs-goods-list">
-            {goods.map(item => {
-              const selected = selectedGoods === item.id;
-              return (
-                <button
-                  type="button"
-                  className={`gs-goods-card${selected ? " is-selected" : ""}`}
-                  onClick={() => {
-                    // 다시 누르면 고르지 않은 상태로 되돌린다. 실수로 누른 선택이
-                    // 그대로 굳어 2차 수량 산정에 섞이면 안 된다.
-                    const next = selected ? "" : item.id;
-                    setSelectedGoods(next);
-                    trackEvent("goods_preview_select", {
-                      goods_type: next || GOODS_UNSELECTED,
-                    });
-                  }}
-                  aria-pressed={selected}
-                  key={item.id}
-                >
-                  <div className="gs-goods-select">
-                    <span>{selected && <Check aria-hidden="true" />}</span>
-                    눌러서 마음에 담기
-                  </div>
-                  {item.image && item.imageAlt && (
-                    <LandingImage
-                      src={item.image}
-                      alt={item.imageAlt}
-                      className="gs-goods-image"
-                    />
-                  )}
-                  <div className="gs-goods-content">
-                    <small>{item.eyebrow}</small>
-                    <h3>{item.name}</h3>
-                    <p>{item.description}</p>
-                    {item.use && item.note && (
-                      <dl>
-                        <div>
-                          <dt>권장 용도</dt>
-                          <dd>{item.use}</dd>
-                        </div>
-                        <div>
-                          <dt>{item.detailLabel}</dt>
-                          <dd>{item.note}</dd>
-                        </div>
-                      </dl>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
         </section>
 
         <section className="gs-section gs-story-copy">
@@ -650,7 +503,7 @@ export default function GoodsSurvey() {
                   <li>2차 오픈 시 전용 구매 링크 제공</li>
                 </ul>
                 <PrimaryCta
-                  onClick={() => openCta("goods_options")}
+                  onClick={() => openCta("offer")}
                   label="설문하고 멤버가 받기"
                   compact
                   disabled={!surveyAvailable}
@@ -792,10 +645,10 @@ export default function GoodsSurvey() {
         <footer className="gs-footer">
           <nav aria-label="페이지 내 안내">
             <a
-              href="#goods-options"
-              onClick={event => scrollToSection(event, "goods-options")}
+              href="#process"
+              onClick={event => scrollToSection(event, "process")}
             >
-              굿즈 종류 다시보기
+              제작 과정 다시보기
             </a>
             <a
               href="#safety"
@@ -856,7 +709,7 @@ export default function GoodsSurvey() {
             </h2>
             <p>
               1차 무료 체험단 {CAMPAIGN.capacity}명의 선택에서 4명 중 한 명이 3D
-              전신 피규어를 골랐어요. 더 나은 결과물을 만들기 위해 여러분의
+              전신 피규어를 선택했어요. 더 나은 결과물을 만들기 위해 여러분의
               이야기를 계속 듣고 있어요.
             </p>
             <div className="gs-modal-price">
@@ -880,7 +733,7 @@ export default function GoodsSurvey() {
               onClick={() => {
                 setCtaPlacement(null);
                 document
-                  .getElementById("goods-options")
+                  .getElementById("process")
                   ?.scrollIntoView({ behavior: "smooth", block: "start" });
               }}
             >
