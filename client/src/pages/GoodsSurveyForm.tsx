@@ -814,6 +814,14 @@ export default function GoodsSurveyForm() {
     });
   }, [stage]);
 
+  // 회의록 13번의 member_offer_view. 설문을 마치고 참여자 가격을 실제로 본
+  // 사람 수가 알림 신청 전환율의 분모다. 완료했다고 모두 이 화면을 보는 것은
+  // 아니어서(굿즈가 열려 있으면 제작 화면으로 간다) survey_complete로는 셀 수 없다.
+  useEffect(() => {
+    if (stage !== "full") return;
+    trackEvent("member_offer_view", { offer_placement: "survey_complete" });
+  }, [stage]);
+
   // 노션 5번: 안내 화면 방문과 시작 버튼 클릭을 따로 봐야
   // 열어보기만 하고 시작하지 않은 사람을 구분할 수 있다.
   useEffect(() => {

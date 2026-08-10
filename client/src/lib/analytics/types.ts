@@ -54,6 +54,8 @@ export type AnalyticsEventName =
   | "survey_complete"
   | "story_start"
   | "story_skip"
+  // 회의록 13번: 참여자 가격을 실제로 본 지점. 알림 신청 전환율의 분모다.
+  | "member_offer_view"
   | "production_form_view"
   | "application_review_complete"
   | "application_complete"
