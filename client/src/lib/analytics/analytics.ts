@@ -28,6 +28,26 @@ export const createAnalyticsEventId = () =>
     ? crypto.randomUUID()
     : `event-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 
+/**
+ * 모든 이벤트에 함께 실을 캠페인 국면.
+ *
+ * 설문과 굿즈가 각각의 스위치로 열리고 닫히면서, 같은 이벤트라도 어느 국면에서
+ * 나온 것인지에 따라 뜻이 달라졌다. 굿즈를 무료로 주던 때와 아무것도 주지 않는
+ * 때의 "설문 완료"를 한 숫자로 합치면 참여 동기가 다른 수치가 섞인다.
+ * 호출부마다 붙이면 빠뜨리기 쉬워, 캠페인을 조회한 곳에서 한 번 넣어 두면
+ * 이후 모든 이벤트에 자동으로 실린다.
+ */
+type SurveyPhaseContext = {
+  campaignId: string;
+  goodsOpen: boolean;
+};
+
+let surveyPhase: Partial<SurveyPhaseContext> = {};
+
+export const setSurveyPhaseContext = (context: SurveyPhaseContext) => {
+  surveyPhase = context;
+};
+
 export const sanitizeAnalyticsProperties = (
   properties: AnalyticsProperties
 ) => {
@@ -109,7 +129,12 @@ export const trackEvent = (
       visitId: attribution.visitId,
       attribution,
       device: getDeviceContext(),
-      properties: sanitizeAnalyticsProperties(properties),
+      // 국면 값을 뒤에 둔다. 호출부가 실수로 같은 이름을 써도 실제 상태가 남는다.
+      properties: sanitizeAnalyticsProperties({
+        ...properties,
+        campaign_id: surveyPhase.campaignId,
+        goods_open: surveyPhase.goodsOpen,
+      }),
     };
 
     if (analyticsConfig.debug) {

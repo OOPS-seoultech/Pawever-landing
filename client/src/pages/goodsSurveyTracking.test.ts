@@ -14,6 +14,16 @@ const formSource = readFileSync(
   "utf8"
 );
 
+const analyticsSource = readFileSync(
+  new URL("../lib/analytics/analytics.ts", import.meta.url),
+  "utf8"
+);
+
+const metaPixelSource = readFileSync(
+  new URL("../lib/analytics/providers/metaPixel.ts", import.meta.url),
+  "utf8"
+);
+
 const eventOf = (
   name: AnalyticsEvent["name"],
   properties: AnalyticsEvent["properties"] = {}
@@ -147,5 +157,32 @@ describe("설문 단계 추적", () => {
     expect(formSource).toContain("if (!applicationTracked.current)");
     expect(formSource).toContain("enterOnce");
     expect(formSource).toContain("navigationLocked");
+  });
+
+  it("모든 이벤트에 어느 국면에서 나왔는지 함께 싣는다", () => {
+    // 굿즈를 무료로 주던 때와 아무것도 주지 않는 때의 "설문 완료"를 한 숫자로
+    // 합치면 참여 동기가 다른 수치가 섞여 2차 수량 산정을 그르친다.
+    expect(analyticsSource).toContain("campaign_id: surveyPhase.campaignId");
+    expect(analyticsSource).toContain("goods_open: surveyPhase.goodsOpen");
+    // 캠페인을 조회한 곳에서 한 번만 심어 두고 이후는 자동으로 실린다.
+    expect(landingSource).toContain("setSurveyPhaseContext");
+    expect(formSource).toContain("setSurveyPhaseContext");
+  });
+
+  it("굿즈가 닫혀도 발생하는 이벤트를 Meta 표준 전환으로 둔다", () => {
+    // 굿즈 신청에만 Lead가 걸려 있으면 굿즈가 닫힌 기간 내내 학습할 전환이 0이다.
+    expect(metaPixelSource).toContain(
+      'survey_complete: { method: "track", name: "Lead" }'
+    );
+    expect(metaPixelSource).not.toContain(
+      'application_complete: { method: "track", name: "Lead" }'
+    );
+  });
+
+  it("설문 완료 결과를 참·거짓이 아니라 상태 그대로 남긴다", () => {
+    // 굿즈가 닫히면 늘 COMPLETED_NO_SLOT이라, 참·거짓으로 두면
+    // 보고서에 "예약률 0%"로 보여 원인을 오해한다.
+    expect(formSource).toContain("completion_status: completion.status");
+    expect(formSource).not.toContain("goods_reserved");
   });
 });

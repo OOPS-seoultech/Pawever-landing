@@ -57,7 +57,9 @@ export type AnalyticsEventName =
   | "story_skip"
   | "production_form_view"
   | "application_review_complete"
-  | "application_complete";
+  | "application_complete"
+  // 굿즈가 닫힌 동안 설문을 마친 사람이 2차 안내를 신청한 지점.
+  | "notice_subscribe";
 
 export type AnalyticsProperty = string | number | boolean | undefined;
 

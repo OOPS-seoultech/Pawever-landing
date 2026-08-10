@@ -8,12 +8,18 @@ type MetaEventMapping = {
   name: string;
 };
 
+// 표준 이벤트(track)만 Meta 광고의 전환 최적화 대상이 된다.
+// 굿즈 신청은 굿즈가 열려 있을 때만 일어나므로, 거기에 Lead를 걸어 두면
+// 굿즈가 닫힌 기간 내내 학습할 전환이 하나도 발생하지 않는다.
+// 그래서 이 국면의 목표인 설문 완료를 Lead로 두고, 굿즈 신청은 그 뒤에 오는
+// 별도 단계로 SubmitApplication에 매핑해 둘이 겹치지 않게 한다.
 const META_EVENTS: Partial<Record<AnalyticsEvent["name"], MetaEventMapping>> = {
   landing_view: { method: "track", name: "PageView" },
   survey_cta_click: { method: "trackCustom", name: "SurveyCtaClick" },
   survey_start: { method: "trackCustom", name: "SurveyStart" },
-  survey_complete: { method: "trackCustom", name: "SurveyComplete" },
-  application_complete: { method: "track", name: "Lead" },
+  survey_complete: { method: "track", name: "Lead" },
+  notice_subscribe: { method: "trackCustom", name: "NoticeSubscribe" },
+  application_complete: { method: "track", name: "SubmitApplication" },
 };
 
 let configured = false;

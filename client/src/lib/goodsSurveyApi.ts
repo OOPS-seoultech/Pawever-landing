@@ -3,6 +3,10 @@ export const GOODS_SURVEY_VERSION = "2026-07-25-v2";
 // 실제 정원은 서버 캠페인이 정한다. 이 값은 응답이 오기 전에만 쓰는 자리값이다.
 export const GOODS_SURVEY_CAPACITY = 100;
 
+// 굿즈를 고르지 않고 설문에 들어온 경우. 아무것도 고르지 않아도 특정 굿즈가
+// 자동으로 붙으면 실제 선호가 아닌 값이 선호도 집계에 섞인다.
+export const GOODS_UNSELECTED = "unselected";
+
 type ApiEnvelope<T> = {
   success: boolean;
   data?: T;
@@ -32,7 +36,15 @@ export type SurveyCampaign = {
   remaining: number;
   startsAt: string;
   endsAt: string;
+  /**
+   * @deprecated goodsOpen과 같은 값이다. 예전 화면이 읽던 자리라 서버가 계속
+   * 내려줄 뿐이니, 새 코드는 surveyOpen과 goodsOpen을 따로 본다.
+   */
   open: boolean;
+  /** 설문 접수 여부. 굿즈가 마감돼도 설문은 따로 열린다. */
+  surveyOpen: boolean;
+  /** 굿즈 접수 여부. 서버가 스위치와 남은 정원을 모두 본 결과다. */
+  goodsOpen: boolean;
 };
 
 export type SurveyTrackingPayload = object;
@@ -171,6 +183,25 @@ export const completeSurvey = (
       method: "POST",
       headers: editHeaders(session),
       body: JSON.stringify(payload),
+    }
+  );
+
+/**
+ * 2차 제작 안내를 받을 이메일을 남긴다.
+ *
+ * 서버는 이 주소를 설문 응답과 연결해 저장하지 않는다. 설문을 마친 사람인지만
+ * 요청 시점에 확인한다.
+ */
+export const subscribeSurveyNotice = (
+  session: SurveyDraftSession,
+  email: string
+) =>
+  apiRequest<void>(
+    `/api/public/goods-survey/responses/${session.responseId}/notice-subscription`,
+    {
+      method: "POST",
+      headers: editHeaders(session),
+      body: JSON.stringify({ email, noticeAgreed: true }),
     }
   );
 
