@@ -101,9 +101,17 @@ describe("랜딩 CTA 식별자", () => {
       "sticky",
     ];
     for (const placement of placements) {
-      expect(landingSource).toContain(`startSurvey("${placement}")`);
+      expect(landingSource).toContain(`openCta("${placement}")`);
     }
     expect(landingSource).toContain("cta_id: CTA_IDS[placement]");
+  });
+
+  it("안내 모달을 거쳐도 CTA 클릭은 버튼을 누른 시점에 남는다", () => {
+    // 위치별 버튼 효과를 재는 지표라 모달 통과 여부와 분리해야 한다.
+    // 모달에서 돌아선 사람은 설문 진입 이벤트가 없는 것으로 구분된다.
+    expect(landingSource).toMatch(
+      /trackEvent\("survey_cta_click"[\s\S]*?\}\);\s*setCtaPlacement\(placement\);/
+    );
   });
 
   it("랜딩에서 스크롤 도달 구간을 측정한다", () => {

@@ -1,3 +1,19 @@
+/**
+ * 11차 회의록에서 정한 2차 판매 가격.
+ *
+ * 랜딩과 설문 완료 화면이 같은 금액을 말해야 한다. 파일마다 숫자를 적어 두면
+ * 한 곳만 고치고 나머지를 놓쳐, 화면에 따라 다른 값이 보인다.
+ */
+export const GOODS_PRICE = {
+  list: 34_900,
+  presale: 29_900,
+  member: 23_900,
+  competitor: 350_000,
+  shipping: 3_000,
+} as const;
+
+export const wonText = (value: number) => `${value.toLocaleString("ko-KR")}원`;
+
 export const goodsSurveyIntroContent = {
   title: "오늘을 더 기억하기 위한 반려견 돌봄 경험 조사",
   introduction: [

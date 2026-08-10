@@ -67,6 +67,8 @@ import {
   type SurveyQuestion,
 } from "./goodsSurveySchema";
 import {
+  GOODS_PRICE,
+  wonText,
   goodsSurveyClosingContent,
   goodsSurveyIntroContent,
   goodsSurveyPrivacyContent,
@@ -2150,11 +2152,14 @@ export default function GoodsSurveyForm() {
                 서비스의 방향을 정합니다.
               </p>
               <div className="gsf-choice-card">
-                <strong>2차 굿즈 제작을 준비하고 있어요.</strong>
+                <strong>
+                  2차 맞춤 3D 피규어를 설문 참여자 가격{" "}
+                  {wonText(GOODS_PRICE.member)}에 구매할 수 있어요.
+                </strong>
                 <p>
-                  1차 무료 제작 100명은 마감됐어요. 2차는 판매로 진행하며 금액과
-                  수량은 아직 확정 전입니다. 확정되면 먼저 알려드리고, 설문에
-                  참여해 주신 분들께는 참여자 할인을 준비하고 있습니다.
+                  2차 오픈 소식을 신청한 채널로 보내드릴게요.{" "}
+                  <b>알림에 동의하지 않아도 참여자 가격은 그대로 유지됩니다.</b>{" "}
+                  구매 의무는 없고, 사진과 배송지는 구매를 결정한 뒤에 받습니다.
                 </p>
                 {noticeState === "done" ? (
                   <p className="gsf-review-submit-note" role="status">
