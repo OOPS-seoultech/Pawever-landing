@@ -33,6 +33,13 @@ describe("개인정보 처리방침", () => {
     );
   });
 
+  it("2차 안내 이메일을 별도 수집 항목으로 밝힌다", () => {
+    // 설문 응답이나 굿즈 신청과 목적·보유 기간이 달라 한 줄로 묶으면 안 된다.
+    expect(policySource).toContain("2차 안내 신청자");
+    expect(policySource).toContain("광고성 정보");
+    expect(policySource).toContain("수집일로부터 1년 또는 수신 거부 시까지");
+  });
+
   it("조항 번호가 1조부터 빠짐없이 이어진다", () => {
     const numbers = [...policySource.matchAll(/제(\d+)조 \(/g)].map(match =>
       Number(match[1])

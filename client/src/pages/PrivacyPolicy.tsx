@@ -157,6 +157,20 @@ export default function PrivacyPolicy() {
                       <td className="px-4 py-3">굿즈 제작·발송 및 문의 대응</td>
                       <td className="px-4 py-3">배송 완료 후 3개월</td>
                     </tr>
+                    {/* 설문 응답과는 목적도 보유 기간도 달라 항목을 나눠 적는다.
+                        수집한 주소는 설문 응답과 연결해 저장하지 않는다. */}
+                    <tr className="border-b border-border hover:bg-accent/5">
+                      <td className="px-4 py-3 font-semibold text-orange-500">
+                        2차 안내 신청자
+                      </td>
+                      <td className="px-4 py-3">이메일 주소</td>
+                      <td className="px-4 py-3">
+                        2차 굿즈 제작 판매 안내 (광고성 정보)
+                      </td>
+                      <td className="px-4 py-3">
+                        수집일로부터 1년 또는 수신 거부 시까지
+                      </td>
+                    </tr>
                     <tr className="hover:bg-accent/5">
                       <td className="px-4 py-3 font-semibold text-foreground/60">
                         자동

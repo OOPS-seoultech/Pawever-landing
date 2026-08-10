@@ -110,12 +110,46 @@ describe("굿즈 제작 정보 화면", () => {
     expect(formSource).toContain("autoOpened");
   });
 
-  it("이어서 진행할 때 마감을 먼저 알려준다", () => {
-    // 정원이 찬 뒤에 돌아온 사람에게 배송 정보와 사진까지 다 채우게 한 뒤
-    // 거절하면 그때 쓴 것이 통째로 날아간다.
-    expect(formSource).toContain("await getSurveyCampaign().catch(() => null)");
-    expect(formSource).toContain("if (campaign && !campaign.open)");
+  it("굿즈가 닫혀 있으면 제작 단계로 보내지 않는다", () => {
+    // 배송 정보와 사진까지 다 채우게 한 뒤 거절하면 그때 쓴 것이 통째로 날아간다.
+    // 그래서 굿즈 여부는 제작 화면으로 넘어가는 갈림길에서 한 번만 판단한다.
+    expect(formSource).toContain(
+      "const latest = await getSurveyCampaign().catch(() => campaign)"
+    );
+    expect(formSource).toContain("if (!(latest?.goodsOpen ?? false))");
     expect(formSource).toContain('setStage("full")');
+  });
+
+  it("굿즈가 마감돼도 설문을 마친 사람은 사연까지 갈 수 있다", () => {
+    // 설문을 계속 받는 이유가 사연이다. 자리를 못 받았다는 이유로
+    // 완료 직후나 이어서 참여할 때 흐름을 끊으면 사연을 한 건도 못 받는다.
+    expect(formSource).toContain('session.status === "COMPLETED_NO_SLOT"');
+    expect(formSource).not.toContain(
+      'completion.status === "COMPLETED_NO_SLOT"'
+    );
+  });
+
+  it("설문과 굿즈를 각각의 스위치로 판단한다", () => {
+    // 하나의 값으로 둘을 함께 막으면 굿즈가 마감될 때 설문까지 닫힌다.
+    expect(landingSource).toContain("campaign?.surveyOpen ?? true");
+    expect(landingSource).toContain("campaign?.goodsOpen ?? false");
+    expect(landingSource).not.toContain("campaign?.open");
+  });
+
+  it("2차 안내 이메일은 동의를 받아야 보내고, 받는 자리에서 고지한다", () => {
+    // 광고성 정보라 항목·목적·보유 기간·거부 권리를 받는 화면에서 밝혀야 한다.
+    expect(formSource).toContain("noticeAgreed");
+    expect(formSource).toContain("수집 항목: 이메일 주소");
+    expect(formSource).toContain("보유 기간: 수집일로부터 1년");
+    // 동의 없이 눌러 보낼 수 없어야 한다.
+    expect(formSource).toContain("noticeAgreed &&");
+  });
+
+  it("고르지 않은 굿즈를 임의의 값으로 채우지 않는다", () => {
+    // 기본값이 붙으면 실제 선호가 아닌 값이 2차 수량 산정에 섞인다.
+    expect(landingSource).toContain('useState("")');
+    expect(landingSource).not.toContain('useState("acrylic")');
+    expect(formSource).toContain("GOODS_UNSELECTED");
   });
 
   it("제출 실패 안내를 제출 버튼 옆에도 보여준다", () => {

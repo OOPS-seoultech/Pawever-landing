@@ -15,6 +15,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import {
   createSubmissionTrackingContext,
+  setSurveyPhaseContext,
   trackEvent,
 } from "@/lib/analytics/analytics";
 import { useActiveTime, usePageEngagement } from "@/lib/analytics/react";
@@ -26,6 +27,7 @@ import {
 import {
   GOODS_SURVEY_CAPACITY,
   GOODS_SURVEY_VERSION,
+  GOODS_UNSELECTED,
   GoodsSurveyApiError,
   completeSurvey as completeSurveyRequest,
   createSurveyDraft,
@@ -33,7 +35,9 @@ import {
   saveSurveyDraft,
   saveSurveyStory,
   submitSurveyApplication,
+  subscribeSurveyNotice,
   uploadSurveyPhoto,
+  type SurveyCampaign,
   type SurveyDraftSession,
 } from "@/lib/goodsSurveyApi";
 import {
@@ -619,10 +623,14 @@ export function MatrixScreen({
 
 export default function GoodsSurveyForm() {
   const [, setLocation] = useLocation();
-  const initialGoods = useMemo(
-    () => new URLSearchParams(window.location.search).get("goods") ?? "acrylic",
-    []
-  );
+  // 랜딩에서 굿즈를 고르지 않고 바로 들어올 수 있다. 고르지 않았다는 사실도
+  // 선호 데이터라, 빈자리를 임의의 굿즈로 채우지 않는다.
+  const initialGoods = useMemo(() => {
+    const requested = new URLSearchParams(window.location.search).get("goods");
+    return requested && productionGoods.some(([id]) => id === requested)
+      ? requested
+      : GOODS_UNSELECTED;
+  }, []);
   const restoredDraft = useMemo(() => {
     const draft = loadGoodsSurveyDraft();
     if (
@@ -655,9 +663,8 @@ export default function GoodsSurveyForm() {
     publish: null,
   });
   const [production, setProduction] = useState<ProductionFields>({
-    goods: productionGoods.some(([id]) => id === initialGoods)
-      ? initialGoods
-      : "acrylic",
+    // 랜딩에서 고르지 않았으면 비워 둔다. 제작 단계에서 직접 고르게 한다.
+    goods: initialGoods === GOODS_UNSELECTED ? "" : initialGoods,
     customGoods: "",
     petName: "",
     guardianName: "",
@@ -678,6 +685,19 @@ export default function GoodsSurveyForm() {
   const [remaining, setRemaining] = useState(
     () => restoredDraft?.session.remaining ?? GOODS_SURVEY_CAPACITY
   );
+  // 굿즈 접수 여부. 설문과 별개로 열리고 닫히므로 화면 문구와 마지막 갈림길에서 쓴다.
+  // 조회 전에는 닫힌 것으로 본다. 못 줄 것을 준다고 적는 쪽이 더 나쁘다.
+  const [campaign, setCampaign] = useState<SurveyCampaign | null>(null);
+  const goodsAvailable = campaign?.goodsOpen ?? false;
+  // 분석에 실을 굿즈 값. 아직 고르지 않았으면 고르지 않았다고 남긴다.
+  const goodsTypeForTracking = production.goods || initialGoods;
+  // 2차 안내를 받을 이메일. 설문 완료 화면에서만 선택으로 받는다.
+  const [noticeEmail, setNoticeEmail] = useState("");
+  const [noticeAgreed, setNoticeAgreed] = useState(false);
+  const [noticeState, setNoticeState] = useState<"idle" | "saving" | "done">(
+    "idle"
+  );
+  const [noticeError, setNoticeError] = useState("");
   const [apiBusy, setApiBusy] = useState(false);
   const [apiError, setApiError] = useState("");
   const [draftSaveState, setDraftSaveState] = useState<
@@ -762,6 +782,16 @@ export default function GoodsSurveyForm() {
     };
   }, []);
 
+  // 굿즈 상태는 화면 문구를 정하는 데 쓴다. 조회에 실패하면 닫힌 것으로 두고,
+  // 실제 갈림길에서 한 번 더 확인한다.
+  useEffect(() => {
+    void getSurveyCampaign()
+      .then(applyCampaign)
+      .catch(() => {
+        // 최종 판정은 서버가 한다. 여기서 실패해도 설문 진행은 막지 않는다.
+      });
+  }, []);
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [stage, currentQuestionId]);
@@ -778,7 +808,7 @@ export default function GoodsSurveyForm() {
   useEffect(() => {
     if (stage !== "production") return;
     trackEvent("production_form_view", {
-      goods_type: production.goods,
+      goods_type: goodsTypeForTracking,
     });
   }, [stage]);
 
@@ -787,7 +817,7 @@ export default function GoodsSurveyForm() {
   useEffect(() => {
     if (stage !== "intro") return;
     trackEvent("survey_intro_view", {
-      goods_type: production.goods,
+      goods_type: goodsTypeForTracking,
       resumed: Boolean(restoredDraft),
     });
   }, [stage]);
@@ -804,7 +834,7 @@ export default function GoodsSurveyForm() {
       step_visit_count: visitCount,
       question_count:
         stage === "questions" ? currentScreen?.questions.length : undefined,
-      goods_type: production.goods,
+      goods_type: goodsTypeForTracking,
     });
   }, [currentStep, surveyRun]);
 
@@ -822,13 +852,22 @@ export default function GoodsSurveyForm() {
         step_name: surveyStepLabel(log.last),
         furthest_step: log.furthest,
         survey_completed: surveyCompletionTracked.current,
-        goods_type: production.goods,
+        goods_type: goodsTypeForTracking,
       });
     };
 
     window.addEventListener("pagehide", onPageHide);
     return () => window.removeEventListener("pagehide", onPageHide);
-  }, [production.goods]);
+  }, [goodsTypeForTracking]);
+
+  // 화면 상태와 분석 국면을 함께 갱신한다. 한쪽만 바꾸면 이벤트에 옛 국면이 실린다.
+  const applyCampaign = (next: SurveyCampaign) => {
+    setCampaign(next);
+    setSurveyPhaseContext({
+      campaignId: next.campaignId,
+      goodsOpen: next.goodsOpen,
+    });
+  };
 
   const apiMessage = (error: unknown) =>
     error instanceof GoodsSurveyApiError
@@ -849,7 +888,9 @@ export default function GoodsSurveyForm() {
       currentQuestionId: nextQuestionId,
       questionActiveMs: timings,
       surveyActiveMs: surveyActiveBaseMs + getSurveyActiveMs(),
-      selectedGoods: production.goods,
+      // 이어서 참여할 때 이 값으로 같은 응답인지 가린다. 제작 화면에서 고른 굿즈를
+      // 넣으면 그 선택을 바꾸는 순간 임시 저장이 남남이 되어 복구되지 않는다.
+      selectedGoods: initialGoods,
       stage: nextStage,
     });
   };
@@ -917,7 +958,7 @@ export default function GoodsSurveyForm() {
         clearGoodsSurveyDraftSnapshot();
         session = await createSurveyDraft({
           questionnaireVersion: GOODS_SURVEY_VERSION,
-          selectedGoods: production.goods,
+          selectedGoods: initialGoods,
           tracking: createSubmissionTrackingContext(),
         });
         setDraftSession(session);
@@ -927,28 +968,32 @@ export default function GoodsSurveyForm() {
 
       trackEvent("survey_start", {
         entry_method: wasResume ? "resume_button" : "intro_button",
-        goods_type: production.goods,
+        goods_type: goodsTypeForTracking,
       });
 
-      if (session.status === "RESERVED") {
-        // 정원이 찬 뒤에 이어서 들어온 사람은 여기서 알려준다.
-        // 배송 정보와 사진까지 다 채운 뒤 거절하면 그때 쓴 것이 통째로 날아간다.
-        // 조회에 실패하면 지금까지처럼 진행시킨다. 최종 판정은 어차피 서버가 한다.
-        const campaign = await getSurveyCampaign().catch(() => null);
-        if (campaign && !campaign.open) {
-          clearGoodsSurveyDraftSnapshot();
-          setRemaining(campaign.remaining);
-          setStage("full");
-          return;
+      if (
+        session.status === "RESERVED" ||
+        session.status === "COMPLETED_NO_SLOT"
+      ) {
+        // 설문을 끝낸 사람이다. 굿즈 자리를 받았는지는 여기서 따지지 않는다.
+        // 자리가 없어도 사연은 남길 수 있고, 굿즈 여부는 제작 화면으로 넘어가는
+        // 갈림길에서 한 번만 판단한다. 그래야 다 채운 뒤 거절당하는 일도 없고,
+        // 사연을 쓰러 온 사람이 문 앞에서 막히지도 않는다.
+        const latest = await getSurveyCampaign().catch(() => null);
+        if (latest) {
+          applyCampaign(latest);
+          setRemaining(latest.remaining);
         }
-        if (campaign) setRemaining(campaign.remaining);
-        setStage(
+        const resumedStage =
           restoredDraft?.stage && restoredDraft.stage !== "questions"
             ? restoredDraft.stage
-            : "closing"
+            : "closing";
+        // 제작 정보를 적다 나간 사이에 굿즈가 닫혔다면 그 화면으로 되돌리지 않는다.
+        setStage(
+          resumedStage === "production" && !(latest?.goodsOpen ?? false)
+            ? "closing"
+            : resumedStage
         );
-      } else if (session.status === "COMPLETED_NO_SLOT") {
-        setStage("full");
       } else if (session.status === "TERMINATED") {
         setStage("terminated");
       } else {
@@ -1000,18 +1045,17 @@ export default function GoodsSurveyForm() {
           {
             answered_question_count: Object.keys(nextAnswers).length,
             active_ms: surveyActiveBaseMs + getSurveyActiveMs(),
-            goods_reserved: completion.status === "RESERVED",
+            // 굿즈가 닫혀 있으면 늘 COMPLETED_NO_SLOT이다. 예전처럼 참·거짓으로만
+            // 두면 보고서에 "예약률 0%"로 보여 원인을 오해한다.
+            completion_status: completion.status,
           },
           { eventId: tracking.conversionEventId }
         );
       }
 
-      if (completion.status === "COMPLETED_NO_SLOT") {
-        clearGoodsSurveyDraftSnapshot();
-        setStage("full");
-        return;
-      }
-
+      // COMPLETED_NO_SLOT은 굿즈 자리를 못 받았다는 뜻일 뿐, 설문은 끝난 것이다.
+      // 사연은 자리와 상관없이 남길 수 있으므로 여기서 흐름을 끊지 않는다.
+      // 굿즈 여부는 제작 화면으로 넘어가는 갈림길에서 한 번만 판단한다.
       persistSnapshot(
         completedSession,
         nextAnswers,
@@ -1061,7 +1105,7 @@ export default function GoodsSurveyForm() {
       !hasMinimumAnswers(prunedAnswers)
     ) {
       setApiError(
-        "무료 제작 신청은 설문에 최소한의 응답이 있어야 접수돼요. 이전으로 돌아가 몇 문항만 더 답해 주세요."
+        "응답이 너무 적어 설문을 마칠 수 없어요. 이전으로 돌아가 몇 문항만 더 답해 주세요."
       );
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
@@ -1091,7 +1135,7 @@ export default function GoodsSurveyForm() {
         active_ms: activeMs,
         question_count: currentScreen?.questions.length,
         step_visit_count: stepVisits.current.visitCount(currentStep),
-        goods_type: production.goods,
+        goods_type: goodsTypeForTracking,
       });
     }
     try {
@@ -1134,7 +1178,7 @@ export default function GoodsSurveyForm() {
         to_step: toStep,
         active_ms: stage === "questions" ? getQuestionActiveMs() : undefined,
         step_visit_count: stepVisits.current.visitCount(currentStep),
-        goods_type: production.goods,
+        goods_type: goodsTypeForTracking,
       });
     };
 
@@ -1239,7 +1283,15 @@ export default function GoodsSurveyForm() {
     privacyConsent &&
     shippingConsent;
 
-  const continueToProduction = () => {
+  /**
+   * 설문·사연을 마친 뒤 어디로 갈지 정하는 갈림길.
+   *
+   * 굿즈가 열려 있으면 제작 정보를 받고, 닫혀 있으면 여기서 끝낸다.
+   * 이 판단을 화면 진입 시점이 아니라 여기 한 곳에 둔 이유는, 굿즈를 못 받는
+   * 사람도 사연까지는 남길 수 있어야 하고, 반대로 제작 정보를 다 채운 뒤에
+   * 거절당하는 일도 없어야 하기 때문이다.
+   */
+  const continueAfterStory = async () => {
     // 사연 화면(STEP 14)을 거쳐 온 경우에만 그 단계를 끝낸 것으로 센다.
     // closing에서 바로 넘어온 사람은 STEP 14에 들어간 적이 없다.
     if (currentStep !== null) {
@@ -1247,9 +1299,23 @@ export default function GoodsSurveyForm() {
         step_number: currentStep,
         step_name: surveyStepLabel(currentStep),
         story_written: Boolean(story.scene.trim()),
-        goods_type: production.goods,
+        goods_type: goodsTypeForTracking,
       });
     }
+
+    // 설문을 채우는 동안 굿즈가 닫혔을 수 있다. 화면에 들고 있던 값 대신
+    // 지금 상태를 다시 확인한다. 조회에 실패하면 마지막으로 받은 값을 쓴다.
+    const latest = await getSurveyCampaign().catch(() => campaign);
+    if (latest) {
+      applyCampaign(latest);
+      setRemaining(latest.remaining);
+    }
+
+    if (!(latest?.goodsOpen ?? false)) {
+      setStage("full");
+      return;
+    }
+
     if (draftSession) {
       persistSnapshot(
         draftSession,
@@ -1262,6 +1328,34 @@ export default function GoodsSurveyForm() {
     setStage("production");
   };
 
+  const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
+  const noticeReady =
+    noticeAgreed &&
+    EMAIL_PATTERN.test(noticeEmail.trim()) &&
+    noticeState === "idle";
+
+  const submitNoticeEmail = async () => {
+    if (!draftSession || !noticeReady) return;
+    setNoticeState("saving");
+    setNoticeError("");
+    try {
+      await subscribeSurveyNotice(draftSession, noticeEmail.trim());
+      trackEvent("notice_subscribe");
+      setNoticeState("done");
+    } catch (error) {
+      setNoticeState("idle");
+      setNoticeError(apiMessage(error));
+    }
+  };
+
+  // 사연을 저장하지 않고 바로 넘어가는 버튼용. 캠페인을 다시 조회하는 동안
+  // 버튼이 반응 없어 보이지 않도록 진행 표시를 켠다.
+  const skipStoryAndContinue = () => {
+    if (apiBusy) return;
+    setApiBusy(true);
+    void continueAfterStory().finally(() => setApiBusy(false));
+  };
+
   const saveStoryAndContinue = async () => {
     if (!draftSession || !storyReady || apiBusy) return;
     setApiBusy(true);
@@ -1272,7 +1366,7 @@ export default function GoodsSurveyForm() {
         analysisAgreed: storyConsent.analysis === true,
         publishAgreed: storyConsent.publish === true,
       });
-      continueToProduction();
+      await continueAfterStory();
     } catch (error) {
       setApiError(apiMessage(error));
     } finally {
@@ -1337,13 +1431,13 @@ export default function GoodsSurveyForm() {
           trackEvent("survey_step_complete", {
             step_number: currentStep,
             step_name: surveyStepLabel(currentStep),
-            goods_type: production.goods,
+            goods_type: goodsTypeForTracking,
           });
         }
         trackEvent(
           "application_complete",
           {
-            goods_type: production.goods,
+            goods_type: goodsTypeForTracking,
             photo_count: photos.length,
             story_included: Boolean(story.scene.trim()),
             furthest_step: stepVisits.current.furthest,
@@ -1608,11 +1702,12 @@ export default function GoodsSurveyForm() {
                 <button
                   type="button"
                   className="gsf-secondary"
+                  disabled={apiBusy}
                   onClick={() => {
                     trackEvent("story_skip", {
                       skip_placement: "closing",
                     });
-                    continueToProduction();
+                    skipStoryAndContinue();
                   }}
                 >
                   {goodsSurveyClosingContent.skipButton}
@@ -1792,17 +1887,20 @@ export default function GoodsSurveyForm() {
               >
                 {apiBusy
                   ? "사연을 저장하고 있어요..."
-                  : "사연 저장하고 굿즈 신청하기"}
+                  : goodsAvailable
+                    ? "사연 저장하고 굿즈 신청하기"
+                    : "사연 저장하고 마치기"}
                 <ArrowRight aria-hidden="true" />
               </button>
               <button
                 type="button"
                 className="gsf-text-button"
+                disabled={apiBusy}
                 onClick={() => {
                   trackEvent("story_skip", {
                     skip_placement: "story_form",
                   });
-                  continueToProduction();
+                  skipStoryAndContinue();
                 }}
               >
                 사연을 작성하지 않고 넘어가기
@@ -2033,27 +2131,115 @@ export default function GoodsSurveyForm() {
             </form>
           )}
 
+          {/* 굿즈를 못 받는 사람에게도 이 화면은 실패가 아니라 완료다.
+              설문을 끝까지 마친 것이 이 단계의 목적이므로 사과문을 두지 않는다. */}
           {stage === "full" && (
             <section className="gsf-message gsf-complete">
               <span className="gsf-message-icon">
                 <Heart aria-hidden="true" />
               </span>
-              <span className="gsf-eyebrow">설문 응답 완료</span>
+              <span className="gsf-eyebrow">설문 참여 완료</span>
               <h1>
-                답변은 안전하게 저장됐지만
+                끝까지 답해 주셔서
                 <br />
-                무료 제작은 마감됐어요.
+                고맙습니다.
               </h1>
               <p>
-                설문을 마치는 사이 선착순 100명이 모두 확정되었습니다. 배송
-                정보와 사진은 수집하지 않았습니다.
+                보내주신 답변은 안전하게 저장했습니다. 아이와 보낸 시간을
+                떠올리며 답하는 일이 쉽지 않았을 텐데, 그 시간이 저희가 만드는
+                서비스의 방향을 정합니다.
               </p>
+              <div className="gsf-choice-card">
+                <strong>2차 굿즈 제작을 준비하고 있어요.</strong>
+                <p>
+                  1차 무료 제작 100명은 마감됐어요. 2차는 판매로 진행하며 금액과
+                  수량은 아직 확정 전입니다. 확정되면 먼저 알려드리고, 설문에
+                  참여해 주신 분들께는 참여자 할인을 준비하고 있습니다.
+                </p>
+                {noticeState === "done" ? (
+                  <p className="gsf-review-submit-note" role="status">
+                    안내받을 주소를 저장했어요. 2차가 확정되면 알려드릴게요.
+                  </p>
+                ) : (
+                  <div className="gsf-notice-form">
+                    <label>
+                      <FieldLabel optional>안내받을 이메일</FieldLabel>
+                      <input
+                        type="email"
+                        inputMode="email"
+                        value={noticeEmail}
+                        onChange={event => setNoticeEmail(event.target.value)}
+                        placeholder="이메일 주소"
+                        autoComplete="email"
+                      />
+                    </label>
+                    <label className="gsf-consent-inline">
+                      <input
+                        type="checkbox"
+                        checked={noticeAgreed}
+                        onChange={event =>
+                          setNoticeAgreed(event.target.checked)
+                        }
+                      />
+                      <span>
+                        2차 제작 판매 안내를 이메일로 받는 데 동의합니다.
+                      </span>
+                    </label>
+                    {/* 광고성 정보라 항목·목적·기간·거부 권리를 받는 자리에서 밝힌다. */}
+                    <small className="gsf-field-help">
+                      수집 항목: 이메일 주소 · 이용 목적: 2차 제작 판매 안내 ·
+                      보유 기간: 수집일로부터 1년. 동의하지 않아도 설문 응답은
+                      이미 저장됐으며 어떤 불이익도 없습니다. 수신을 원하지
+                      않으시면 언제든 문의하기로 알려주시면 바로 지워드립니다.
+                    </small>
+                    <button
+                      type="button"
+                      className="gsf-secondary"
+                      onClick={() => void submitNoticeEmail()}
+                      disabled={!noticeReady}
+                    >
+                      {noticeState === "saving"
+                        ? "저장하고 있어요..."
+                        : "2차 소식 받기"}
+                    </button>
+                    {noticeError && (
+                      <p className="gsf-field-error" role="alert">
+                        {noticeError}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+              {/* 사연은 굿즈 자리와 상관없이 남길 수 있다. 아직 쓰지 않았다면
+                  여기서 한 번 더 길을 열어 준다. */}
+              {!story.scene.trim() && (
+                <button
+                  type="button"
+                  className="gsf-primary"
+                  onClick={() => {
+                    trackEvent("story_start");
+                    if (draftSession) {
+                      persistSnapshot(
+                        draftSession,
+                        answers,
+                        currentQuestionId,
+                        questionActiveMs,
+                        "story"
+                      );
+                    }
+                    setStage("story");
+                  }}
+                >
+                  사연도 남기기
+                  <ArrowRight aria-hidden="true" />
+                </button>
+              )}
               <button
                 type="button"
-                className="gsf-primary"
+                className="gsf-text-button"
                 onClick={() => setLocation("/goods-survey")}
               >
-                랜딩페이지로 돌아가기
+                처음 화면으로 돌아가기
               </button>
             </section>
           )}
@@ -2065,7 +2251,7 @@ export default function GoodsSurveyForm() {
               </span>
               <span className="gsf-eyebrow">신청 완료</span>
               <h1>
-                선착순 굿즈 신청이
+                굿즈 신청이
                 <br />
                 정상적으로 접수됐어요.
               </h1>
@@ -2078,7 +2264,7 @@ export default function GoodsSurveyForm() {
                 <strong>{reviewId}</strong>
               </div>
               <p className="gsf-review-submit-note">
-                현재 남은 무료 제작 자리 {remaining}명
+                현재 남은 자리 {remaining}명
               </p>
               <button
                 type="button"

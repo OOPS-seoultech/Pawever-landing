@@ -798,6 +798,60 @@
   font-size: 10.5px;
 }
 
+/* 설문 완료 화면의 2차 안내 신청.
+   긴 양식(.gsf-long-form) 밖에 있어 입력칸 스타일이 닿지 않으므로 여기서 따로 준다. */
+.gsf-notice-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.gsf-notice-form label {
+  display: grid;
+  gap: 7px;
+}
+
+.gsf-notice-form input[type="email"] {
+  width: 100%;
+  height: 48px;
+  padding: 0 13px;
+  border: 1px solid var(--gsf-line);
+  border-radius: 13px;
+  outline: none;
+  background: #fffdfa;
+  color: var(--gsf-ink);
+}
+
+.gsf-notice-form input[type="email"]:focus {
+  border-color: var(--gsf-accent);
+  box-shadow: 0 0 0 3px rgba(224, 112, 58, 0.12);
+}
+
+.gsf-notice-form .gsf-consent-inline {
+  grid-template-columns: 20px 1fr;
+  align-items: start;
+  gap: 9px;
+  cursor: pointer;
+}
+
+.gsf-notice-form .gsf-consent-inline input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  accent-color: var(--gsf-accent);
+}
+
+.gsf-notice-form .gsf-consent-inline span {
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.gsf-notice-form > small {
+  color: var(--gsf-ink-soft);
+  font-size: 11.5px;
+  line-height: 1.65;
+}
+
 /* 질문과 예·아니요를 한 줄에 둔다. 동의 항목이 여러 개라 줄마다 두 단으로
    쌓이면 화면이 지나치게 길어진다. */
 .gsf-consent-question {
