@@ -25,8 +25,6 @@ const CAMPAIGN = {
   // 서버 응답이 오기 전에 쓰는 값이다. 실제 신청 수를 그대로 보여주기로 했으므로
   // 여기에 임의의 숫자를 두면 화면이 잠깐 사실과 다른 수를 보여준다.
   completed: 0,
-  // 1차 무료 체험단 모집 기간. 이미 지난 일정이라 기록으로만 쓴다.
-  firstRoundPeriod: "2026.07.23 ~ 08.05",
 } as const;
 
 // 금액은 goodsSurveyContent.ts 한 곳에서만 관리한다. 설문 완료 화면도 같은 값을 쓴다.
@@ -370,9 +368,6 @@ export default function GoodsSurvey() {
         </header>
 
         <section className="gs-section gs-hero">
-          <span className="gs-kicker">
-            1차 체험단 하루 만에 {CAMPAIGN.capacity}명 마감
-          </span>
           <h1>
             {CAMPAIGN.capacity}명의 보호자와 시작한
             <br />
@@ -407,9 +402,6 @@ export default function GoodsSurvey() {
             </p>
             <small>타사 판매가 {won(PRICE.competitor)} 비교</small>
           </div>
-          <p className="gs-cta-meta">
-            결제 없이 시작 · {CAMPAIGN.duration} 소요 · 구매 의무 없음
-          </p>
           <PrimaryCta
             onClick={() => openCta("hero")}
             disabled={!surveyAvailable}
@@ -425,16 +417,13 @@ export default function GoodsSurvey() {
               {CAMPAIGN.capacity}명 모집 마감
             </h2>
           </div>
+          {/* 회의록 6-2는 이 두 줄만 정했다. 확인된 수치가 아니면 여기에
+              숫자를 덧붙이지 않는다. */}
           <div className="gs-promise-answer">
             <strong>
               많은 보호자분이 가장 갖고 싶은 굿즈로 3D 전신 피규어를
               선택했습니다
             </strong>
-            <p>
-              4명 중 한 명이 3D 전신 피규어를 골랐어요. 지금은 그분들과 함께
-              제품을 만들며, 더 나은 결과물을 위해 여러분의 이야기를 계속 듣고
-              있습니다.
-            </p>
           </div>
         </section>
 
@@ -462,11 +451,9 @@ export default function GoodsSurvey() {
             결과가 마음에 들지 확인하기도 전에 결제부터 해야 하죠.
           </p>
 
-          <div className="gs-quote">
-            그래서 2차에서는
-            <br />
-            여러분의 15분을 제작비로 돌려드립니다.
-          </div>
+          {/* "왜 설문 참여자가 더 저렴한가"는 아래 Offer 단락에서 따로 다룬다.
+              여기서 먼저 말하면 중복이고, 제작비 지원을 시간과 맞바꾸는 것처럼
+              읽힌다. 회의록 6-6이 구분하라고 못 박은 지점이다. */}
           <PrimaryCta
             onClick={() => openCta("price_comparison")}
             disabled={!surveyAvailable}
@@ -506,31 +493,22 @@ export default function GoodsSurvey() {
         </section>
 
         <section className="gs-section gs-process">
-          <span className="gs-kicker">2차 제작은 이렇게 진행돼요</span>
           <h2>사진에서 아이의 특징을 찾아 만듭니다.</h2>
 
+          {/* 회의록 6-5가 정한 네 단계. 설명을 덧붙이지 않는다. */}
           <div className="gs-process-list">
             {[
-              [
-                "01",
-                "사진 제출",
-                "얼굴과 전신이 잘 보이는 사진 3장을 보내주세요.",
-              ],
-              [
-                "02",
-                "특징 정리",
-                "귀·얼굴형·털색·자주 짓는 자세를 정리합니다.",
-              ],
-              ["03", "3D 제작", "3D 모델을 만들어 약 5~6cm로 출력합니다."],
-              ["04", "수작업 검수", "손으로 다듬고 확인한 뒤 발송합니다."],
-            ].map(([number, title, description]) => (
+              ["01", "얼굴·전신 사진 3장 제출"],
+              ["02", "귀·얼굴형·털색·자세 특징 정리"],
+              ["03", "3D 모델 제작 및 출력"],
+              ["04", "수작업 검수 후 발송"],
+            ].map(([number, title]) => (
               <div className="gs-process-step" key={number}>
                 <span aria-hidden="true" />
                 <div>
                   <strong>
                     {number}. {title}
                   </strong>
-                  <p>{description}</p>
                 </div>
               </div>
             ))}
@@ -548,12 +526,10 @@ export default function GoodsSurvey() {
           </p>
         </section>
 
+        {/* 회의록 2번: 판매는 3D 전신 피규어 한 종으로 좁히고, 나머지는
+            선호도 조사 항목으로만 남긴다. */}
         <section className="gs-section gs-goods-section" id="goods-options">
-          <h2>2차에는 어떤 걸 만들면 좋을까요?</h2>
-          <p className="gs-copy">
-            고른 형태는 2차 제작 수량을 정하는 데 참고합니다. 고르지 않고
-            넘어가도 설문 참여에는 아무 영향이 없어요.
-          </p>
+          <h2>받고 싶은 굿즈를 골라보세요.</h2>
 
           <div className="gs-goods-list">
             {goods.map(item => {
@@ -576,7 +552,7 @@ export default function GoodsSurvey() {
                 >
                   <div className="gs-goods-select">
                     <span>{selected && <Check aria-hidden="true" />}</span>
-                    {selected ? "다시 눌러 취소" : "눌러서 마음에 담기"}
+                    눌러서 마음에 담기
                   </div>
                   {item.image && item.imageAlt && (
                     <LandingImage
@@ -625,10 +601,7 @@ export default function GoodsSurvey() {
             <br />
             제품 선택과 서비스 설계에 직접 쓰입니다
           </strong>
-          <p>
-            그 기여에 대한 감사로 2차 제작비 일부를 지원합니다. 할인이 아니라,
-            함께 만든 몫을 돌려드리는 것에 가깝습니다.
-          </p>
+          <p>그 기여에 대한 감사로 2차 제작비 일부를 지원합니다.</p>
           <div className="gs-soft-callout">
             설문 후반에는 노화·아픔·마지막 돌봄에 관한 질문이 일부 포함됩니다.
             답하기 어려운 문항은 건너뛰어도 괜찮아요.
@@ -709,40 +682,20 @@ export default function GoodsSurvey() {
               "언제 변화를 느꼈고 무엇이 필요했는지 알아야, 포에버가 필요한 순간에 자연스럽게 도움을 건넬 수 있습니다."
             }
           </p>
+          {/* 회의록 6-9가 정한 다섯 단계. 설명을 덧붙이지 않는다. */}
           <div className="gs-timeline">
             {[
-              [
-                "1",
-                "약 15분 설문 참여",
-                "아이의 일상·변화·돌봄 경험을 객관식으로 체크합니다.",
-              ],
-              [
-                "2",
-                "설문 참여자 가격 즉시 확인",
-                `완료 화면에서 ${won(PRICE.member)} 참여자 가격을 바로 확인할 수 있어요.`,
-              ],
-              [
-                "3",
-                "알림 수신 여부 선택",
-                "동의하지 않아도 참여자 가격은 그대로 유지됩니다.",
-              ],
-              [
-                "4",
-                "2차 오픈 시 전용 링크 확인",
-                "준비가 끝나면 신청한 채널로 안내드립니다.",
-              ],
-              [
-                "5",
-                "구매할 경우에만 결제",
-                "그때 사진과 배송지를 입력합니다. 구매 의무는 없습니다.",
-              ],
-            ].map(([number, title, description]) => (
+              ["1", "약 15분 설문 참여"],
+              ["2", "설문 참여자 가격 즉시 확인"],
+              ["3", "광고성 정보 수신 여부 선택"],
+              ["4", "2차 오픈 시 전용 링크 확인"],
+              ["5", "구매할 경우 사진·배송지 입력 후 결제"],
+            ].map(([number, title]) => (
               <div className="gs-timeline-item" key={number}>
                 <span>{number}</span>
                 <div>
                   <small>참여 과정 {number}/5</small>
                   <strong>{title}</strong>
-                  <p>{description}</p>
                 </div>
               </div>
             ))}
@@ -758,22 +711,14 @@ export default function GoodsSurvey() {
             <br />
             필요한 목적에만 사용합니다.
           </h2>
+          {/* 회의록 6-10의 목록. 연락 수단은 휴대전화 전환을 미루고
+              이메일을 유지하기로 해, 그 항목만 실제 수집값으로 적는다. */}
           <ul>
-            <li>
-              <b>설문 응답</b> — 서비스 연구와 통계 분석. 익명으로 다룹니다.
-            </li>
-            <li>
-              <b>이메일 주소</b> — 2차 판매 오픈 안내. 선택 항목이며, 남기지
-              않아도 참여자 가격은 그대로 유지됩니다.
-            </li>
-            <li>
-              <b>반려견 사진·배송지</b> — 구매를 결정한 뒤 전용 구매 페이지에서
-              받습니다. <b>설문 단계에서는 받지 않습니다.</b>
-            </li>
-            <li>
-              <b>사연·후기의 SNS 활용</b> — 별도로 동의하고 선정된 경우에만
-              익명으로 소개합니다.
-            </li>
+            <li>설문 응답: 서비스 연구와 통계 분석</li>
+            <li>이메일 주소: 참여자 식별과 선택한 알림 발송</li>
+            <li>반려견 사진: 구매 후 피규어 제작</li>
+            <li>배송지: 구매가 확정된 뒤 배송 목적</li>
+            <li>광고·SNS 활용: 별도 선택 동의</li>
           </ul>
         </section>
 
@@ -820,33 +765,6 @@ export default function GoodsSurvey() {
                 </li>
               </ul>
             </div>
-          </div>
-        </section>
-
-        <section className="gs-section">
-          <div className="gs-recruit">
-            <span>진행 상황</span>
-            <h2>1차 무료 제작은 마감됐어요.</h2>
-            <p>
-              한 분씩 사진을 확인해 손으로 만들기 때문에, 생산 가능한 수량까지만
-              받았습니다.
-            </p>
-            <dl>
-              <div>
-                <dt>1차 무료 체험단</dt>
-                <dd>{CAMPAIGN.capacity}명 마감</dd>
-              </div>
-              <div>
-                <dt>1차 모집 기간</dt>
-                <dd>{CAMPAIGN.firstRoundPeriod}</dd>
-              </div>
-              <div>
-                <dt>2차 제작</dt>
-                <dd>
-                  설문 참여자 {won(PRICE.member)} · 일반 {won(PRICE.presale)}
-                </dd>
-              </div>
-            </dl>
           </div>
         </section>
 
@@ -901,12 +819,7 @@ export default function GoodsSurvey() {
           >
             <span>
               {surveyAvailable ? CTA_LABEL : "설문 접수 마감"}
-              <small>
-                {CAMPAIGN.duration} · 결제 없음 ·{" "}
-                {goodsAvailable
-                  ? "굿즈 신청 진행 중"
-                  : `참여자 ${won(PRICE.member)}`}
-              </small>
+              <small>설문 완료 즉시 참여자 자격 부여 · 구매 의무 없음</small>
             </span>
             <ArrowRight aria-hidden="true" />
           </button>

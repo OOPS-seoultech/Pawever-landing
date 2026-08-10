@@ -12,6 +12,10 @@
   background: #ddd9d5;
   color: var(--gs-ink);
   line-height: 1.58;
+  /* 한글은 기본값에서 음절 단위로 끊겨 "어렵 / 습니다"처럼 낱말 중간이 갈라진다.
+     띄어쓰기에서만 줄을 바꾸되, 끊을 수 없는 긴 문자열은 넘치지 않게 둔다. */
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .goods-survey-page *,
@@ -271,6 +275,11 @@
   letter-spacing: -0.035em;
 }
 
+/* 뒤따르는 본문이 없으면 아래 여백도 필요 없다. */
+.gs-promise-answer strong:last-child {
+  margin-bottom: 0;
+}
+
 .gs-promise-answer p {
   margin: 0;
   color: var(--gs-muted);
@@ -310,16 +319,6 @@
   color: #aaa29c;
   font-size: 9px;
   text-align: center;
-}
-
-.gs-quote {
-  margin: 30px 0 21px;
-  padding: 3px 0 3px 15px;
-  border-left: 3px solid var(--gs-orange);
-  color: #3d332e;
-  font-size: 15px;
-  font-weight: 850;
-  line-height: 1.7;
 }
 
 .gs-emotion h2 {
@@ -760,59 +759,6 @@
   left: 0;
   color: var(--gs-orange);
   font-weight: 950;
-}
-
-.gs-recruit {
-  padding: 25px 20px;
-  border-radius: 15px;
-  background: linear-gradient(145deg, #ff861d, #ff6f09);
-  color: #ffffff;
-}
-
-.gs-recruit > span {
-  display: inline-block;
-  margin-bottom: 12px;
-  padding: 5px 8px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.18);
-  font-size: 8px;
-  font-weight: 850;
-}
-
-.gs-recruit h2 {
-  margin-bottom: 8px;
-  color: #ffffff;
-  font-size: 21px;
-}
-
-.gs-recruit > p {
-  margin-bottom: 17px;
-  color: rgba(255, 255, 255, 0.82);
-  font-size: 10.5px;
-}
-
-.gs-recruit dl {
-  display: grid;
-  gap: 9px;
-  margin: 0;
-}
-
-.gs-recruit dl > div {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 15px;
-}
-
-.gs-recruit dt {
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 9px;
-}
-
-.gs-recruit dd {
-  margin: 0;
-  font-size: 10px;
-  font-weight: 850;
 }
 
 .gs-final {

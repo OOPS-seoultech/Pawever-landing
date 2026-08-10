@@ -2141,25 +2141,16 @@ export default function GoodsSurveyForm() {
                 <Heart aria-hidden="true" />
               </span>
               <span className="gsf-eyebrow">설문 참여 완료</span>
-              <h1>
-                끝까지 답해 주셔서
-                <br />
-                고맙습니다.
-              </h1>
-              <p>
-                보내주신 답변은 안전하게 저장했습니다. 아이와 보낸 시간을
-                떠올리며 답하는 일이 쉽지 않았을 텐데, 그 시간이 저희가 만드는
-                서비스의 방향을 정합니다.
-              </p>
+              {/* 회의록 9번의 완료 화면 문구를 그대로 쓴다. */}
+              <h1>설문을 모두 마쳤어요. 감사합니다.</h1>
               <div className="gsf-choice-card">
                 <strong>
                   2차 맞춤 3D 피규어를 설문 참여자 가격{" "}
                   {wonText(GOODS_PRICE.member)}에 구매할 수 있어요.
                 </strong>
                 <p>
-                  2차 오픈 소식을 신청한 채널로 보내드릴게요.{" "}
-                  <b>알림에 동의하지 않아도 참여자 가격은 그대로 유지됩니다.</b>{" "}
-                  구매 의무는 없고, 사진과 배송지는 구매를 결정한 뒤에 받습니다.
+                  2차 오픈 소식을 신청한 채널로 보내드릴게요. 알림에 동의하지
+                  않아도 참여자 가격은 그대로 유지됩니다.
                 </p>
                 {noticeState === "done" ? (
                   <p className="gsf-review-submit-note" role="status">
