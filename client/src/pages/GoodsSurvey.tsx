@@ -69,7 +69,13 @@ const heroImages = [
   },
 ] as const;
 
-// 회의록 6-11번의 FAQ. 1차와 2차의 차이, 구매 의무, 할인 조건, 결제 시점을 다룬다.
+/**
+ * 회의록 6-11번의 FAQ 다섯 개. 여기에 임의로 더하지 않는다.
+ *
+ * 마지막 두 개는 회의록이 카카오톡을 전제로 쓴 문답이다. 연락 수단을
+ * 이메일로 유지하기로 해(goods-round2-checklist.md) 채널 이름만 뺐다.
+ * 휴대전화·카카오톡으로 전환할 때 회의록 원문대로 되돌린다.
+ */
 const faqs = [
   {
     question: "1차랑 2차랑 무엇이 다른가요?",
@@ -94,21 +100,6 @@ const faqs = [
     question: "판매 소식은 어떻게 오나요?",
     answer:
       "판매 오픈과 할인 소식은 광고성 정보 수신에 동의한 채널로만 안내합니다. 구매 후 주문·제작·배송 안내는 정보성 알림으로 따로 받습니다.",
-  },
-  {
-    question: "15분보다 오래 걸리진 않나요?",
-    answer:
-      "객관식 중심으로 평균 약 15분입니다. 응답에 따라 꼬리 문항이 달라져 실제 시간은 조금 달라질 수 있고, 답하기 어려운 선택 문항은 건너뛸 수 있어요.",
-  },
-  {
-    question: "사진과 똑같이 나오나요?",
-    answer:
-      "아이의 눈, 귀, 털색과 눈에 띄는 특징을 반영하지만 완전히 복제하는 방식은 아닙니다. 사진 상태와 제작 방식에 따라 색상과 형태에 차이가 생길 수 있어요.",
-  },
-  {
-    question: "이미 이별한 아이에 대해서도 답할 수 있나요?",
-    answer:
-      "네. 가장 최근에 이별한 아이 한 마리를 기준으로 응답해 주세요. 답하기 어려운 문항은 건너뛰어도 괜찮습니다.",
   },
 ];
 
@@ -367,10 +358,6 @@ export default function GoodsSurvey() {
           <p className="gs-source-note">
             시중 커스텀 제작 A·B·C사 실판매가 기준(2026.07)
           </p>
-          <p className="gs-copy">
-            결과가 마음에 들지 확인하기도 전에 결제부터 해야 하죠.
-          </p>
-
           {/* "왜 설문 참여자가 더 저렴한가"는 아래 Offer 단락에서 따로 다룬다.
               여기서 먼저 말하면 중복이고, 제작비 지원을 시간과 맞바꾸는 것처럼
               읽힌다. 회의록 6-6이 구분하라고 못 박은 지점이다. */}
@@ -454,11 +441,10 @@ export default function GoodsSurvey() {
             <br />
             제품 선택과 서비스 설계에 직접 쓰입니다
           </strong>
+          {/* 민감 문항 예고는 설문 안내 화면(goodsSurveyContent.ts)에 남겨 두었다.
+              랜딩에서 뺐으므로 그쪽 문구는 지우면 안 된다. 아무 예고 없이
+              노화·이별에 관한 질문을 마주하게 된다. */}
           <p>그 기여에 대한 감사로 2차 제작비 일부를 지원합니다.</p>
-          <div className="gs-soft-callout">
-            설문 후반에는 노화·아픔·마지막 돌봄에 관한 질문이 일부 포함됩니다.
-            답하기 어려운 문항은 건너뛰어도 괜찮아요.
-          </div>
         </section>
 
         {/* 굿즈가 열려 있으면 남은 자리를, 닫혀 있으면 2차 가격을 보여준다.
@@ -545,17 +531,14 @@ export default function GoodsSurvey() {
               ["5", "구매할 경우 사진·배송지 입력 후 결제"],
             ].map(([number, title]) => (
               <div className="gs-timeline-item" key={number}>
+                {/* 순서는 왼쪽 원 안의 숫자가 이미 말한다. */}
                 <span>{number}</span>
                 <div>
-                  <small>참여 과정 {number}/5</small>
                   <strong>{title}</strong>
                 </div>
               </div>
             ))}
           </div>
-          <p className="gs-fine-print">
-            객관식 중심이라 빠르게 체크할 수 있어요. 긴 사연 작성은 선택입니다.
-          </p>
         </section>
 
         <section className="gs-section gs-privacy-summary">

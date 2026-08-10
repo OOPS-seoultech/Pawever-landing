@@ -286,26 +286,6 @@
   font-size: 13px;
 }
 
-.gs-soft-callout {
-  padding: 18px;
-  border-radius: 14px;
-  background: var(--gs-orange-soft);
-  color: #6f5141;
-  font-size: 12px;
-}
-
-.gs-soft-callout strong {
-  display: block;
-  margin-bottom: 8px;
-  color: #43352e;
-  font-size: 13px;
-}
-
-.gs-soft-callout p {
-  margin: 0;
-  color: #7d6659;
-}
-
 .gs-price-comparison {
   width: 100%;
   height: auto;
@@ -314,8 +294,7 @@
 }
 
 .gs-source-note,
-.gs-process-note,
-.gs-fine-print {
+.gs-process-note {
   color: #aaa29c;
   font-size: 9px;
   text-align: center;
@@ -407,11 +386,6 @@
   line-height: 1.7;
 }
 
-.gs-story-copy .gs-soft-callout {
-  margin: 26px 0 18px;
-  text-align: center;
-}
-
 .gs-remaining-card {
   padding: 22px 18px;
   border: 1px solid #f1e8e0;
@@ -481,6 +455,8 @@
   display: grid;
   grid-template-columns: 31px 1fr;
   gap: 14px;
+  /* 제목 한 줄만 남아 위로 붙으면 숫자 원과 어긋나 보인다. */
+  align-items: center;
 }
 
 .gs-timeline-item > span {
@@ -495,17 +471,8 @@
   font-weight: 900;
 }
 
-.gs-timeline-item small {
-  display: block;
-  margin-bottom: 2px;
-  color: var(--gs-orange);
-  font-size: 8px;
-  font-weight: 850;
-}
-
 .gs-timeline-item strong {
   display: block;
-  margin-bottom: 3px;
   font-size: 13px;
 }
 
