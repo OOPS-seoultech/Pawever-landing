@@ -84,12 +84,13 @@ STEP 13과 14 사이에 "설문이 끝났어요 / 사연을 남기시겠어요?"
 
 ### 랜딩페이지
 
-| 이벤트             | 언제              | 주요 파라미터                |
-| ------------------ | ----------------- | ---------------------------- |
-| `landing_view`     | 랜딩 진입         | `page_name`                  |
-| `scroll_depth`     | 25/50/75/90% 도달 | `percent_scrolled`           |
-| `survey_cta_click` | CTA 클릭          | `cta_id`, `cta_placement`    |
-| `page_engagement`  | 화면을 떠날 때    | `active_ms`, `report_reason` |
+| 이벤트              | 언제              | 주요 파라미터                |
+| ------------------- | ----------------- | ---------------------------- |
+| `landing_view`      | 랜딩 진입         | `page_name`                  |
+| `scroll_depth`      | 25/50/75/90% 도달 | `percent_scrolled`           |
+| `survey_cta_click`  | CTA 클릭          | `cta_id`, `cta_placement`    |
+| `member_offer_view` | 참여자 가격 노출  | `offer_placement`            |
+| `page_engagement`   | 화면을 떠날 때    | `active_ms`, `report_reason` |
 
 **CTA 식별자** — 이동 목적지는 모두 같지만 위치로 구분합니다.
 
@@ -116,12 +117,25 @@ STEP 13과 14 사이에 "설문이 끝났어요 / 사연을 남기시겠어요?"
 | `survey_complete`            | STEP 13 완료             | `active_ms`, `completion_status`                                 |
 | `story_start` / `story_skip` | 사연 작성/건너뛰기       | `reason`                                                         |
 | `production_form_view`       | 굿즈 정보 화면           | `goods_type`                                                     |
+| `member_offer_view`          | 완료 화면에서 가격 노출  | `offer_placement`                                                |
 | `notice_subscribe`           | 2차 안내 이메일 남김     | —                                                                |
 | `application_complete`       | 굿즈 신청 완료           | `goods_type`, `photo_count`, `furthest_step`                     |
 
 `survey_complete`의 `completion_status`는 `RESERVED`(굿즈 자리 확보) 또는
 `COMPLETED_NO_SLOT`(설문은 저장, 굿즈 자리 없음)입니다. 굿즈가 닫힌 기간에는
 전부 후자이며, 이는 실패가 아니라 정상 완료입니다.
+
+`member_offer_view`는 참여자 가격을 실제로 본 지점입니다. `offer_placement`로 둘을 나눕니다.
+
+| `offer_placement` | 언제                                       |
+| ----------------- | ------------------------------------------ |
+| `cta_modal`       | CTA를 눌러 안내 모달이 열렸을 때 (설문 전) |
+| `survey_complete` | 설문을 마치고 완료 화면에 닿았을 때        |
+
+**설문 완료가 곧 가격 확인은 아닙니다.** 굿즈가 열려 있으면 완료 뒤 제작 화면으로
+가므로 `survey_complete`로는 이 수를 셀 수 없습니다. 알림 신청 전환율(회의록 핵심
+지표 3번)을 볼 때는 `offer_placement = survey_complete`인 `member_offer_view`를
+분모로 쓰세요.
 
 ### Meta Pixel 매핑
 
@@ -143,7 +157,35 @@ STEP 13과 14 사이에 "설문이 끝났어요 / 사연을 남기시겠어요?"
 
 ---
 
-## 3. GA4에서 확인하는 방법
+## 3. UTM 규칙
+
+링크를 만들 때 이 형식을 그대로 씁니다. **사람마다 다르게 붙이면 채널·소재별
+비교가 불가능해집니다.** UTM은 랜딩에서 설문으로 넘어가도 `sessionStorage`로
+유지되며 모든 이벤트에 `campaign_source` 등으로 함께 실립니다.
+
+```
+Instagram 오가닉
+?utm_source=instagram&utm_medium=organic_social&utm_campaign=goods_round2_waitlist&utm_content=reel_build_01
+
+Threads 오가닉
+?utm_source=threads&utm_medium=organic_social&utm_campaign=goods_round2_waitlist&utm_content=founder_log_01
+
+Meta 광고
+?utm_source=instagram&utm_medium=paid_social&utm_campaign=goods_round2_sales&utm_content=reel_before_after_01
+```
+
+| 값                      | 뜻                                  |
+| ----------------------- | ----------------------------------- |
+| `goods_round2_waitlist` | 설문 참여자를 모으는 국면 (지금)    |
+| `goods_round2_sales`    | 2차 판매를 여는 국면                |
+| `utm_content`           | 소재 식별용. 릴스·게시물마다 다르게 |
+
+`utm_content`는 소재를 가리키는 값입니다. 랜딩 A/B 테스트에는 쓰지 말고 별도의
+실험 ID와 변형값을 따로 기록하세요.
+
+---
+
+## 4. GA4에서 확인하는 방법
 
 ### ⚠️ 먼저 해야 할 일 — 맞춤 정의 등록
 
@@ -225,7 +267,7 @@ UTM은 랜딩에서 설문으로 넘어가도 `sessionStorage`로 유지되며, 
 
 ---
 
-## 4. 노션 요청 대응표
+## 5. 노션 요청 대응표
 
 | 노션 | 항목                                      | 상태                                      |
 | ---- | ----------------------------------------- | ----------------------------------------- |
@@ -261,7 +303,7 @@ UTM은 랜딩에서 설문으로 넘어가도 `sessionStorage`로 유지되며, 
 
 ---
 
-## 5. 남은 것
+## 6. 남은 것
 
 - **Hotjar 등 세션 리코딩** (노션 12번, 필수 아님) — GTM 연결 후 추가.
   설문 페이지에 적용하실 경우 이름·연락처·주소·자유 입력·사진·설문 응답을

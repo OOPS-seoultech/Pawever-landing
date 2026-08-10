@@ -183,6 +183,9 @@ export default function GoodsSurvey() {
       cta_id: CTA_IDS[placement],
       cta_placement: placement,
     });
+    // 모달이 참여자 가격을 처음 보여주는 자리다. 설문을 마친 뒤 다시 보는
+    // 완료 화면과 구분해야 "설문 전 제안"과 "설문 후 자격"을 따로 셀 수 있다.
+    trackEvent("member_offer_view", { offer_placement: "cta_modal" });
     setCtaPlacement(placement);
   };
 

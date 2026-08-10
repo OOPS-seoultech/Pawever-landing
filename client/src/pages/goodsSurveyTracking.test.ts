@@ -181,6 +181,13 @@ describe("설문 단계 추적", () => {
     );
   });
 
+  it("참여자 가격을 실제로 본 지점을 따로 센다", () => {
+    // 굿즈가 열려 있으면 설문 완료 뒤 제작 화면으로 가므로
+    // survey_complete로는 가격을 본 사람 수를 셀 수 없다.
+    expect(landingSource).toContain('offer_placement: "cta_modal"');
+    expect(formSource).toContain('offer_placement: "survey_complete"');
+  });
+
   it("설문 완료 결과를 참·거짓이 아니라 상태 그대로 남긴다", () => {
     // 굿즈가 닫히면 늘 COMPLETED_NO_SLOT이라, 참·거짓으로 두면
     // 보고서에 "예약률 0%"로 보여 원인을 오해한다.
