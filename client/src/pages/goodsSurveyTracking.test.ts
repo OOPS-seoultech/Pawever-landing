@@ -87,19 +87,13 @@ describe("랜딩 CTA 식별자", () => {
   it("노션 규격대로 위에서부터 btn_A1~A4, 하단 고정이 btn_B다", () => {
     expect(landingSource).toContain('hero: "btn_A1"');
     expect(landingSource).toContain('price_comparison: "btn_A2"');
-    expect(landingSource).toContain('goods_options: "btn_A3"');
+    expect(landingSource).toContain('offer: "btn_A3"');
     expect(landingSource).toContain('final: "btn_A4"');
     expect(landingSource).toContain('sticky: "btn_B"');
   });
 
   it("다섯 개 CTA가 모두 규격 식별자를 갖는다", () => {
-    const placements = [
-      "hero",
-      "price_comparison",
-      "goods_options",
-      "final",
-      "sticky",
-    ];
+    const placements = ["hero", "price_comparison", "offer", "final", "sticky"];
     for (const placement of placements) {
       expect(landingSource).toContain(`openCta("${placement}")`);
     }

@@ -387,138 +387,6 @@
   border-radius: 13px;
 }
 
-.gs-goods-section {
-  background: #fffdfa;
-}
-
-.gs-goods-list {
-  display: grid;
-  gap: 18px;
-  margin-top: 25px;
-}
-
-.gs-goods-card {
-  width: 100%;
-  overflow: hidden;
-  padding: 0;
-  border: 1px solid #eee9e4;
-  border-radius: 16px;
-  background: #ffffff;
-  color: var(--gs-ink);
-  text-align: left;
-  cursor: pointer;
-  box-shadow: 0 6px 18px rgba(55, 44, 37, 0.055);
-  transition:
-    border-color 140ms ease,
-    box-shadow 140ms ease,
-    transform 100ms ease;
-}
-
-.gs-goods-card:hover {
-  transform: translateY(-1px);
-}
-
-.gs-goods-card.is-selected {
-  border: 2px solid var(--gs-orange);
-  box-shadow: 0 9px 24px rgba(255, 122, 25, 0.12);
-}
-
-.gs-goods-select {
-  height: 38px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 14px;
-  color: #9b928c;
-  font-size: 8.5px;
-  font-weight: 800;
-}
-
-.gs-goods-select > span {
-  order: 2;
-  width: 17px;
-  height: 17px;
-  display: grid;
-  place-items: center;
-  border: 1px solid #ded7d1;
-  border-radius: 50%;
-}
-
-.gs-goods-card.is-selected .gs-goods-select {
-  color: var(--gs-orange);
-}
-
-.gs-goods-card.is-selected .gs-goods-select > span {
-  border-color: var(--gs-orange);
-  background: var(--gs-orange);
-  color: #ffffff;
-}
-
-.gs-goods-select svg {
-  width: 11px;
-  height: 11px;
-  stroke-width: 3;
-}
-
-.gs-goods-image {
-  width: 100%;
-  height: auto;
-  aspect-ratio: 680 / 412;
-  object-fit: cover;
-}
-
-.gs-goods-content {
-  padding: 19px 17px 18px;
-}
-
-.gs-goods-content > small {
-  display: block;
-  margin-bottom: 6px;
-  color: var(--gs-orange);
-  font-size: 8.5px;
-  font-weight: 900;
-}
-
-.gs-goods-content h3 {
-  margin: 0 0 8px;
-  font-size: 18px;
-  font-weight: 900;
-}
-
-.gs-goods-content > p {
-  margin-bottom: 15px;
-  color: var(--gs-muted);
-  font-size: 11px;
-}
-
-.gs-goods-content dl {
-  display: grid;
-  gap: 8px;
-  margin: 0;
-  padding-top: 13px;
-  border-top: 1px solid var(--gs-line);
-}
-
-.gs-goods-content dl > div {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 14px;
-}
-
-.gs-goods-content dt {
-  color: #aaa19a;
-  font-size: 8.5px;
-}
-
-.gs-goods-content dd {
-  margin: 0;
-  color: #4c433e;
-  font-size: 8.5px;
-  font-weight: 750;
-  text-align: right;
-}
-
 .gs-why-free-image {
   width: 100%;
   height: auto;
@@ -865,15 +733,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .gs-primary-cta,
-  .gs-goods-card,
-  .gs-faq-list summary svg {
-    transition: none;
-  }
 
   .gs-primary-cta:hover,
-  .gs-goods-card:hover {
-    transform: none;
-  }
 }
 
 /* ── 2차 판매 가격 표시 ─────────────────────────────────────────
