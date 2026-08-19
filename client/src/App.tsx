@@ -9,6 +9,9 @@ import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import AccountDeletion from "./pages/AccountDeletion";
 import Contact from "./pages/Contact";
+import Service from "./pages/Service";
+import AppService from "./pages/AppService";
+import Roadmap from "./pages/Roadmap";
 import GoodsSurvey from "./pages/GoodsSurvey";
 import GoodsSurveyForm from "./pages/GoodsSurveyForm";
 import { useEffect } from "react";
@@ -26,6 +29,9 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/service" component={Service} />
+      <Route path="/app" component={AppService} />
+      <Route path="/roadmap" component={Roadmap} />
       <Route path="/terms" component={TermsOfService} />
       <Route path="/privacy" component={PrivacyPolicy} />
       <Route path="/account-deletion" component={AccountDeletion} />
