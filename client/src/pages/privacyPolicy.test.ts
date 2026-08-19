@@ -14,36 +14,47 @@ describe("개인정보 처리방침", () => {
     expect(policySource).toContain("Meta Pixel");
   });
 
-  it("국외 이전 조항에 이전받는 자·항목·목적·보유기간·거부 방법을 담는다", () => {
-    // 개인정보보호법 제28조의8이 요구하는 고지 항목이다.
-    expect(policySource).toContain("제7조 (개인정보의 국외 이전)");
-    expect(policySource).toContain("Google LLC (미국)");
-    expect(policySource).toContain("Meta Platforms, Inc. (미국)");
-    expect(policySource).toContain("이전 항목:");
-    expect(policySource).toContain("이용 목적:");
-    expect(policySource).toContain("보유 기간:");
-    expect(policySource).toContain("이전 거부 방법");
+  it("위탁·국외 처리 조항에 실제 이용하는 사업자를 모두 적는다", () => {
+    // 인프라가 바뀌면 이 목록도 함께 바뀌어야 한다.
+    expect(policySource).toContain("제6조 (처리 위탁 및 국외 처리)");
+    expect(policySource).toContain("AWS");
+    expect(policySource).toContain("Firebase");
+    expect(policySource).toContain("Cloudflare");
   });
 
-  it("설문 답변과 개인정보는 국외로 보내지 않는다고 못 박는다", () => {
-    // 코드에서도 sanitizeAnalyticsProperties가 이 항목들을 막고 있다.
-    // 둘 중 하나만 바뀌면 문서와 구현이 어긋난다.
-    expect(policySource).toContain(
-      "설문 답변, 이름, 연락처, 배송지와 반려견 사진은 국외로 이전되지"
-    );
+  it("앱 접근 권한을 빠짐없이 밝힌다", () => {
+    // 권한을 추가하면서 고지를 빼먹으면 스토어 심사에서도 걸린다.
+    expect(policySource).toContain("제3조 (앱 접근 권한과 위치 정보)");
+    for (const permission of ["카메라", "사진첩", "마이크", "알림", "위치"]) {
+      expect(policySource).toContain(permission);
+    }
   });
 
-  it("2차 안내 이메일을 별도 수집 항목으로 밝힌다", () => {
-    // 설문 응답이나 굿즈 신청과 목적·보유 기간이 달라 한 줄로 묶으면 안 된다.
-    expect(policySource).toContain("2차 안내 신청자");
+  it("서비스 유형별 보유 기간을 표에 담는다", () => {
+    // 앱·웹·제품·선택·자동 다섯 구분은 파기 배치의 기준이기도 하다.
+    expect(policySource).toContain("제1조 (수집 정보·이용 목적·보유 기간)");
+    for (const retention of [
+      "탈퇴 시까지",
+      "설문 2년 / 로그 14일",
+      "배송 완료 후 90일",
+      "2년 또는 철회 / 1년",
+      "로그 14일 / GA4 최대 14개월",
+    ]) {
+      expect(policySource).toContain(retention);
+    }
+  });
+
+  it("광고성 정보 수신 동의를 서비스 알림과 분리해 밝힌다", () => {
+    // 두 동의를 한 줄로 묶으면 정보통신망법상 별도 동의 요건을 못 지킨다.
+    expect(policySource).toContain("제7조 (서비스 알림과 광고성 정보)");
     expect(policySource).toContain("광고성 정보");
-    expect(policySource).toContain("수집일로부터 1년 또는 수신 거부 시까지");
+    expect(policySource).toContain("수신 거부 방법");
   });
 
   it("조항 번호가 1조부터 빠짐없이 이어진다", () => {
     const numbers = [...policySource.matchAll(/제(\d+)조 \(/g)].map(match =>
       Number(match[1])
     );
-    expect(numbers).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    expect(numbers).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
   });
 });
