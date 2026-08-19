@@ -197,4 +197,21 @@ describe("굿즈 제작 정보 화면", () => {
     expect(formSource).toContain("gsf-consent-question-label");
     expect(formSource).not.toMatch(/<legend>\s*\{label\}/);
   });
+
+  it("사진 공개 동의를 사연 공개 동의와 따로 받는다", () => {
+    // 사연 공개에 동의했다고 사진까지 공개해도 된다는 뜻은 아니다.
+    // 예전에는 storyConsent.publish 하나로 사진까지 공개 처리해서,
+    // 묻지도 않은 반려견 사진이 공개 대상이 됐다.
+    expect(formSource).toContain(
+      "const publicPhotoIds = photoPublishConsent ? photoIds : [];"
+    );
+    expect(formSource).not.toMatch(
+      /publicPhotoIds\s*=\s*storyConsent\.publish/
+    );
+    // 사진을 올린 뒤 그 사진을 보면서 답하도록 사진 단계에 둔다.
+    expect(formSource).toContain(
+      "goodsSurveyProductionContent.photoPublishConsent"
+    );
+    expect(contentSource).toContain("photoPublishConsent:");
+  });
 });
