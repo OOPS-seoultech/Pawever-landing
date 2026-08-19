@@ -1,346 +1,256 @@
-import { Button } from "@/components/ui/button";
-import { Heart, Mic, BookOpen, Package, MessageCircle, X } from "lucide-react";
-import { useState, useRef } from "react";
+import SiteFooter from "@/components/SiteFooter";
+import SiteHeader from "@/components/SiteHeader";
+import { Link } from "wouter";
 
 /**
- * Pawever Landing Page
- * 
- * 디자인 철학: 따뜻한 미니멀리즘
- * - 오렌지 포인트 컬러로 기억의 온기 표현
- * - 디터 람스의 절제된 미학으로 슬픔을 배려
- * - 충분한 여백으로 사용자의 감정 존중
- * - 부드러운 애니메이션으로 강압 없는 경험
+ * 포에버 홈.
+ *
+ * 6~11세 반려견의 일상·건강 변화를 쌓아 병원 상담 준비까지 잇는 흐름을 보여준다.
+ * 방문자가 앱·굿즈·설문 중 지금 필요한 길을 고르게 하는 것이 이 화면의 일이다.
  */
 
+const CARE_STEPS = [
+  {
+    step: "STEP 01",
+    title: "오늘의 30초 케어 기록",
+    body: "식사, 산책, 수면처럼 매일 보이는 변화를 짧게 남겨요.",
+  },
+  {
+    step: "STEP 02",
+    title: "주간 변화 비교",
+    body: "지난 기록과 나란히 보며 예전과 달라진 점을 놓치지 않아요.",
+  },
+  {
+    step: "STEP 03",
+    title: "병원 준비 요약",
+    body: "관찰한 내용을 정리해 진료 상담 전에 필요한 정보를 준비해요.",
+  },
+];
+
+const ENTRY_POINTS = [
+  {
+    category: "기록과 케어",
+    title: "포에버 앱",
+    body: "오늘의 변화를 기록하고 반려견의 일상과 건강 흐름을 한곳에서 확인하세요.",
+    action: "앱 서비스 살펴보기",
+    href: "/app",
+  },
+  {
+    category: "우리 아이 맞춤 제작",
+    title: "3D 맞춤 굿즈 얼리버드",
+    body: "사진 속 우리 아이의 특징을 담은 맞춤 굿즈 제작 흐름을 확인하세요.",
+    action: "맞춤 굿즈 얼리버드 보기",
+    href: "/goods-survey",
+  },
+  {
+    category: "함께 만드는 다음 서비스",
+    title: "반려인 설문",
+    body: "15분 설문으로 지금 필요한 케어와 서비스에 대한 경험을 들려주세요.",
+    action: "15분 설문 참여하기",
+    href: "/goods-survey/survey",
+  },
+];
+
+const HIGHLIGHTS = [
+  {
+    title: "반려인 731명 조사 완료",
+    body: "반려견 생애주기에 따른 보호자의 행동 데이터를 모았습니다.",
+  },
+  {
+    title: "우리 아이 완전 맞춤 3D굿즈 100건 제작 중",
+    body: "보호자의 사진과 이야기를 바탕으로 한 맞춤 제작을 이어가고 있습니다.",
+  },
+];
+
+function Eyebrow({ children }: { children: React.ReactNode }) {
+  return <p className="mb-3 text-sm font-medium text-primary">{children}</p>;
+}
+
 export default function Home() {
-  const [showEmailModal, setShowEmailModal] = useState(false);
-  const appPreviewRef = useRef<HTMLDivElement>(null);
-
-  const scrollToAppPreview = () => {
-    appPreviewRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const handleEmailClick = () => {
-    window.location.href = "/contact";
-    setShowEmailModal(false);
-  };
-
   return (
-    <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <section
-        className="relative w-full min-h-screen flex items-center justify-center overflow-hidden"
-        style={{
-          backgroundImage: `url('https://private-us-east-1.manuscdn.com/sessionFile/v05qfpJiY2BnS8goGxJSua/sandbox/nwNYvLYHDRTIKMzOGs8wx3-img-1_1771847928000_na1fn_Zm9yZXZlci1oZXJvLWJn.png?x-oss-process=image/resize,w_1920,h_1920/format,webp/quality,q_80&Expires=1798761600&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvdjA1cWZwSmlZMkJuUzhnb0d4SlN1YS9zYW5kYm94L253Tll2TFlIRFJUSUtNek9Hczh3eDMtaW1nLTFfMTc3MTg0NzkyODAwMF9uYTFmbl9abTl2WlhabGNpMW9aWEp2TFdKbi5wbmc~eC1vc3MtcHJvY2Vzcz1pbWFnZS9yZXNpemUsd18xOTIwLGhfMTkyMC9mb3JtYXQsd2VicC9xdWFsaXR5LHFfODAiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3OTg3NjE2MDB9fX1dfQ__&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=CPcIQ5ZdVOk2JzzLLjuT4uUfYNbQE9C9WaQ69vAvgvEC5bCQA-S6JrR95ZFbC43K6b8zPFGXrTnTVtQH0s879SuItPcz-SceRcmkpuQXhTNFypWZlrkUTtRZiYK1EQs-MpcSWEJuUuPuVJe8AC0pQRWBVO1ujaSvYPFSjlesxWuP7qgpzWVA58nmWn1zX348sySV6sFqG5D0ncPTto10wCUHmPxOJzlG-76RlmX4VPoFKE20ba~3TvGHBThFM7Bts6ngUUVqs-CbCCMUK~rcYnkr8NUeExzjiBrUW4n3HshRq~HFR~B7fdvALPJof0~O-Hk0jQKl3~sgGPOF9FOg7Q__')`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/20" />
+    <div className="min-h-screen bg-background text-foreground">
+      <SiteHeader />
 
-        <div className="relative z-10 container max-w-4xl mx-auto px-4 py-20 text-center">
-          <div className="mb-6 flex justify-center">
-            <p className="text-lg md:text-xl text-foreground/70 font-medium animate-fade-in">
-              우리 아이를 위한 가장 따뜻한 마지막 여정
+      <main>
+        {/* 히어로 */}
+        <section className="mx-auto grid w-full max-w-[1280px] items-center gap-10 px-8 py-20 lg:grid-cols-2 lg:py-28">
+          <div>
+            <Eyebrow>함께 있는 오늘부터 시작하는 생애주기 케어</Eyebrow>
+            <h1 className="text-4xl font-bold leading-tight md:text-5xl">
+              우리 아이, 예전과 무엇이 달라졌는지 기록으로 확인하세요.
+            </h1>
+            <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
+              포에버(PAW-EVER)는 6~11세 반려견의 일상과 건강 변화를 쌓고, 필요한
+              케어와 병원 상담 준비를 돕습니다.
             </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                href="/service"
+                className="rounded-[10px] bg-primary px-6 py-3 font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                나에게 맞는 서비스 찾기
+              </Link>
+              <Link
+                href="/goods-survey/survey"
+                className="rounded-[10px] border border-border bg-card px-6 py-3 font-medium shadow-sm transition-colors hover:bg-accent/10"
+              >
+                15분 설문으로 의견 남기기
+              </Link>
+            </div>
           </div>
 
-          <div className="mb-8 flex justify-center">
+          <div className="rounded-[24px] border border-border bg-card p-5 shadow-sm">
             <img
-              src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663308210539/LVDAepFghBqoplrU.png"
-              alt="Pawever Logo"
-              className="w-32 h-32 animate-fade-in"
+              src="/home/app-preview.png"
+              alt="반려견의 일상 기록과 건강 변화 기능이 보이는 포에버 앱 화면"
+              width="1024"
+              height="500"
+              className="w-full rounded-[16px]"
             />
+            <div className="mt-5 flex items-end gap-4">
+              <img
+                src="/home/mascot.png"
+                alt=""
+                aria-hidden="true"
+                width="390"
+                height="373"
+                className="hidden w-28 shrink-0 sm:block"
+              />
+              <ul className="flex-1 space-y-3">
+                {HIGHLIGHTS.map(item => (
+                  <li key={item.title} className="rounded-[16px] bg-muted p-4">
+                    <p className="font-semibold">{item.title}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {item.body}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
+        </section>
 
-          <div className="mb-8 flex justify-center hidden">
-            <img
-              src="https://private-us-east-1.manuscdn.com/sessionFile/v05qfpJiY2BnS8goGxJSua/sandbox/nwNYvLYHDRTIKMzOGs8wx3_1771847932647_na1fn_Zm9yZXZlci1wYXctaWxsdXN0cmF0aW9u.png?x-oss-process=image/resize,w_1920,h_1920/format,webp/quality,q_80&Expires=1798761600&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvdjA1cWZwSmlZMkJuUzhnb0d4SlN1YS9zYW5kYm94L253Tll2TFlIRFJUSUtNek9Hczh3eDNfMTc3MTg0NzkzMjY0N19uYTFmbl9abTl5WlhabGNpMXdZWGN0YVd4c2RYTjBjbUYwYVc5dS5wbmc~eC1vc3MtcHJvY2Vzcz1pbWFnZS9yZXNpemUsd18xOTIwLGhfMTkyMC9mb3JtYXQsd2VicC9xdWFsaXR5LHFfODAiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3OTg3NjE2MDB9fX1dfQ__&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=UQ319mlweN6V61RdyfBzahSa~2y7FLALhtoQwlFPEQD8zxBqcQLVhIlmejbuY9yVih7rtbY164ZG728U63tpxqUBqYjMlOZXUIaXHKWavjAIjBsi5v4lh7b4IMKuTQR~zImHFqQDgagM1PvCTDaFhYyGtuMjtd1aXklkzEE4nHh5PoG43~CDCS6FfEVzhixeXQtfM9NATQ1sV0El1fJWANujcCgFSW6h6oBk2FqtQQ2BGXckUODF3cMfsicQI8L~pjnhXJUs1K5DPJ-JOBEG5dbYSpb6DwdOwvOwbE5rceIaGD9pwDMu6L6jdLQOBWhWZRYQsVH5D31o8vo9TonIsg__"
-              alt="Pawever Paw"
-              className="w-24 h-24 animate-fade-in"
-            />
-          </div>
-
-          <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-6 leading-tight animate-fade-in">
-            함께하는 시간에 집중하고,
-            <br />
-            <span className="text-primary">소중했던 시간을 기억해요</span>
-          </h1>
-
-          <p className="text-lg md:text-xl text-foreground/70 mb-12 max-w-2xl mx-auto leading-relaxed animate-fade-in">
-            반려친구와의 이별을 정성스러운 배웅의 과정으로 전환합니다.
-            <br />
-            이별 전에는 함께하는 순간을, 이별 후에는 건강한 애도를 돕습니다.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in">
-            <Button
-              size="lg"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-6 text-lg rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105"
-              disabled
-            >
-              출시 예정
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-2 border-primary text-primary hover:bg-primary/5 font-semibold px-8 py-6 text-lg rounded-xl transition-all duration-300"
-              onClick={scrollToAppPreview}
-            >
-              자세히 알아보기
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="w-full py-20 bg-secondary/30">
-        <div className="container max-w-5xl mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-              Pawever의 핵심 기능
+        {/* 기록에서 케어로 이어지는 흐름 */}
+        <section className="border-t border-border">
+          <div className="mx-auto w-full max-w-[1280px] px-8 py-20">
+            <Eyebrow>매일의 기록이 다음 케어로</Eyebrow>
+            <h2 className="text-3xl font-bold md:text-4xl">
+              작은 변화를 알아보는 가장 쉬운 흐름
             </h2>
-            <p className="text-lg text-foreground/60">
-              반려친구와의 이별 전후를 함께하는 네 가지 서비스
+            <ol className="mt-10 grid gap-5 md:grid-cols-3">
+              {CARE_STEPS.map(step => (
+                <li
+                  key={step.step}
+                  className="rounded-[16px] border border-border bg-card p-6"
+                >
+                  <p className="text-sm font-semibold text-primary">
+                    {step.step}
+                  </p>
+                  <h3 className="mt-3 text-lg font-semibold">{step.title}</h3>
+                  <p className="mt-2 text-muted-foreground">{step.body}</p>
+                </li>
+              ))}
+            </ol>
+            <p className="mt-8 text-sm text-muted-foreground">
+              * 포에버의 기록은 진단이나 치료 지시가 아닌, 보호자의 관찰과 병원
+              상담 준비를 돕기 위한 정보입니다.
             </p>
           </div>
+        </section>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Feature 1: 발자국 남기기 */}
-            <div className="bg-white rounded-2xl p-8 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                  <Mic className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="text-2xl font-bold text-foreground">발자국 남기기</h3>
-              </div>
-              <p className="text-foreground/70 leading-relaxed">
-                아이의 목소리나 숨소리, 혹은 아이에게 전하고 싶은 목소리 편지를 기록하여 영원히 간직하는 기능입니다.
-              </p>
-            </div>
-
-            {/* Feature 2: 맞춤형 배웅 가이드 */}
-            <div className="bg-white rounded-2xl p-8 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                  <BookOpen className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="text-2xl font-bold text-foreground">맞춤형 배웅 가이드</h3>
-              </div>
-              <p className="text-foreground/70 leading-relaxed">
-                이별 직후 당황한 보호자를 위해 장례 방법, 예약, 주의사항 등을 빠르게 안내하여 심리적 안정을 돕습니다.
-              </p>
-            </div>
-
-            {/* Feature 3: 가정용 추모 키트 */}
-            <div className="bg-white rounded-2xl p-8 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                  <Package className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="text-2xl font-bold text-foreground">가정용 추모 키트</h3>
-              </div>
-              <p className="text-foreground/70 leading-relaxed">
-                집에서 아이를 추모하고 수습할 수 있는 임시 관과 장례 용품을 제공하여 직접적인 이별 준비를 지원합니다.
-              </p>
-            </div>
-
-            {/* Feature 4: 감정 케어 다이어리 */}
-            <div className="bg-white rounded-2xl p-8 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                  <Heart className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="text-2xl font-bold text-foreground">감정 케어 다이어리</h3>
-              </div>
-              <p className="text-foreground/70 leading-relaxed">
-                슬픔의 단계별로 보호자의 마음을 보살피고, 아이와의 추억을 차곡차곡 정리할 수 있는 인터페이스를 제공합니다.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* App Preview Section */}
-      <section ref={appPreviewRef} className="w-full py-20 bg-background">
-        <div className="container max-w-6xl mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-              Pawever 앱 미리보기
+        {/* 시작하는 세 가지 방법 */}
+        <section className="border-t border-border bg-muted/30">
+          <div className="mx-auto w-full max-w-[1280px] px-8 py-20 text-center">
+            <Eyebrow>지금 필요한 길을 선택하세요</Eyebrow>
+            <h2 className="text-3xl font-bold md:text-4xl">
+              포에버를 시작하는 세 가지 방법
             </h2>
-            <p className="text-lg text-foreground/60">
-              Pawever 앱의 주요 화면을 미리 확인해보세요
+            <ul className="mt-10 grid gap-5 text-left md:grid-cols-3">
+              {ENTRY_POINTS.map(entry => (
+                <li
+                  key={entry.title}
+                  className="flex flex-col rounded-[16px] border border-border bg-card p-6"
+                >
+                  <p className="text-sm font-medium text-primary">
+                    {entry.category}
+                  </p>
+                  <h3 className="mt-2 text-lg font-semibold">{entry.title}</h3>
+                  <p className="mt-2 flex-1 text-muted-foreground">
+                    {entry.body}
+                  </p>
+                  <Link
+                    href={entry.href}
+                    className="mt-6 rounded-[10px] border border-border px-4 py-2.5 text-center text-sm font-medium transition-colors hover:bg-accent/10"
+                  >
+                    {entry.action}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        {/* 향후 방향 */}
+        <section className="border-t border-border">
+          <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-8 px-8 py-20 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <Eyebrow>건강한 오늘에서 필요한 다음 케어까지</Eyebrow>
+              <h2 className="text-3xl font-bold md:text-4xl">
+                기록을 바탕으로 아이와의 접점을 늘려요.
+              </h2>
+              <p className="mt-6 max-w-2xl leading-relaxed text-muted-foreground">
+                일상 기록과 병원 상담 준비에서 시작해 건강관리, 보험, 상담,
+                노령기 돌봄 등 생애주기에 필요한 연결을 단계적으로 확장합니다.
+              </p>
+            </div>
+            <Link
+              href="/roadmap"
+              className="shrink-0 self-start rounded-[10px] border border-border bg-card px-5 py-2.5 text-sm font-medium shadow-sm transition-colors hover:bg-accent/10 lg:self-auto"
+            >
+              향후 방향 보기
+            </Link>
+          </div>
+        </section>
+
+        {/* 문의 */}
+        <section className="border-t border-border">
+          <div className="mx-auto w-full max-w-[1280px] px-8 py-20 text-center">
+            <h2 className="text-3xl font-bold md:text-4xl">
+              포에버에 궁금한 점이 있나요?
+            </h2>
+            <p className="mt-4 text-muted-foreground">
+              앱, 맞춤 굿즈, 설문, 제휴에 관한 문의를 남겨 주세요.
             </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            {/* Screen 1: 반려동물 선택 */}
-            <div className="flex flex-col items-center animate-fade-in">
-              <div className="relative mb-6 rounded-3xl overflow-hidden shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105">
-                <img
-                  src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663308210539/iauaTLArMwKDYLVw.png"
-                  alt="Pawever 반려동물 선택 화면"
-                  className="h-[500px] w-auto"
-                />
-              </div>
-              <h3 className="text-xl font-bold text-foreground mb-2 text-center">
-                반려동물 선택
-              </h3>
-              <p className="text-foreground/60 text-center text-sm">
-                반려동물의 종류를 선택하고 기본 정보를 입력합니다.
-              </p>
-            </div>
-
-            {/* Screen 2: 별자리 추모관 */}
-            <div className="flex flex-col items-center animate-fade-in">
-              <div className="relative mb-6 rounded-3xl overflow-hidden shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105">
-                <img
-                  src="/memorial.png"
-                  alt="Pawever 별자리 추모관 화면"
-                  className="h-[500px] w-auto"
-                />
-              </div>
-              <h3 className="text-xl font-bold text-foreground mb-2 text-center">
-                별자리 추모관
-              </h3>
-              <p className="text-foreground/60 text-center text-sm">
-                반려친구의 사진과 추모 메시지를 공유하며 함께 기억합니다.
-              </p>
-            </div>
-
-            {/* Screen 3: 장례업체 선택 */}
-            <div className="flex flex-col items-center animate-fade-in">
-              <div className="relative mb-6 rounded-3xl overflow-hidden shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105">
-                <img
-                  src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663308210539/VQNVcXFdMgLszrKX.png"
-                  alt="Pawever 장례업체 선택 화면"
-                  className="h-[500px] w-auto"
-                />
-              </div>
-              <h3 className="text-xl font-bold text-foreground mb-2 text-center">
-                맞춤형 배웅 가이드
-              </h3>
-              <p className="text-foreground/60 text-center text-sm">
-                예산과 선호도에 맞는 장례 방법을 선택하고 전문가의 도움을 받습니다.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Closing Section */}
-      <section
-        className="relative w-full py-20 flex items-center justify-center overflow-hidden"
-        style={{
-          backgroundImage: `url('https://private-us-east-1.manuscdn.com/sessionFile/v05qfpJiY2BnS8goGxJSua/sandbox/nwNYvLYHDRTIKMzOGs8wx3-img-4_1771847929000_na1fn_Zm9yZXZlci1jbG9zaW5nLWJn.png?x-oss-process=image/resize,w_1920,h_1920/format,webp/quality,q_80&Expires=1798761600&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvdjA1cWZwSmlZMkJuUzhnb0d4SlN1YS9zYW5kYm94L253Tll2TFlIRFJUSUtNek9Hczh3eDMtaW1nLTRfMTc3MTg0NzkyOTAwMF9uYTFmbl9abTl5WlhabGNpMWpiRzl6YVc1bkxXSm4ucG5nP3gtb3NzLXByb2Nlc3M9aW1hZ2UvcmVzaXplLHdfMTkyMCxoXzE5MjAvZm9ybWF0LHdlYnAvcXVhbGl0eSxxXzgwIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzk4NzYxNjAwfX19XX0_&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=qcQMkANsQkWImB5nO5D4K7vzsv~qPKh~n2U0PN3XtRXAnzZ5ftudZwWgrq0FiDHL8D8omgUznMwvUCgEvLbXUep~3G66XWrG26qAz6WZn9dgRtb9WbKvNANYMbIKa21U3YF7Ct~OTxMiAfXw1CSSzQg189hLQ7J2gCOVTbG03SdSFhuHq9vUlrUwuaEWgChaS8MEUhtiLL6UKesA7LsZqapL52NzEXU7aWCSNUzsgOR4kPGXTLgEbWfJnTF9yEkUDJAuumeu~EwJx~AVBFoihjlUcvieT7qXgkrXSWcGai7KsKTM5iQZeJgCGwaGlqhLKwJBLWYFRaf1i-q-x~7tTA__')`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent" />
-
-        <div className="relative z-10 container max-w-3xl mx-auto px-4 py-16 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
-            포에버는 당신의 모든 이별의 순간에 함께합니다
-          </h2>
-
-          <p className="text-lg text-foreground/70 mb-12 leading-relaxed">
-            반려친구와의 이별은 슬프지만, 그 슬픔 속에는 함께했던 모든 순간의 소중함이 담겨 있습니다.
-            <br />
-            포에버와 함께 그 순간들을 영원히 기억해보세요.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Button
-              size="lg"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-6 text-lg rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105"
-              disabled
+            <Link
+              href="/contact"
+              className="mt-8 inline-block rounded-[10px] bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
             >
-              App Store 출시 예정
-            </Button>
-            <Button
-              size="lg"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-6 text-lg rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105"
-              disabled
-            >
-              Google Play 출시 예정
-            </Button>
+              문의 유형 선택하기
+            </Link>
           </div>
+        </section>
+      </main>
 
-          <div className="flex flex-col items-center gap-4">
-            <div className="flex gap-6 text-sm">
-              <a
-                href="/terms"
-                className="text-foreground/60 hover:text-primary transition-colors duration-300"
-              >
-                이용약관
-              </a>
-              <span className="text-foreground/30">|</span>
-              <a
-                href="/privacy"
-                className="text-foreground/60 hover:text-primary transition-colors duration-300"
-              >
-                개인정보취급방침
-              </a>
-              <span className="text-foreground/30">|</span>
-              <button
-                onClick={() => setShowEmailModal(true)}
-                className="text-foreground/60 hover:text-primary transition-colors duration-300 cursor-pointer"
-              >
-                문의
-              </button>
-            </div>
+      <SiteFooter />
 
-            <div className="border-t border-foreground/20 pt-6 w-full max-w-2xl">
-              <p className="text-xs text-foreground/50">2026 Pawever. All rights reserved.</p>
-            </div>
-          </div>
+      {/* 전환 바 — 화면을 가리지 않도록 본문 아래 여백을 함께 둔다 */}
+      <div className="h-20" aria-hidden="true" />
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-4 py-3 shadow-lg backdrop-blur">
+        <div className="mx-auto flex w-full max-w-[1024px] flex-wrap items-center justify-center gap-3">
+          <Link
+            href="/goods-survey"
+            className="rounded-[10px] bg-primary px-6 py-2.5 font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            굿즈 얼리버드 신청하기
+          </Link>
+          <Link
+            href="/goods-survey/survey"
+            className="rounded-[10px] border border-border bg-card px-6 py-2.5 text-center font-medium shadow-sm transition-colors hover:bg-accent/10"
+          >
+            15분 설문으로 포에버의 다음 서비스를 함께 만들어 주세요
+          </Link>
         </div>
-      </section>
-
-      {/* Floating Action Button */}
-      <div className="fixed bottom-8 right-8 z-40">
-        <button onClick={() => setShowEmailModal(true)} className="w-14 h-14 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 flex items-center justify-center">
-          <MessageCircle className="w-6 h-6" />
-        </button>
       </div>
-
-      {/* Email Modal */}
-      {showEmailModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-fade-in">
-          <div className="bg-background rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 animate-fade-in">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-foreground">문의하기</h3>
-              <button
-                onClick={() => setShowEmailModal(false)}
-                className="text-foreground/60 hover:text-foreground transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-
-            <p className="text-foreground/70 mb-6">
-              담당자에게 문의 사항을 전달하시겠어요?
-            </p>
-
-            <div className="flex gap-4">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => setShowEmailModal(false)}
-              >
-                아니오
-              </Button>
-              <Button
-                className="flex-1 bg-primary hover:bg-primary/90"
-                onClick={handleEmailClick}
-              >
-                예
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
