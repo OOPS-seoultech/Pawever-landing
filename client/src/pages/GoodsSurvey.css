@@ -700,8 +700,13 @@
 
 @media (prefers-reduced-motion: reduce) {
   .gs-primary-cta,
+  .gs-faq-list summary svg {
+    transition: none;
+  }
 
-  .gs-primary-cta:hover,
+  .gs-primary-cta:hover {
+    transform: none;
+  }
 }
 
 /* ── 2차 판매 가격 표시 ─────────────────────────────────────────

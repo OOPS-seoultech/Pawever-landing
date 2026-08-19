@@ -38,6 +38,10 @@ const ASSET_BASE = "/goods-survey";
 
 // 노션 3번: 이동 목적지는 같지만 어느 위치의 버튼이 설문 시작에 효과적인지 봐야 한다.
 // 위에서부터 순서대로 btn_A1~A4, 화면 하단 고정 버튼이 btn_B다.
+//
+// 이벤트 파라미터로만 쓰지 않고 data-cta-id로 DOM에도 내보낸다. Meta 이벤트 설정
+// 도구나 GTM 클릭 트리거는 DOM만 보는데, 히어로와 가격 비교 버튼은 클래스도
+// 문구도 같아서 식별자가 없으면 둘을 구분하지 못하고 같은 규칙에 겹쳐 잡힌다.
 const CTA_IDS = {
   hero: "btn_A1",
   price_comparison: "btn_A2",
@@ -127,11 +131,13 @@ function LandingImage({
 
 function PrimaryCta({
   onClick,
+  ctaId,
   label = CTA_LABEL,
   compact = false,
   disabled = false,
 }: {
   onClick: () => void;
+  ctaId?: string;
   label?: string;
   compact?: boolean;
   disabled?: boolean;
@@ -139,6 +145,7 @@ function PrimaryCta({
   return (
     <button
       type="button"
+      data-cta-id={ctaId}
       className={`gs-primary-cta${compact ? " gs-primary-cta--compact" : ""}`}
       onClick={onClick}
       disabled={disabled}
@@ -192,6 +199,20 @@ export default function GoodsSurvey() {
   const startSurvey = () => {
     // wouter는 화면 안에서 경로만 바꾸므로 이 이벤트가 유실될 일은 없다.
     setLocation("/goods-survey/survey");
+  };
+
+  /**
+   * 설문을 건너뛰고 바로 신청하러 간다.
+   *
+   * 설문에 답하면 더 싸다는 것을 이미 카드에서 보여준 뒤에 누르는 길이라,
+   * 여기서 다시 붙잡지 않는다. 값이 갈리는 것은 서버가 판정한다.
+   */
+  const startDirectPurchase = () => {
+    trackEvent("survey_cta_click", {
+      cta_id: CTA_IDS.offer,
+      cta_placement: "direct_purchase",
+    });
+    setLocation("/goods-survey/survey?direct=1");
   };
 
   useEffect(() => {
@@ -317,6 +338,7 @@ export default function GoodsSurvey() {
             <small>타사 판매가 {won(PRICE.competitor)} 비교</small>
           </div>
           <PrimaryCta
+            ctaId={CTA_IDS.hero}
             onClick={() => openCta("hero")}
             disabled={!surveyAvailable}
           />
@@ -365,6 +387,7 @@ export default function GoodsSurvey() {
               여기서 먼저 말하면 중복이고, 제작비 지원을 시간과 맞바꾸는 것처럼
               읽힌다. 회의록 6-6이 구분하라고 못 박은 지점이다. */}
           <PrimaryCta
+            ctaId={CTA_IDS.price_comparison}
             onClick={() => openCta("price_comparison")}
             disabled={!surveyAvailable}
           />
@@ -492,6 +515,7 @@ export default function GoodsSurvey() {
                   <li>2차 오픈 시 전용 구매 링크 제공</li>
                 </ul>
                 <PrimaryCta
+                  ctaId={CTA_IDS.offer}
                   onClick={() => openCta("offer")}
                   label="설문하고 멤버가 받기"
                   compact
@@ -500,10 +524,18 @@ export default function GoodsSurvey() {
               </div>
               <div className="gs-offer-card">
                 <span>일반 구매자</span>
-                <strong>{won(PRICE.presale)}</strong>
+                <strong>{won(PRICE.list)}</strong>
                 <ul>
-                  <li>2차 공개 사전판매 기간 적용</li>
+                  <li>설문 없이 바로 신청</li>
+                  <li>신청 후 문자로 입금 계좌 안내</li>
                 </ul>
+                <PrimaryCta
+                  ctaId={CTA_IDS.offer}
+                  onClick={startDirectPurchase}
+                  label="바로 신청하기"
+                  compact
+                  disabled={!goodsAvailable}
+                />
               </div>
               <p className="gs-source-note">
                 배송비 {won(PRICE.shipping)} 별도 · 2차 수량 한정
@@ -619,6 +651,7 @@ export default function GoodsSurvey() {
             우리 아이의 모습을 더 오래 남겨보세요.
           </h2>
           <PrimaryCta
+            ctaId={CTA_IDS.final}
             onClick={() => openCta("final")}
             label={`설문하고 -${won(MEMBER_DISCOUNT)} 혜택 받기`}
             disabled={!surveyAvailable}
@@ -653,6 +686,7 @@ export default function GoodsSurvey() {
         <div className="gs-stickybar">
           <button
             type="button"
+            data-cta-id={CTA_IDS.sticky}
             onClick={() => openCta("sticky")}
             disabled={!surveyAvailable}
           >

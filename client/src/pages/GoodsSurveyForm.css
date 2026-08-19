@@ -1354,6 +1354,62 @@
   font-weight: 800;
 }
 
+/* 신청 직후 보여주는 입금 안내. 계좌는 문자로만 보내고 여기 적지 않는다. */
+.gsf-payment-notice {
+  margin: 22px 0 0;
+  padding: 18px;
+  border: 1px solid var(--gsf-accent);
+  border-radius: 15px;
+  background: var(--gsf-accent-soft, #fff6ec);
+  text-align: left;
+}
+
+.gsf-payment-notice strong {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--gsf-accent-dark);
+  font-size: 15px;
+}
+
+.gsf-payment-notice p {
+  margin: 0 0 14px;
+  color: var(--gsf-ink-soft);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.gsf-payment-notice dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.gsf-payment-notice dl div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.gsf-payment-notice dt {
+  color: var(--gsf-ink-soft);
+  font-size: 13px;
+}
+
+.gsf-payment-notice dd {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.gsf-payment-notice dd em {
+  margin-left: 6px;
+  color: var(--gsf-accent-dark);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+}
+
 .gsf-review-id {
   margin: 22px 0;
   padding: 15px;
