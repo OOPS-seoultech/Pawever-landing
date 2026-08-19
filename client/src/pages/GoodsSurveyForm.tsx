@@ -676,6 +676,9 @@ export default function GoodsSurveyForm() {
     addressDetail: "",
   });
   const [photos, setPhotos] = useState<File[]>([]);
+  // 사진 공개 동의는 사연 공개 동의와 별개다. 사연에 동의했다고 해서 사진까지
+  // 공개해도 된다는 뜻은 아니다.
+  const [photoPublishConsent, setPhotoPublishConsent] = useState(false);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [privacyConsent, setPrivacyConsent] = useState(false);
@@ -1401,8 +1404,9 @@ export default function GoodsSurveyForm() {
           return uploadSurveyPhoto(draftSession, file, clientFileId);
         })
       );
-      // 사진별 공개 동의를 따로 받지 않고, 사연의 SNS 공유 동의 하나로 일괄 처리한다.
-      const publicPhotoIds = storyConsent.publish === true ? photoIds : [];
+      // 사진 공개는 사진 단계에서 따로 물어본 답을 쓴다. 사연 공개 동의를
+      // 여기에 끌어다 쓰면, 글에 동의한 사람의 사진까지 묻지도 않고 공개된다.
+      const publicPhotoIds = photoPublishConsent ? photoIds : [];
 
       setSubmissionProgress(
         "신청 정보를 저장하고 선착순 자리를 확정하고 있어요."
@@ -1478,6 +1482,7 @@ export default function GoodsSurveyForm() {
       publish: null,
     });
     setPhotos([]);
+    setPhotoPublishConsent(false);
     setPrivacyConsent(false);
     setShippingConsent(false);
     setReviewId("");
@@ -2039,6 +2044,22 @@ export default function GoodsSurveyForm() {
                   밝은 곳에서 얼굴 정면과 귀가 가리지 않은 사진이 좋아요. 전신
                   피규어는 몸의 무늬와 자세가 보이는 사진도 함께 올려주세요.
                 </p>
+                <div className="gsf-consent-card">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={photoPublishConsent}
+                      onChange={event =>
+                        setPhotoPublishConsent(event.target.checked)
+                      }
+                    />
+                    <span>
+                      {goodsSurveyProductionContent.photoPublishConsent}{" "}
+                      <em>선택</em>
+                    </span>
+                  </label>
+                  <p>{goodsSurveyProductionContent.photoPublishConsentNote}</p>
+                </div>
               </section>
 
               <section className="gsf-form-section">

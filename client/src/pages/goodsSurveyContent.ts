@@ -131,7 +131,8 @@ export const goodsSurveyStoryContent = {
   },
   consents: {
     analysis: "익명 연구·서비스 개선 분석 동의",
-    // SNS 공유에 동의하면 첨부 사진까지 함께 공개된다. 사진별 동의는 받지 않는다.
+    // 사연 글에 대한 동의다. 사진은 제작 단계에서 따로 묻는다
+    // (goodsSurveyProductionContent.photoPublishConsent).
     publish: "익명으로 SNS에 공유해도 괜찮을까요?",
     note: "SNS 공유를 수락해주신 분들의 사연 중에서만 소개하며, 모든 사연이 공유되지는 않습니다.",
   },
@@ -144,6 +145,11 @@ export const goodsSurveyProductionContent = {
   phoneFormatError: "형식에 맞춰 작성해주세요",
   safety:
     "본 굿즈는 보호자용 키링 또는 전시용입니다. 제품 소재 특성상 반려견이 물거나 삼키지 않도록 각별히 주의해 주세요.",
+  // 사진 공개는 사연과 따로 묻는다. 올린 사진을 보면서 답하도록 사진 단계에 둔다.
+  photoPublishConsent:
+    "올려주신 사진을 PAW-EVER 웹사이트·SNS에 소개해도 괜찮을까요?",
+  photoPublishConsentNote:
+    "동의하지 않으셔도 굿즈 제작과 배송에는 영향이 없어요. 제작이 끝나면 사진은 삭제됩니다.",
 } as const;
 
 export const goodsSurveyPrivacyContent = [

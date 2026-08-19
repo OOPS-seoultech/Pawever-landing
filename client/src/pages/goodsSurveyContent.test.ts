@@ -163,6 +163,10 @@ describe("굿즈 설문 첫 화면 문구", () => {
       phoneFormatError: "형식에 맞춰 작성해주세요",
       safety:
         "본 굿즈는 보호자용 키링 또는 전시용입니다. 제품 소재 특성상 반려견이 물거나 삼키지 않도록 각별히 주의해 주세요.",
+      photoPublishConsent:
+        "올려주신 사진을 PAW-EVER 웹사이트·SNS에 소개해도 괜찮을까요?",
+      photoPublishConsentNote:
+        "동의하지 않으셔도 굿즈 제작과 배송에는 영향이 없어요. 제작이 끝나면 사진은 삭제됩니다.",
     });
   });
 
