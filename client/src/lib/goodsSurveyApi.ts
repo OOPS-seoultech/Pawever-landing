@@ -187,6 +187,21 @@ export const completeSurvey = (
   );
 
 /**
+ * 설문을 건너뛰고 바로 굿즈 신청으로 간다.
+ *
+ * 적용가는 정가다. 설문을 마친 사람은 할인가를 받으므로, 이 길로 들어온
+ * 사람에게는 신청 전에 값이 다르다는 것을 먼저 보여줘야 한다.
+ */
+export const startDirectPurchase = (session: SurveyDraftSession) =>
+  apiRequest<SurveyCompletion>(
+    `/api/public/goods-survey/responses/${session.responseId}/direct-purchase`,
+    {
+      method: "POST",
+      headers: editHeaders(session),
+    }
+  );
+
+/**
  * 2차 제작 안내를 받을 이메일을 남긴다.
  *
  * 서버는 이 주소를 설문 응답과 연결해 저장하지 않는다. 설문을 마친 사람인지만
@@ -287,6 +302,10 @@ export const submitSurveyApplication = (
     applicationId: number;
     status: "SUBMITTED";
     remaining: number;
+    /** 설문에 답하고 온 신청인지. 완료 화면이 어떤 값을 보여줄지 가른다. */
+    surveyParticipant: boolean;
+    /** 문자로 안내할 입금액. 서버가 정한 값을 그대로 보여준다. */
+    appliedPriceKrw: number;
   }>(`/api/public/goods-survey/responses/${session.responseId}/application`, {
     method: "POST",
     headers: {

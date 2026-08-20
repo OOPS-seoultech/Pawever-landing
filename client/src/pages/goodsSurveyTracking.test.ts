@@ -100,6 +100,18 @@ describe("랜딩 CTA 식별자", () => {
     expect(landingSource).toContain("cta_id: CTA_IDS[placement]");
   });
 
+  it("다섯 개 CTA가 DOM에도 규격 식별자를 드러낸다", () => {
+    // Meta 이벤트 설정 도구와 GTM 클릭 트리거는 DOM만 본다. 히어로와 가격 비교
+    // 버튼은 클래스도 문구도 같아서, 식별자가 없으면 두 버튼을 구분할 수 없다.
+    const placements = ["hero", "price_comparison", "offer", "final", "sticky"];
+    expect(landingSource).toContain("data-cta-id={ctaId}");
+    for (const placement of placements) {
+      expect(landingSource).toMatch(
+        new RegExp(`(ctaId|data-cta-id)=\\{CTA_IDS\\.${placement}\\}`)
+      );
+    }
+  });
+
   it("안내 모달을 거쳐도 CTA 클릭은 버튼을 누른 시점에 남는다", () => {
     // 위치별 버튼 효과를 재는 지표라 모달 통과 여부와 분리해야 한다.
     // 모달에서 돌아선 사람은 설문 진입 이벤트가 없는 것으로 구분된다.

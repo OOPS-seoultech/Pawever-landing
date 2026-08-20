@@ -31,6 +31,7 @@ import {
   GoodsSurveyApiError,
   completeSurvey as completeSurveyRequest,
   createSurveyDraft,
+  startDirectPurchase,
   getSurveyCampaign,
   saveSurveyDraft,
   saveSurveyStory,
@@ -633,6 +634,16 @@ export default function GoodsSurveyForm() {
       ? requested
       : GOODS_UNSELECTED;
   }, []);
+  /**
+   * 설문을 건너뛰고 바로 신청하러 왔는지.
+   *
+   * 설문을 마친 사람은 할인가를, 이 길로 온 사람은 정가를 낸다. 값이 갈리므로
+   * 서버에도 어느 길로 왔는지 알려야 하고, 그 판정은 서버가 한다.
+   */
+  const directPurchase = useMemo(
+    () => new URLSearchParams(window.location.search).get("direct") === "1",
+    []
+  );
   const restoredDraft = useMemo(() => {
     const draft = loadGoodsSurveyDraft();
     if (
@@ -685,6 +696,16 @@ export default function GoodsSurveyForm() {
   const [shippingConsent, setShippingConsent] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [reviewId, setReviewId] = useState("");
+  /**
+   * 신청 직후 띄우는 입금 안내.
+   *
+   * 계좌는 화면에 적지 않는다. 문자로 보내야 누가 어떤 금액을 냈는지 대조할 수
+   * 있고, 화면에 계좌를 붙여 두면 신청하지 않은 사람도 입금하게 된다.
+   */
+  const [paymentNotice, setPaymentNotice] = useState<{
+    amountKrw: number;
+    surveyParticipant: boolean;
+  } | null>(null);
   // 서버가 알려주기 전까지 쓰는 값이다. 임의의 숫자를 두면 사실과 다른 수가
   // 잠깐 보일 수 있으므로 아직 아무도 신청하지 않은 상태로 둔다.
   const [remaining, setRemaining] = useState(
@@ -800,6 +821,48 @@ export default function GoodsSurveyForm() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [stage, currentQuestionId]);
+
+  /**
+   * 직행으로 들어오면 설문을 거치지 않고 제작 화면으로 보낸다.
+   *
+   * 이어서 진행하던 응답이 있으면 그쪽이 우선이다. 설문을 절반 쓰다 온 사람을
+   * 직행으로 덮으면 그때까지 쓴 답이 사라진다.
+   */
+  useEffect(() => {
+    if (!directPurchase || restoredDraft || draftSession || apiBusy) return;
+
+    let cancelled = false;
+    setApiBusy(true);
+    void (async () => {
+      try {
+        const session = await createSurveyDraft({
+          questionnaireVersion: GOODS_SURVEY_VERSION,
+          selectedGoods: initialGoods,
+          tracking: createSubmissionTrackingContext(),
+        });
+        if (cancelled) return;
+        await startDirectPurchase(session);
+        if (cancelled) return;
+        setDraftSession(session);
+        setRemaining(session.remaining);
+        trackEvent("survey_start", {
+          entry_method: "direct_purchase",
+          goods_type: goodsTypeForTracking,
+        });
+        setStage("production");
+      } catch (error) {
+        if (!cancelled) setApiError(apiMessage(error));
+      } finally {
+        if (!cancelled) setApiBusy(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // 진입 시 한 번만 돈다. 의존성을 넓히면 제작 화면에서 다시 실행된다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [directPurchase]);
 
   useEffect(() => {
     if (stage !== "questions" || !currentQuestion) return;
@@ -1437,6 +1500,11 @@ export default function GoodsSurveyForm() {
         .toUpperCase()}`;
       setReviewId(nextReviewId);
       setRemaining(application.remaining);
+      // 입금 안내에 쓸 값. 서버가 설문 참여 여부를 보고 정한 금액을 그대로 쓴다.
+      setPaymentNotice({
+        amountKrw: application.appliedPriceKrw,
+        surveyParticipant: application.surveyParticipant,
+      });
       // 노션 10번: 제출 버튼을 누른 시점이 아니라 서버 저장이 끝난 지금이 완료다.
       // 여기까지 온 사람은 이탈이 아니므로 pagehide 이탈 기록도 막는다.
       if (!applicationTracked.current) {
@@ -1486,6 +1554,7 @@ export default function GoodsSurveyForm() {
     setPrivacyConsent(false);
     setShippingConsent(false);
     setReviewId("");
+    setPaymentNotice(null);
     setApiError("");
     setDraftSaveState("idle");
     fileClientIds.current.clear();
@@ -2280,17 +2349,40 @@ export default function GoodsSurveyForm() {
                 <br />
                 정상적으로 접수됐어요.
               </h1>
-              <p>
-                설문 응답과 제작·배송 정보는 분리해 안전하게 저장했습니다. 제작
-                관련 안내는 입력한 연락처로 전달드릴게요.
-              </p>
+              <p>설문 응답과 제작·배송 정보는 분리해 안전하게 저장했습니다.</p>
+              {paymentNotice && (
+                <div className="gsf-payment-notice">
+                  <strong>입금 안내를 문자로 보내드릴게요</strong>
+                  <p>
+                    입력하신 연락처로 입금 계좌를 문자로 보내드립니다. 입금이
+                    확인되면 제작이 시작돼요.
+                  </p>
+                  <dl>
+                    <div>
+                      <dt>결제 금액</dt>
+                      <dd>
+                        {paymentNotice.amountKrw.toLocaleString("ko-KR")}원
+                        {paymentNotice.surveyParticipant && (
+                          <em> 설문 참여 할인 적용</em>
+                        )}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>배송비</dt>
+                      <dd>{wonText(GOODS_PRICE.shipping)} 별도</dd>
+                    </div>
+                  </dl>
+                </div>
+              )}
               <div className="gsf-review-id">
                 <span>접수 확인 번호</span>
                 <strong>{reviewId}</strong>
               </div>
-              <p className="gsf-review-submit-note">
-                현재 남은 자리 {remaining}명
-              </p>
+              {remaining >= 0 && (
+                <p className="gsf-review-submit-note">
+                  현재 남은 자리 {remaining}명
+                </p>
+              )}
               <button
                 type="button"
                 className="gsf-primary"
