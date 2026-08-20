@@ -119,7 +119,13 @@ export default function AdminOrders() {
         <Input
           value={searchInput}
           onChange={(event) => setSearchInput(event.target.value)}
-          placeholder="주문번호 또는 반려동물 이름"
+          placeholder={
+            // 제작팀 검색은 보호자 이름에 걸리지 않는다. 걸린다고 적어 두면
+            // 이름을 넣어 보고 결과가 없는 것을 없는 주문으로 읽는다.
+            role === "ADMIN"
+              ? "주문번호, 반려동물 또는 보호자 이름"
+              : "주문번호 또는 반려동물 이름"
+          }
           className="max-w-xs"
         />
         <Button type="submit" variant="secondary">
