@@ -141,7 +141,6 @@ export const goodsSurveyStoryContent = {
 export const goodsSurveyProductionContent = {
   title: "굿즈 제작 정보를 알려주세요.",
   lead: "수작업 3D 굿즈 특성상 5일에서 최대 3주까지 시간이 소요될 수 있어요. 제공하신 정보는 굿즈 발송일로부터 3주 뒤 모두 삭제됩니다.",
-  goodsSubstitution: "신청자가 적은 굿즈는 비슷한 형태로 대체될 수 있어요.",
   phoneFormatError: "형식에 맞춰 작성해주세요",
   safety:
     "본 굿즈는 보호자용 키링 또는 전시용입니다. 제품 소재 특성상 반려견이 물거나 삼키지 않도록 각별히 주의해 주세요.",
