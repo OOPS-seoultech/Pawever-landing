@@ -127,7 +127,6 @@ type StoryConsent = {
 
 type ProductionFields = {
   goods: string;
-  customGoods: string;
   petName: string;
   guardianName: string;
   phone: string;
@@ -136,13 +135,15 @@ type ProductionFields = {
   addressDetail: string;
 };
 
-const productionGoods = [
-  ["acrylic", "아크릴 얼굴 키링"],
-  ["face", "3D 얼굴 키링"],
-  ["backplate", "뒷판형 3D 얼굴 키링"],
-  ["figure", "3D 전신 피규어"],
-  ["custom", "원하는 형태 직접 제안"],
-] as const;
+/**
+ * 2차 판매 상품.
+ *
+ * 회의록 2번이 주력을 3D 전신 피규어 한 종으로 좁혔다. 고를 것이 없으므로
+ * 신청 화면에서도 선택을 받지 않고 무엇을 만드는지만 보여준다.
+ * 1차 신청 기록에는 다른 종류 값이 남아 있다. 그때 실제로 신청한 것이라 고치지 않는다.
+ */
+const PRODUCTION_GOODS_ID = "figure";
+const PRODUCTION_GOODS_NAME = "3D 전신 피규어";
 
 const emptyStory: StoryFields = {
   status: "",
@@ -628,12 +629,9 @@ export default function GoodsSurveyForm() {
   const [, setLocation] = useLocation();
   // 랜딩에서 굿즈를 고르지 않고 바로 들어올 수 있다. 고르지 않았다는 사실도
   // 선호 데이터라, 빈자리를 임의의 굿즈로 채우지 않는다.
-  const initialGoods = useMemo(() => {
-    const requested = new URLSearchParams(window.location.search).get("goods");
-    return requested && productionGoods.some(([id]) => id === requested)
-      ? requested
-      : GOODS_UNSELECTED;
-  }, []);
+  // 판매 상품이 한 종이라 랜딩에서 고를 것이 없다. 설문 응답에는 "고르지 않음"으로
+  // 남긴다. 고르지 않았다는 사실도 선호 데이터라 임의의 굿즈로 채우지 않는다.
+  const initialGoods = GOODS_UNSELECTED;
   /**
    * 설문을 건너뛰고 바로 신청하러 왔는지.
    *
@@ -677,8 +675,7 @@ export default function GoodsSurveyForm() {
   });
   const [production, setProduction] = useState<ProductionFields>({
     // 랜딩에서 고르지 않았으면 비워 둔다. 제작 단계에서 직접 고르게 한다.
-    goods: initialGoods === GOODS_UNSELECTED ? "" : initialGoods,
-    customGoods: "",
+    goods: PRODUCTION_GOODS_ID,
     petName: "",
     guardianName: "",
     phone: "",
@@ -1355,7 +1352,6 @@ export default function GoodsSurveyForm() {
         production.postalCode.trim() &&
         production.address.trim()
     ) &&
-    (production.goods !== "custom" || Boolean(production.customGoods.trim())) &&
     privacyConsent &&
     shippingConsent;
 
@@ -1480,7 +1476,8 @@ export default function GoodsSurveyForm() {
         idempotencyKey.current,
         {
           goodsType: production.goods,
-          customGoods: production.customGoods,
+          // 한 종만 팔아 직접 제안을 받지 않는다. 1차 기록에는 값이 남아 있다.
+          customGoods: "",
           petName: production.petName,
           guardianName: production.guardianName,
           phone: production.phone,
@@ -2007,47 +2004,12 @@ export default function GoodsSurveyForm() {
               </p>
 
               <section className="gsf-form-section">
-                <h2>1. 받고 싶은 굿즈</h2>
-                <div className="gsf-goods-grid">
-                  {productionGoods.map(([id, name]) => (
-                    <button
-                      type="button"
-                      key={id}
-                      className={production.goods === id ? "is-selected" : ""}
-                      onClick={() =>
-                        setProduction(previous => ({
-                          ...previous,
-                          goods: id,
-                        }))
-                      }
-                    >
-                      <span>
-                        {production.goods === id && (
-                          <Check aria-hidden="true" />
-                        )}
-                      </span>
-                      {name}
-                    </button>
-                  ))}
+                <h2>1. 제작할 굿즈</h2>
+                {/* 판매 상품이 한 종이라 고를 것이 없다. 무엇을 만드는지만 밝힌다. */}
+                <div className="gsf-goods-fixed">
+                  <Check aria-hidden="true" />
+                  <strong>{PRODUCTION_GOODS_NAME}</strong>
                 </div>
-                {production.goods === "custom" && (
-                  <label>
-                    <FieldLabel>원하는 형태</FieldLabel>
-                    <input
-                      value={production.customGoods}
-                      onChange={event =>
-                        setProduction(previous => ({
-                          ...previous,
-                          customGoods: event.target.value,
-                        }))
-                      }
-                      placeholder="원하는 굿즈 형태와 용도를 적어 주세요."
-                    />
-                  </label>
-                )}
-                <p className="gsf-field-help">
-                  {goodsSurveyProductionContent.goodsSubstitution}
-                </p>
               </section>
 
               <section className="gsf-form-section">

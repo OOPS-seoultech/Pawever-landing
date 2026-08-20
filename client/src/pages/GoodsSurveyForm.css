@@ -922,54 +922,30 @@
   font-weight: 900;
 }
 
-.gsf-goods-grid {
-  display: grid;
-  gap: 8px;
-}
-
-.gsf-goods-grid button {
+/* 판매 상품이 한 종이라 고르는 자리가 아니라 무엇을 만드는지 밝히는 자리다. */
+.gsf-goods-fixed {
   min-height: 48px;
   display: grid;
-  grid-template-columns: 25px 1fr;
+  grid-template-columns: 24px 1fr;
   align-items: center;
   gap: 9px;
   padding: 10px 12px;
-  border: 1px solid var(--gsf-line);
+  border: 1px solid var(--gsf-accent);
   border-radius: 13px;
-  background: #fffdfa;
+  background: var(--gsf-accent-soft);
   color: var(--gsf-ink);
   font-size: 13px;
-  font-weight: 750;
-  text-align: left;
-  cursor: pointer;
 }
 
-.gsf-goods-grid button.is-selected {
-  border: 2px solid var(--gsf-accent);
-  padding: 9px 11px;
-  background: var(--gsf-accent-soft);
-}
-
-.gsf-goods-grid button > span {
-  width: 24px;
-  height: 24px;
-  display: inline-grid;
-  place-items: center;
-  border: 1px solid var(--gsf-line);
-  border-radius: 50%;
-  background: #ffffff;
-}
-
-.gsf-goods-grid button.is-selected > span {
-  border-color: var(--gsf-accent);
-  background: var(--gsf-accent);
-  color: #ffffff;
-}
-
-.gsf-goods-grid svg {
-  width: 14px;
-  height: 14px;
+.gsf-goods-fixed svg {
+  width: 16px;
+  height: 16px;
+  color: var(--gsf-accent-dark);
   stroke-width: 3;
+}
+
+.gsf-goods-fixed strong {
+  font-weight: 750;
 }
 
 .gsf-upload {
