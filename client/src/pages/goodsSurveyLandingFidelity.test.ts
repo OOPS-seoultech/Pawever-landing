@@ -198,6 +198,28 @@ describe("굿즈 제작 정보 화면", () => {
     expect(formSource).not.toMatch(/<legend>\s*\{label\}/);
   });
 
+  it("바로 신청 버튼은 굿즈가 열렸을 때 그린다", () => {
+    // 오퍼 카드는 굿즈가 닫혔을 때만 뜨고 버튼은 열렸을 때만 눌리게 두면,
+    // 두 조건이 엇갈려 버튼을 영영 누를 수 없다. 보일 땐 비활성, 활성일 땐
+    // 화면에 없는 상태가 된다.
+    expect(landingSource).toMatch(
+      /\{goodsAvailable \? \(\s*<PrimaryCta[\s\S]{0,200}?startDirectPurchase/
+    );
+    expect(landingSource).not.toMatch(
+      /onClick=\{startDirectPurchase\}[\s\S]{0,200}?disabled=\{!goodsAvailable\}/
+    );
+  });
+
+  it("정원이 없는 모집에서는 남은 자리를 세지 않는다", () => {
+    // 수량을 막지 않는 모집에서 서버는 셀 수 없다는 뜻으로 -1을 준다.
+    // 그대로 그리면 "-1명만 더 받을 수 있어요"가 화면에 뜬다.
+    expect(landingSource).toContain(
+      "const hasSlotLimit = remaining >= 0 && capacity > 0;"
+    );
+    expect(landingSource).toContain("{goodsAvailable && hasSlotLimit ? (");
+    expect(formSource).toContain("{remaining >= 0 && (");
+  });
+
   it("사진 공개 동의를 사연 공개 동의와 따로 받는다", () => {
     // 사연 공개에 동의했다고 사진까지 공개해도 된다는 뜻은 아니다.
     // 예전에는 storyConsent.publish 하나로 사진까지 공개 처리해서,

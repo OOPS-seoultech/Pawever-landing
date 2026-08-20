@@ -166,7 +166,10 @@ export default function GoodsSurvey() {
   const capacity = campaign?.capacity ?? CAMPAIGN.capacity;
   const completed = campaign?.allocated ?? CAMPAIGN.completed;
   const remaining = campaign?.remaining ?? capacity - completed;
-  const completedPercent = (completed / capacity) * 100;
+  // 유료로 전환하면서 수량을 막지 않는 모집이 생겼다. 그때 서버는 남은 자리를
+  // 셀 수 없다는 뜻으로 -1을 준다. 선착순 화면은 정원이 있을 때만 뜻이 있다.
+  const hasSlotLimit = remaining >= 0 && capacity > 0;
+  const completedPercent = hasSlotLimit ? (completed / capacity) * 100 : 0;
   // 설문과 굿즈는 서로 다른 스위치로 열리고 닫힌다. 기본값을 반대로 두는 이유는
   // 각각 틀렸을 때 덜 나쁜 쪽으로 넘어지게 하기 위해서다. 설문이 잘못 열리면
   // 서버가 거부할 뿐이지만, 굿즈가 잘못 열리면 지킬 수 없는 약속이 화면에 뜬다.
@@ -476,7 +479,7 @@ export default function GoodsSurvey() {
         {/* 굿즈가 열려 있으면 남은 자리를, 닫혀 있으면 2차 가격을 보여준다.
             줄 수 없는 것을 준다고 말하지 않으려면 두 화면이 갈라져야 한다. */}
         <section className="gs-section" id="offer">
-          {goodsAvailable ? (
+          {goodsAvailable && hasSlotLimit ? (
             <div
               className="gs-remaining-card"
               data-remaining={remaining}
@@ -512,7 +515,11 @@ export default function GoodsSurvey() {
                 <strong>{won(PRICE.member)}</strong>
                 <ul>
                   <li>{CAMPAIGN.duration} 설문 완료</li>
-                  <li>2차 오픈 시 전용 구매 링크 제공</li>
+                  <li>
+                    {goodsAvailable
+                      ? "설문을 마치면 이어서 신청"
+                      : "2차 오픈 시 전용 구매 링크 제공"}
+                  </li>
                 </ul>
                 <PrimaryCta
                   ctaId={CTA_IDS.offer}
@@ -529,16 +536,22 @@ export default function GoodsSurvey() {
                   <li>설문 없이 바로 신청</li>
                   <li>신청 후 문자로 입금 계좌 안내</li>
                 </ul>
-                <PrimaryCta
-                  ctaId={CTA_IDS.offer}
-                  onClick={startDirectPurchase}
-                  label="바로 신청하기"
-                  compact
-                  disabled={!goodsAvailable}
-                />
+                {/* 굿즈가 닫혀 있으면 버튼을 두지 않는다. 눌러도 신청할 수 없는
+                    버튼은 줄 수 없는 것을 준다고 말하는 것과 같다. */}
+                {goodsAvailable ? (
+                  <PrimaryCta
+                    ctaId={CTA_IDS.offer}
+                    onClick={startDirectPurchase}
+                    label="바로 신청하기"
+                    compact
+                  />
+                ) : (
+                  <p className="gs-source-note">2차 오픈 시 신청할 수 있어요</p>
+                )}
               </div>
               <p className="gs-source-note">
-                배송비 {won(PRICE.shipping)} 별도 · 2차 수량 한정
+                배송비 {won(PRICE.shipping)} 별도
+                {hasSlotLimit ? " · 2차 수량 한정" : ""}
               </p>
             </div>
           )}
