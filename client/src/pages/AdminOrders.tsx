@@ -18,6 +18,20 @@ import {
 
 const PAGE_SIZE = 20;
 
+/**
+ * 굿즈 종류.
+ *
+ * 서버의 GoodsTypeNames 와 같아야 한다. 2차는 3D 전신 피규어 한 종이지만,
+ * 1차 체험단 100건은 종류가 여러 개라 옛 주문을 찾을 때 쓴다.
+ */
+const GOODS_TYPES = [
+  { code: "figure", label: "3D 전신 피규어" },
+  { code: "face", label: "3D 얼굴 키링" },
+  { code: "backplate", label: "뒷판형 3D 얼굴 키링" },
+  { code: "acrylic", label: "아크릴 얼굴 키링" },
+  { code: "custom", label: "원하는 형태 직접 제안" },
+];
+
 const TONE_CLASS: Record<ReturnType<typeof statusTone>, string> = {
   waiting: "bg-amber-100 text-amber-900",
   active: "bg-emerald-100 text-emerald-900",
@@ -39,6 +53,8 @@ export default function AdminOrders() {
   const [submittedFrom, setSubmittedFrom] = useState("");
   const [submittedTo, setSubmittedTo] = useState("");
   const [minPhotoCount, setMinPhotoCount] = useState("");
+  // 1차 체험단은 굿즈가 여러 종류다. 2차는 한 종이지만 옛 주문을 찾을 때 쓴다.
+  const [goodsType, setGoodsType] = useState("");
 
   const [data, setData] = useState<AdminOrderListResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -55,6 +71,7 @@ export default function AdminOrders() {
           submittedFrom: submittedFrom || undefined,
           submittedTo: submittedTo || undefined,
           minPhotoCount: minPhotoCount ? Number(minPhotoCount) : undefined,
+          goodsType: goodsType || undefined,
           page,
           size: PAGE_SIZE,
         })
@@ -75,6 +92,7 @@ export default function AdminOrders() {
     submittedFrom,
     submittedTo,
     minPhotoCount,
+    goodsType,
     page,
     setLocation,
   ]);
@@ -175,6 +193,25 @@ export default function AdminOrders() {
         </label>
 
         <label className="text-xs text-muted-foreground">
+          굿즈
+          <select
+            value={goodsType}
+            onChange={(event) => {
+              setPage(0);
+              setGoodsType(event.target.value);
+            }}
+            className="mt-1 block h-8 rounded-md border border-input bg-background px-2 text-sm"
+          >
+            <option value="">전체</option>
+            {GOODS_TYPES.map((type) => (
+              <option key={type.code} value={type.code}>
+                {type.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="text-xs text-muted-foreground">
           사진 최소 장수
           <Input
             type="number"
@@ -190,7 +227,7 @@ export default function AdminOrders() {
           />
         </label>
 
-        {submittedFrom || submittedTo || minPhotoCount ? (
+        {submittedFrom || submittedTo || minPhotoCount || goodsType ? (
           <Button
             variant="ghost"
             size="sm"
@@ -199,6 +236,7 @@ export default function AdminOrders() {
               setSubmittedFrom("");
               setSubmittedTo("");
               setMinPhotoCount("");
+              setGoodsType("");
             }}
           >
             조건 지우기
@@ -214,6 +252,7 @@ export default function AdminOrders() {
             <tr>
               <th className="px-3 py-2 font-medium">주문번호</th>
               <th className="px-3 py-2 font-medium">신청일</th>
+              <th className="px-3 py-2 font-medium">굿즈</th>
               <th className="px-3 py-2 font-medium">반려동물</th>
               <th className="px-3 py-2 font-medium">보호자</th>
               <th className="px-3 py-2 font-medium">연락처</th>
@@ -225,7 +264,7 @@ export default function AdminOrders() {
           <tbody>
             {loading && !data ? (
               <tr>
-                <td colSpan={8} className="px-3 py-8 text-center text-muted-foreground">
+                <td colSpan={9} className="px-3 py-8 text-center text-muted-foreground">
                   불러오는 중...
                 </td>
               </tr>
@@ -233,7 +272,7 @@ export default function AdminOrders() {
 
             {data?.orders.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-3 py-8 text-center text-muted-foreground">
+                <td colSpan={9} className="px-3 py-8 text-center text-muted-foreground">
                   조건에 맞는 주문이 없습니다.
                 </td>
               </tr>
@@ -248,6 +287,9 @@ export default function AdminOrders() {
                 <td className="px-3 py-2 font-mono text-xs">{order.orderNumber}</td>
                 <td className="px-3 py-2 text-muted-foreground">
                   {formatDateTime(order.submittedAt)}
+                </td>
+                <td className="px-3 py-2 text-muted-foreground">
+                  {order.goodsTypeLabel || order.goodsType}
                 </td>
                 <td className="px-3 py-2">{order.petName}</td>
                 <td className="px-3 py-2">{order.guardianNameMasked}</td>

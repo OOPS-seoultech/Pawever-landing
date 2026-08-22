@@ -115,7 +115,7 @@ export default function AdminOrderDetail() {
         <Section title="주문">
           <Row label="상태" value={order.statusLabel ?? STATUS_LABELS[order.status]} />
           <Row label="신청일" value={formatDateTime(order.submittedAt)} />
-          <Row label="굿즈" value={order.goodsType} />
+          <Row label="굿즈" value={order.goodsTypeLabel || order.goodsType} />
           <Row label="반려동물" value={order.petName} />
           {order.pricing ? (
             <>

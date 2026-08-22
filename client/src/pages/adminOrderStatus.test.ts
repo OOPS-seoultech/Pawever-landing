@@ -3,6 +3,7 @@ import {
   canRegisterTracking,
   filterableStatusesFor,
   photoSlotRows,
+  statusTone,
   settableStatusesFor,
   STATUS_LABELS,
 } from "./adminOrderStatus";
@@ -42,10 +43,12 @@ describe("관리자 주문 상태 규칙", () => {
 
   it("제작팀 필터에는 결제 전 주문이 없다", () => {
     // 돈을 받지 않은 주문이 제작 대기열에 섞이면 만들지 않아도 될 것을 만든다.
+    // 1차 체험단은 예외다. 결제는 없었지만 실제로 만들어 보내야 하는
+    // 물건이라 제작 화면에 있어야 한다. 아래 "1차 체험단" 묶음에서 따로 본다.
     const production = filterableStatusesFor("PRODUCTION");
     expect(production).not.toContain("PAYMENT_PENDING");
     expect(production).not.toContain("PAYMENT_EXPIRED");
-    expect(production).not.toContain("LEGACY_FREE");
+    expect(production).not.toContain("PAYMENT_FAILED");
   });
 
   it("송장 등록은 관리자만, 결제가 끝난 뒤에만 열린다", () => {
@@ -71,6 +74,33 @@ describe("관리자 주문 상태 규칙", () => {
     statuses.forEach((status) => {
       expect(STATUS_LABELS[status]).toBeTruthy();
     });
+  });
+});
+
+describe("1차 체험단", () => {
+  it("결제 관련 상태로는 바꿀 수 없다", () => {
+    // 결제라는 것이 없던 주문이다. 결제 완료로 바꾸면 받지도 않은 돈이
+    // 매출로 잡힌다. 서버도 같은 것을 막는다.
+    const settable = settableStatusesFor("ADMIN", "LEGACY_FREE");
+
+    expect(settable).toEqual(["IN_PRODUCTION"]);
+    expect(settable).not.toContain("PAYMENT_COMPLETED");
+    expect(settable).not.toContain("PAYMENT_EXPIRED");
+    expect(settable).not.toContain("PAYMENT_FAILED");
+  });
+
+  it("제작팀에게 보인다", () => {
+    // 결제는 없었지만 실제로 만들어 보내야 하는 물건이다.
+    expect(filterableStatusesFor("PRODUCTION")).toContain("LEGACY_FREE");
+  });
+
+  it("송장을 등록할 수 있다", () => {
+    // 무료로 드린 것도 보내야 한다. 막아 두면 발송 완료로 못 넘어간다.
+    expect(canRegisterTracking("ADMIN", "LEGACY_FREE")).toBe(true);
+  });
+
+  it("끝난 것으로 보이지 않는다", () => {
+    expect(statusTone("LEGACY_FREE")).toBe("active");
   });
 });
 
