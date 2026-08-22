@@ -14,6 +14,11 @@ import AppService from "./pages/AppService";
 import Roadmap from "./pages/Roadmap";
 import GoodsSurvey from "./pages/GoodsSurvey";
 import GoodsSurveyForm from "./pages/GoodsSurveyForm";
+import AdminLogin from "./pages/AdminLogin";
+import AdminOrders from "./pages/AdminOrders";
+import AdminOrderDetail from "./pages/AdminOrderDetail";
+import AdminAccounts from "./pages/AdminAccounts";
+import AdminAcceptInvite from "./pages/AdminAcceptInvite";
 import { useEffect } from "react";
 import { initializeAnalytics } from "./lib/analytics/analytics";
 
@@ -38,6 +43,12 @@ function Router() {
       <Route path="/contact" component={Contact} />
       <Route path="/goods-survey/survey" component={GoodsSurveyForm} />
       <Route path="/goods-survey" component={GoodsSurvey} />
+      {/* 관리자 화면. 더 긴 주소를 먼저 둔다 — /admin 이 앞에 오면 뒤가 안 잡힌다. */}
+      <Route path="/admin/accept-invite" component={AdminAcceptInvite} />
+      <Route path="/admin/orders/:orderNumber" component={AdminOrderDetail} />
+      <Route path="/admin/orders" component={AdminOrders} />
+      <Route path="/admin/accounts" component={AdminAccounts} />
+      <Route path="/admin" component={AdminLogin} />
       <Route path="/404" component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
