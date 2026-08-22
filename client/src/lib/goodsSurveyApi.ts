@@ -220,6 +220,19 @@ export const subscribeSurveyNotice = (
     }
   );
 
+/**
+ * 안내 메일 수신을 거부한다.
+ *
+ * 값은 본문으로 보낸다. 주소에 실으면 링크를 거치는 모든 곳에 남는다.
+ * 서버는 맞지 않는 값에도 성공으로 답한다 — 어떤 값이 살아 있는지 알려 주면
+ * 그것으로 하나씩 넣어 볼 수 있게 된다.
+ */
+export const unsubscribeSurveyNotice = (token: string) =>
+  apiRequest<void>("/api/public/goods-survey/notice-subscriptions/unsubscribe", {
+    method: "POST",
+    body: JSON.stringify({ token }),
+  });
+
 export const saveSurveyStory = (
   session: SurveyDraftSession,
   payload: StoryPayload

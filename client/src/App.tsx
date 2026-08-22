@@ -14,6 +14,7 @@ import AppService from "./pages/AppService";
 import Roadmap from "./pages/Roadmap";
 import GoodsSurvey from "./pages/GoodsSurvey";
 import GoodsSurveyForm from "./pages/GoodsSurveyForm";
+import Unsubscribe from "./pages/Unsubscribe";
 import AdminLogin from "./pages/AdminLogin";
 import AdminOrders from "./pages/AdminOrders";
 import AdminOrderDetail from "./pages/AdminOrderDetail";
@@ -43,6 +44,8 @@ function Router() {
       <Route path="/contact" component={Contact} />
       <Route path="/goods-survey/survey" component={GoodsSurveyForm} />
       <Route path="/goods-survey" component={GoodsSurvey} />
+      {/* 안내 메일의 수신거부 링크가 닿는 자리. */}
+      <Route path="/unsubscribe" component={Unsubscribe} />
       {/* 관리자 화면. 더 긴 주소를 먼저 둔다 — /admin 이 앞에 오면 뒤가 안 잡힌다. */}
       <Route path="/admin/accept-invite" component={AdminAcceptInvite} />
       <Route path="/admin/orders/:orderNumber" component={AdminOrderDetail} />
