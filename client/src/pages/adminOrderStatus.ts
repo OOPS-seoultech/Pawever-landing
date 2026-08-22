@@ -80,6 +80,43 @@ export const canRegisterTracking = (
     current === "IN_PRODUCTION" ||
     current === "SHIPPED");
 
+/** 사진 자리 하나. 비어 있으면 "미기입"으로 보여 준다. */
+export type PhotoSlotRow = {
+  slot: number;
+  filled: boolean;
+  label: string;
+};
+
+export const PHOTO_SLOT_COUNT = 5;
+export const EMPTY_PHOTO_LABEL = "미기입";
+
+/**
+ * 사진 1~5 자리를 만든다.
+ *
+ * 사진 1은 필수이고 2~5는 선택이다. 올리지 않은 자리를 그냥 빼면, 화면만
+ * 봐서는 안 올린 것인지 화면이 못 그린 것인지 알 수 없다. 그래서 빈 자리도
+ * 자리로 남기고 "미기입"이라고 적는다.
+ *
+ * 서버가 자리를 덜 내려줘도 다섯 자리를 채운다.
+ */
+export const photoSlotRows = (
+  photos: { slot: number; filled: boolean }[] | undefined
+): PhotoSlotRow[] => {
+  const filled = new Set(
+    (photos ?? []).filter((photo) => photo.filled).map((photo) => photo.slot)
+  );
+
+  return Array.from({ length: PHOTO_SLOT_COUNT }, (_, index) => {
+    const slot = index + 1;
+    const has = filled.has(slot);
+    return {
+      slot,
+      filled: has,
+      label: has ? `사진 ${slot}` : EMPTY_PHOTO_LABEL,
+    };
+  });
+};
+
 /** 화면에서 상태에 붙일 색. 손이 가야 하는 것과 끝난 것을 나눈다. */
 export const statusTone = (
   status: GoodsOrderStatus

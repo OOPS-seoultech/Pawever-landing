@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   canRegisterTracking,
   filterableStatusesFor,
+  photoSlotRows,
   settableStatusesFor,
   STATUS_LABELS,
 } from "./adminOrderStatus";
@@ -70,5 +71,41 @@ describe("관리자 주문 상태 규칙", () => {
     statuses.forEach((status) => {
       expect(STATUS_LABELS[status]).toBeTruthy();
     });
+  });
+});
+
+describe("사진 자리", () => {
+  it("올리지 않은 자리를 미기입으로 남긴다", () => {
+    // 요구서: 선택 사진이 없으면 관리자 화면에 반드시 "미기입"으로 표시한다.
+    const rows = photoSlotRows([
+      { slot: 1, filled: true },
+      { slot: 2, filled: false },
+      { slot: 3, filled: false },
+      { slot: 4, filled: false },
+      { slot: 5, filled: false },
+    ]);
+
+    expect(rows).toHaveLength(5);
+    expect(rows[0].label).toBe("사진 1");
+    expect(rows.slice(1).map((row) => row.label)).toEqual([
+      "미기입",
+      "미기입",
+      "미기입",
+      "미기입",
+    ]);
+  });
+
+  it("서버가 자리를 덜 내려줘도 다섯 자리를 채운다", () => {
+    // 자리를 빼 버리면 안 올린 것인지 화면이 못 그린 것인지 구분이 안 된다.
+    const rows = photoSlotRows([{ slot: 1, filled: true }]);
+
+    expect(rows).toHaveLength(5);
+    expect(rows.filter((row) => row.filled)).toHaveLength(1);
+    expect(rows[4].label).toBe("미기입");
+  });
+
+  it("값이 아예 없어도 화면을 깨지 않는다", () => {
+    expect(photoSlotRows(undefined)).toHaveLength(5);
+    expect(photoSlotRows(undefined).every((row) => !row.filled)).toBe(true);
   });
 });
