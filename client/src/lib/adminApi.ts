@@ -354,6 +354,19 @@ export const changeAdminOrderStatus = (
     }
   );
 
+/**
+ * 주문을 취소한다.
+ *
+ * 결제 취소가 성공해야 취소로 넘어간다. 실패하면 서버가 취소 처리 실패로
+ * 남기고 오류를 돌려준다 — 화면은 그걸 그대로 알려야 한다. 조용히 넘어가면
+ * 담당자가 취소된 줄 알고 넘어간다.
+ */
+export const cancelAdminOrder = (orderNumber: string, reason: string) =>
+  adminRequest<void>(
+    `/api/admin/orders/${encodeURIComponent(orderNumber)}/cancel`,
+    { method: "POST", body: JSON.stringify({ reason }) }
+  );
+
 export const registerAdminTracking = (
   orderNumber: string,
   trackingCompany: string,
