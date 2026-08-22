@@ -34,11 +34,19 @@ export const FILTERABLE_STATUSES: GoodsOrderStatus[] = [
   "LEGACY_FREE",
 ];
 
-/** 제작팀에게 보이는 상태. 돈을 받지 않은 주문은 제작 대기열에 넣지 않는다. */
+/**
+ * 제작팀에게 보이는 상태.
+ *
+ * 결제를 기다리다 말았거나 실패한 주문은 넣지 않는다. 제작 대기열에 섞이면
+ * 만들지 않아도 될 것을 만든다.
+ *
+ * 1차 체험단은 예외다. 결제는 없었지만 실제로 만들어 보내야 하는 물건이다.
+ */
 export const PRODUCTION_VISIBLE_STATUSES: GoodsOrderStatus[] = [
   "PAYMENT_COMPLETED",
   "IN_PRODUCTION",
   "SHIPPED",
+  "LEGACY_FREE",
 ];
 
 export const filterableStatusesFor = (role: AdminRole): GoodsOrderStatus[] =>
@@ -62,13 +70,26 @@ const ADMIN_SETTABLE: GoodsOrderStatus[] = [
 
 const PRODUCTION_SETTABLE: GoodsOrderStatus[] = ["IN_PRODUCTION"];
 
+/**
+ * 1차 체험단에서 갈 수 있는 상태.
+ *
+ * 결제가 없던 주문이라 결제 관련 상태로는 가지 않는다. 결제 완료로 바꾸면
+ * 받지도 않은 돈이 매출로 잡히고, 만료·실패로 바꾸면 없던 결제가 실패한
+ * 것이 된다. 서버도 같은 것을 막는다.
+ */
+const LEGACY_FREE_SETTABLE: GoodsOrderStatus[] = ["IN_PRODUCTION"];
+
 export const settableStatusesFor = (
   role: AdminRole,
   current: GoodsOrderStatus
-): GoodsOrderStatus[] =>
-  (role === "ADMIN" ? ADMIN_SETTABLE : PRODUCTION_SETTABLE).filter(
+): GoodsOrderStatus[] => {
+  if (current === "LEGACY_FREE") {
+    return LEGACY_FREE_SETTABLE;
+  }
+  return (role === "ADMIN" ? ADMIN_SETTABLE : PRODUCTION_SETTABLE).filter(
     (status) => status !== current
   );
+};
 
 /** 송장 등록은 관리자만 한다. 이미 보냈으면 다시 등록해 고칠 수 있다. */
 export const canRegisterTracking = (
@@ -78,7 +99,9 @@ export const canRegisterTracking = (
   role === "ADMIN" &&
   (current === "PAYMENT_COMPLETED" ||
     current === "IN_PRODUCTION" ||
-    current === "SHIPPED");
+    current === "SHIPPED" ||
+    // 무료로 드린 것도 보내야 한다. 막아 두면 100건이 발송 완료로 못 넘어간다.
+    current === "LEGACY_FREE");
 
 /** 사진 자리 하나. 비어 있으면 "미기입"으로 보여 준다. */
 export type PhotoSlotRow = {
@@ -129,6 +152,9 @@ export const statusTone = (
       return "active";
     case "SHIPPED":
       return "done";
+    case "LEGACY_FREE":
+      // 아직 만들어 보내야 하는 물건이다. 끝난 것으로 보이면 안 된다.
+      return "active";
     default:
       return "dead";
   }

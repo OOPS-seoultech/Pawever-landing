@@ -23,6 +23,8 @@ export type AdminOrderSummary = {
   orderNumber: string;
   submittedAt: string;
   goodsType: string;
+  /** 사람이 읽는 굿즈 이름. 코드값만 보면 무엇인지 알 수 없다. */
+  goodsTypeLabel: string;
   petName: string;
   /** 목록에는 가려서 온다. 서버가 가린 값이라 화면에서 되돌릴 수 없다. */
   guardianNameMasked: string;
@@ -53,6 +55,8 @@ export type AdminOrderDetail = {
   status: GoodsOrderStatus;
   statusLabel: string;
   goodsType: string;
+  /** 사람이 읽는 굿즈 이름. */
+  goodsTypeLabel: string;
   petName: string;
   pricing: {
     listPriceKrw: number;
