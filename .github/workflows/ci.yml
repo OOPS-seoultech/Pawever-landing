@@ -1,0 +1,49 @@
+name: CI
+
+# 배포는 Cloudflare Pages 가 push 를 보고 스스로 한다. 여기서 하는 일은
+# 그 전에 검사와 빌드를 돌리는 것이다.
+#
+# 검사가 실패해도 Pages 는 그대로 배포한다. 둘은 서로를 모른다. 실제로
+# 막으려면 저장소 설정에서 이 검사를 필수로 걸어야 한다:
+#   Settings > Branches > main > Require status checks to pass
+# 그러면 검사가 통과해야 머지되고, 머지돼야 배포된다.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# 같은 브랜치에 연달아 밀면 앞의 것은 멈춘다. 어차피 뒤엣것 결과만 본다.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: pnpm 준비
+        uses: pnpm/action-setup@v4
+
+      - name: Node 준비
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      # --frozen-lockfile: 잠금 파일과 package.json 이 어긋나면 멈춘다.
+      # 그냥 install 이면 CI 가 잠금 파일을 고쳐 가며 통과시키고,
+      # 로컬과 다른 것을 빌드하게 된다.
+      - name: 의존성 설치
+        run: pnpm install --frozen-lockfile
+
+      - name: 타입 검사
+        run: pnpm run check
+
+      - name: 테스트
+        run: pnpm run test
+
+      # 타입이 맞아도 빌드가 깨질 수 있다. 배포되는 것과 같은 명령을 돌린다.
+      - name: 빌드
+        run: pnpm run build
