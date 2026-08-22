@@ -27,11 +27,22 @@ const CARE_STEPS = [
   },
 ];
 
+/**
+ * proof: 카드 안에 한 줄로 붙는 실적.
+ *
+ * 앱 카드에는 없다. 아직 내세울 수가 없어서 비워 둔 자리이고, 피그마도
+ * 그 자리를 빈 채로 둔다. 없는 수를 지어내지 않는다.
+ *
+ * 히어로 아래 HIGHLIGHTS 에도 같은 문구가 있다. 겹쳐 보이지만 피그마가
+ * 그렇게 둔 것이다 — 위는 회사가 어디까지 왔는지를, 여기는 이 길을 고르면
+ * 무엇을 만나는지를 말한다.
+ */
 const ENTRY_POINTS = [
   {
     category: "기록과 케어",
     title: "포에버 앱",
     body: "오늘의 변화를 기록하고 반려견의 일상과 건강 흐름을 한곳에서 확인하세요.",
+    proof: "",
     action: "앱 서비스 살펴보기",
     href: "/app",
   },
@@ -39,6 +50,7 @@ const ENTRY_POINTS = [
     category: "우리 아이 맞춤 제작",
     title: "3D 맞춤 굿즈 얼리버드",
     body: "사진 속 우리 아이의 특징을 담은 맞춤 굿즈 제작 흐름을 확인하세요.",
+    proof: "우리 아이 완전 맞춤 3D굿즈 100건 제작 중",
     action: "맞춤 굿즈 얼리버드 보기",
     href: "/goods-survey",
   },
@@ -46,6 +58,7 @@ const ENTRY_POINTS = [
     category: "함께 만드는 다음 서비스",
     title: "반려인 설문",
     body: "15분 설문으로 지금 필요한 케어와 서비스에 대한 경험을 들려주세요.",
+    proof: "반려인 731명 조사 완료",
     action: "15분 설문 참여하기",
     href: "/goods-survey/survey",
   },
@@ -178,6 +191,9 @@ export default function Home() {
                   <p className="mt-2 flex-1 text-muted-foreground">
                     {entry.body}
                   </p>
+                  {entry.proof && (
+                    <p className="mt-4 font-medium">{entry.proof}</p>
+                  )}
                   <Link
                     href={entry.href}
                     className="mt-6 rounded-[10px] border border-border px-4 py-2.5 text-center text-sm font-medium transition-colors hover:bg-accent/10"
