@@ -89,6 +89,8 @@ export type ApplicationPayload = {
   tracking: SurveyTrackingPayload;
   privacyAgreed: boolean;
   shippingConfirmed: boolean;
+  /** 광고성 정보 수신 동의. 선택 항목이라 false 로 와도 신청은 성립한다. */
+  marketingAgreed: boolean;
 };
 
 type PhotoUpload = {
@@ -317,8 +319,22 @@ export const submitSurveyApplication = (
     remaining: number;
     /** 설문에 답하고 온 신청인지. 완료 화면이 어떤 값을 보여줄지 가른다. */
     surveyParticipant: boolean;
-    /** 문자로 안내할 입금액. 서버가 정한 값을 그대로 보여준다. */
-    appliedPriceKrw: number;
+    /** 고객에게 읽어 줄 주문번호. */
+    orderNumber: string;
+    /** 정상가. */
+    listPriceKrw: number;
+    /** 할인액. 없으면 0. */
+    discountAmountKrw: number;
+    /** 배송비. 화면에는 따로 보여 주고 청구는 아래 금액에 합쳐져 있다. */
+    shippingFeeKrw: number;
+    /**
+     * 실제 청구할 금액.
+     *
+     * 이름을 서버와 똑같이 둔다. 예전에 appliedPriceKrw 로 적어 두었는데
+     * 서버에는 그런 값이 없어서 undefined 를 읽고 있었다. 주문은 성공했는데
+     * 완료 화면만 깨진다.
+     */
+    paymentAmountKrw: number;
   }>(`/api/public/goods-survey/responses/${session.responseId}/application`, {
     method: "POST",
     headers: {

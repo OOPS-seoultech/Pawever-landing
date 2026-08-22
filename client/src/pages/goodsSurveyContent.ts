@@ -12,6 +12,18 @@ export const GOODS_PRICE = {
   shipping: 3_000,
 } as const;
 
+/** 설문 참여자에게 깎아 주는 금액. 서버의 survey-discount-krw 와 같다. */
+export const GOODS_SURVEY_DISCOUNT = GOODS_PRICE.presale - GOODS_PRICE.member;
+
+/**
+ * 이 사람이 낼 금액.
+ *
+ * 설문을 거치지 않고 바로 신청하면 정가다. 동의 문구에 이 값을 적으므로,
+ * 서버가 매기는 금액과 어긋나면 동의한 금액과 청구되는 금액이 달라진다.
+ */
+export const applicablePriceKrw = (directPurchase: boolean) =>
+  directPurchase ? GOODS_PRICE.presale : GOODS_PRICE.member;
+
 export const wonText = (value: number) => `${value.toLocaleString("ko-KR")}원`;
 
 export const goodsSurveyIntroContent = {

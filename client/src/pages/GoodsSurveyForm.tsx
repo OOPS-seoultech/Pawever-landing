@@ -69,6 +69,7 @@ import {
 } from "./goodsSurveySchema";
 import {
   GOODS_PRICE,
+  applicablePriceKrw,
   wonText,
   goodsSurveyClosingContent,
   goodsSurveyIntroContent,
@@ -687,6 +688,9 @@ export default function GoodsSurveyForm() {
   // 사진 공개 동의는 사연 공개 동의와 별개다. 사연에 동의했다고 해서 사진까지
   // 공개해도 된다는 뜻은 아니다.
   const [photoPublishConsent, setPhotoPublishConsent] = useState(false);
+  // 광고성 정보 수신 동의. 반드시 선택이고, 기본값은 꺼짐이다. 미리 켜 두면
+  // 동의를 받은 것이 아니라 동의하지 않을 기회를 뺏은 것이 된다.
+  const [marketingConsent, setMarketingConsent] = useState(false);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [privacyConsent, setPrivacyConsent] = useState(false);
@@ -700,8 +704,12 @@ export default function GoodsSurveyForm() {
    * 있고, 화면에 계좌를 붙여 두면 신청하지 않은 사람도 입금하게 된다.
    */
   const [paymentNotice, setPaymentNotice] = useState<{
-    amountKrw: number;
+    listPriceKrw: number;
+    discountAmountKrw: number;
+    shippingFeeKrw: number;
+    paymentAmountKrw: number;
     surveyParticipant: boolean;
+    orderNumber: string;
   } | null>(null);
   // 서버가 알려주기 전까지 쓰는 값이다. 임의의 숫자를 두면 사실과 다른 수가
   // 잠깐 보일 수 있으므로 아직 아무도 신청하지 않은 상태로 둔다.
@@ -1490,6 +1498,7 @@ export default function GoodsSurveyForm() {
           tracking,
           privacyAgreed: privacyConsent,
           shippingConfirmed: shippingConsent,
+          marketingAgreed: marketingConsent,
         }
       );
       const nextReviewId = `PAW-${application.responseId
@@ -1499,8 +1508,12 @@ export default function GoodsSurveyForm() {
       setRemaining(application.remaining);
       // 입금 안내에 쓸 값. 서버가 설문 참여 여부를 보고 정한 금액을 그대로 쓴다.
       setPaymentNotice({
-        amountKrw: application.appliedPriceKrw,
+        listPriceKrw: application.listPriceKrw,
+        discountAmountKrw: application.discountAmountKrw,
+        shippingFeeKrw: application.shippingFeeKrw,
+        paymentAmountKrw: application.paymentAmountKrw,
         surveyParticipant: application.surveyParticipant,
+        orderNumber: application.orderNumber,
       });
       // 노션 10번: 제출 버튼을 누른 시점이 아니라 서버 저장이 끝난 지금이 완료다.
       // 여기까지 온 사람은 이탈이 아니므로 pagehide 이탈 기록도 막는다.
@@ -2162,10 +2175,33 @@ export default function GoodsSurveyForm() {
                     onChange={event => setShippingConsent(event.target.checked)}
                   />
                   <span>
-                    제작비는 0원이며 배송비 3,000원이 별도임을 확인했습니다.{" "}
-                    <em>필수</em>
+                    {/* 설문을 거치지 않고 온 사람은 정가다. 고정 금액을 적으면
+                        동의한 금액과 청구되는 금액이 어긋난다. */}
+                    제작비 {wonText(applicablePriceKrw(directPurchase))} + 배송비{" "}
+                    {wonText(GOODS_PRICE.shipping)} ={" "}
+                    <strong>
+                      {wonText(
+                        applicablePriceKrw(directPurchase) + GOODS_PRICE.shipping
+                      )}
+                    </strong>
+                    을 결제하는 데 동의합니다. <em>필수</em>
                   </span>
                 </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={marketingConsent}
+                    onChange={event => setMarketingConsent(event.target.checked)}
+                  />
+                  <span>
+                    할인·신제품 소식을 문자와 카카오톡으로 받는 데 동의합니다.{" "}
+                    <em>선택</em>
+                  </span>
+                </label>
+                <p>
+                  동의하지 않아도 신청할 수 있습니다. 주문·배송 안내는 동의와
+                  상관없이 보내드립니다. 언제든 수신을 거부할 수 있습니다.
+                </p>
               </div>
 
               <button
@@ -2319,19 +2355,39 @@ export default function GoodsSurveyForm() {
                     입력하신 연락처로 입금 계좌를 문자로 보내드립니다. 입금이
                     확인되면 제작이 시작돼요.
                   </p>
+                  {/* 금액은 서버가 주문에 적은 값을 그대로 쓴다. 화면에서 다시
+                      계산하면 청구된 금액과 보이는 금액이 어긋날 수 있다. */}
                   <dl>
                     <div>
-                      <dt>결제 금액</dt>
+                      <dt>주문번호</dt>
+                      <dd>{paymentNotice.orderNumber}</dd>
+                    </div>
+                    <div>
+                      <dt>제작비</dt>
                       <dd>
-                        {paymentNotice.amountKrw.toLocaleString("ko-KR")}원
-                        {paymentNotice.surveyParticipant && (
-                          <em> 설문 참여 할인 적용</em>
+                        {wonText(
+                          paymentNotice.listPriceKrw -
+                            paymentNotice.discountAmountKrw
                         )}
+                        {paymentNotice.surveyParticipant &&
+                          paymentNotice.discountAmountKrw > 0 && (
+                            <em>
+                              {" "}
+                              설문 참여 할인 −
+                              {wonText(paymentNotice.discountAmountKrw)}
+                            </em>
+                          )}
                       </dd>
                     </div>
                     <div>
                       <dt>배송비</dt>
-                      <dd>{wonText(GOODS_PRICE.shipping)} 별도</dd>
+                      <dd>{wonText(paymentNotice.shippingFeeKrw)}</dd>
+                    </div>
+                    <div>
+                      <dt>결제 금액</dt>
+                      <dd>
+                        <strong>{wonText(paymentNotice.paymentAmountKrw)}</strong>
+                      </dd>
                     </div>
                   </dl>
                 </div>
