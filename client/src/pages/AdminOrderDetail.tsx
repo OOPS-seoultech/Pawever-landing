@@ -17,6 +17,7 @@ import {
 import { formatDateTime, formatKrw } from "@/lib/adminFormat";
 import {
   canRegisterTracking,
+  photoSlotRows,
   settableStatusesFor,
   STATUS_LABELS,
 } from "./adminOrderStatus";
@@ -181,9 +182,46 @@ export default function AdminOrderDetail() {
 
         <Section title="사진">
           <p className="mb-3 text-sm text-muted-foreground">
-            올린 사진 {order.photos.filter((photo) => photo.filled).length}/5장.
-            받은 링크는 5분 뒤 닫히고, 누가 받았는지 이력에 남습니다.
+            사진 1은 필수, 2~5는 선택입니다. 받은 링크는 5분 뒤 닫히고, 누가
+            받았는지 이력에 남습니다.
           </p>
+
+          {/* 올리지 않은 자리도 자리로 남긴다. 빼 버리면 안 올린 것인지
+              화면이 못 그린 것인지 구분이 안 된다. */}
+          <ul className="mb-3 space-y-1 text-sm">
+            {photoSlotRows(order.photos).map((row) => {
+              const link = links?.photos.find((photo) => photo.slot === row.slot);
+              return (
+                <li key={row.slot} className="flex items-center gap-2">
+                  <span className="w-12 shrink-0 text-muted-foreground">
+                    {row.slot}번
+                  </span>
+                  {row.filled ? (
+                    link ? (
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="text-primary underline"
+                      >
+                        {row.label} 내려받기
+                      </a>
+                    ) : (
+                      <span>{row.label}</span>
+                    )
+                  ) : (
+                    <span className="text-muted-foreground">{row.label}</span>
+                  )}
+                  {link ? (
+                    <span className="ml-auto text-xs text-muted-foreground">
+                      {formatDateTime(link.expiresAt)}까지
+                    </span>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
+
           <Button
             variant="secondary"
             size="sm"
@@ -197,28 +235,6 @@ export default function AdminOrderDetail() {
             다운로드 링크 받기
           </Button>
 
-          {links ? (
-            <ul className="mt-3 space-y-1 text-sm">
-              {links.photos.map((photo) => (
-                <li key={photo.slot} className="flex items-center gap-2">
-                  <a
-                    href={photo.url}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className="text-primary underline"
-                  >
-                    사진 {photo.slot}
-                  </a>
-                  <span className="text-xs text-muted-foreground">
-                    {formatDateTime(photo.expiresAt)}까지
-                  </span>
-                </li>
-              ))}
-              {links.photos.length === 0 ? (
-                <li className="text-muted-foreground">받을 사진이 없습니다.</li>
-              ) : null}
-            </ul>
-          ) : null}
         </Section>
 
         <Section title="상태 변경">
