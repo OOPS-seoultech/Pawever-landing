@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  canCancel,
+  CANCEL_REASONS,
   canRegisterTracking,
   filterableStatusesFor,
   photoSlotRows,
@@ -137,5 +139,38 @@ describe("사진 자리", () => {
   it("값이 아예 없어도 화면을 깨지 않는다", () => {
     expect(photoSlotRows(undefined)).toHaveLength(5);
     expect(photoSlotRows(undefined).every((row) => !row.filled)).toBe(true);
+  });
+});
+
+describe("주문 취소", () => {
+  it("결제 완료와 제작 중에서만 취소할 수 있다", () => {
+    // 제작에 손을 대 봐야 드러나는 사유가 있어 착수 뒤에도 막지 않는다.
+    expect(canCancel("ADMIN", "PAYMENT_COMPLETED", true)).toBe(true);
+    expect(canCancel("ADMIN", "IN_PRODUCTION", true)).toBe(true);
+  });
+
+  it("발송한 주문은 취소하지 않는다", () => {
+    // 이미 나간 물건은 되돌릴 수 없다.
+    expect(canCancel("ADMIN", "SHIPPED", true)).toBe(false);
+  });
+
+  it("결제하지 않은 주문은 취소하지 않는다", () => {
+    // 1차 체험단처럼 돌려줄 돈이 없는 건이다.
+    expect(canCancel("ADMIN", "IN_PRODUCTION", false)).toBe(false);
+    expect(canCancel("ADMIN", "LEGACY_FREE", false)).toBe(false);
+  });
+
+  it("제작팀은 취소할 수 없다", () => {
+    expect(canCancel("PRODUCTION", "IN_PRODUCTION", true)).toBe(false);
+  });
+
+  it("요구서가 정한 취소 사유를 그대로 둔다", () => {
+    expect(CANCEL_REASONS).toEqual([
+      "고객 요청",
+      "사진 품질 미달",
+      "제작 불가 상품",
+      "재고·운영상 사유",
+      "주소·연락처 확인 불가",
+    ]);
   });
 });

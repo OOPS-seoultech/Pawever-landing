@@ -11,6 +11,7 @@ import {
 } from "@/components/AdminShell";
 import {
   AdminApiError,
+  cancelAdminOrder,
   changeAdminOrderStatus,
   downloadAdminPhotoArchive,
   getAdminOrder,
@@ -22,6 +23,8 @@ import {
 } from "@/lib/adminApi";
 import { formatDateTime, formatKrw } from "@/lib/adminFormat";
 import {
+  canCancel,
+  CANCEL_REASONS,
   canRegisterTracking,
   photoSlotRows,
   settableStatusesFor,
@@ -43,6 +46,10 @@ export default function AdminOrderDetail() {
   const [memo, setMemo] = useState("");
   const [company, setCompany] = useState("");
   const [invoice, setInvoice] = useState("");
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelDetail, setCancelDetail] = useState("");
+  // 취소는 되돌릴 수 없다. 한 번 더 묻는다.
+  const [cancelArmed, setCancelArmed] = useState(false);
 
   const handle = useCallback(
     (caught: unknown) => {
@@ -368,6 +375,92 @@ export default function AdminOrderDetail() {
                 송장 등록
               </Button>
             </div>
+          </Section>
+        ) : null}
+
+        {canCancel(
+          role ?? "PRODUCTION",
+          order.status,
+          Boolean(order.payment?.paidAt)
+        ) ? (
+          <Section title="주문 취소">
+            <p className="mb-3 text-sm text-muted-foreground">
+              결제 취소가 성공해야 취소로 넘어갑니다. 실패하면 취소 처리 실패로
+              남고 직접 확인해야 합니다. 되돌릴 수 없습니다.
+            </p>
+
+            <div className="mb-3 flex flex-wrap gap-2">
+              {CANCEL_REASONS.map((reason) => (
+                <button
+                  key={reason}
+                  type="button"
+                  onClick={() => {
+                    setCancelReason(reason);
+                    setCancelArmed(false);
+                  }}
+                  className={`rounded-full border px-3 py-1 text-xs transition ${
+                    cancelReason === reason
+                      ? "border-destructive bg-destructive text-destructive-foreground"
+                      : "border-border bg-background text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {reason}
+                </button>
+              ))}
+            </div>
+
+            <Input
+              value={cancelDetail}
+              onChange={(event) => {
+                setCancelDetail(event.target.value);
+                setCancelArmed(false);
+              }}
+              placeholder="직접 입력 (선택). 목록에 없는 사유면 여기에 적으세요."
+              maxLength={300}
+              className="mb-3"
+            />
+
+            {cancelArmed ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm text-destructive">
+                  {order.orderNumber}을(를) 취소합니다. 되돌릴 수 없습니다.
+                </span>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled={pending}
+                  onClick={() =>
+                    run(async () => {
+                      await cancelAdminOrder(
+                        order.orderNumber,
+                        cancelDetail.trim() || cancelReason
+                      );
+                      setCancelReason("");
+                      setCancelDetail("");
+                      setCancelArmed(false);
+                    }, "주문을 취소했습니다. 결제도 함께 취소됐습니다.")
+                  }
+                >
+                  취소 진행
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCancelArmed(false)}
+                >
+                  그만두기
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={pending || (!cancelReason && !cancelDetail.trim())}
+                onClick={() => setCancelArmed(true)}
+              >
+                주문 취소하기
+              </Button>
+            )}
           </Section>
         ) : null}
 

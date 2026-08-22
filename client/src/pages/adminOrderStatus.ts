@@ -159,3 +159,33 @@ export const statusTone = (
       return "dead";
   }
 };
+
+/**
+ * 취소 사유 후보.
+ *
+ * 요구서 5-3 이 정한 목록이다. 직접 입력도 받는다 — 고르게만 두면 맞지 않는
+ * 사유를 아무거나 고르고, 나중에 왜 취소했는지 알 수 없어진다.
+ */
+export const CANCEL_REASONS = [
+  "고객 요청",
+  "사진 품질 미달",
+  "제작 불가 상품",
+  "재고·운영상 사유",
+  "주소·연락처 확인 불가",
+];
+
+/**
+ * 취소할 수 있는 주문인지.
+ *
+ * 결제 완료와 제작 중만이다. 제작에 손을 대 봐야 드러나는 사유가 있어서
+ * 착수 뒤에도 막지 않는다. 발송한 것은 되돌릴 수 없고, 결제하지 않은 것은
+ * 돌려줄 돈이 없다. 서버도 같은 것을 막는다.
+ */
+export const canCancel = (
+  role: AdminRole,
+  current: GoodsOrderStatus,
+  paid: boolean
+): boolean =>
+  role === "ADMIN" &&
+  paid &&
+  (current === "PAYMENT_COMPLETED" || current === "IN_PRODUCTION");

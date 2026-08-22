@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   AdminApiError,
   adminSignIn,
+  cancelAdminOrder,
   changeAdminOrderStatus,
   clearAdminToken,
   downloadAdminPhotoArchive,
@@ -240,6 +241,22 @@ describe("관리자 API", () => {
 
     clearAdminToken();
     expect(readAdminRole()).toBeNull();
+  });
+
+  it("취소 사유를 본문으로 보낸다", async () => {
+    // 주소에 실으면 사유가 방문 기록과 중간 프록시에 남는다.
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(jsonResponse({ success: true }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await cancelAdminOrder("PE-2026-000101", "사진 품질 미달");
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/admin/orders/PE-2026-000101/cancel");
+    expect(url).not.toContain("사진 품질 미달");
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(init.body)).toEqual({ reason: "사진 품질 미달" });
   });
 
   it("로그아웃하면 토큰이 남지 않는다", () => {
