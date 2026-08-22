@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import {
@@ -97,6 +97,40 @@ export function AdminShell({ title, role, children, backTo }: Props) {
       </header>
       <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
     </div>
+  );
+}
+
+/**
+ * 값을 클립보드로 옮기는 버튼.
+ *
+ * 주소와 연락처는 드래그해서 복사하면 앞뒤가 잘리거나 줄바꿈이 섞인다.
+ * 택배 송장에 그대로 붙여 넣는 값이라 한 글자만 틀려도 다른 곳에 간다.
+ *
+ * 복사한 값은 화면에 남기지 않는다. 눌렀다는 표시만 잠깐 보여 준다.
+ */
+export function CopyButton({ value, label }: { value: string; label: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // 브라우저가 막아 둔 경우다. 드래그해서 복사하면 된다.
+      setCopied(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      aria-label={`${label} 복사`}
+      className="shrink-0 rounded border border-border px-1.5 py-0.5 text-[11px] text-muted-foreground transition hover:text-foreground"
+    >
+      {copied ? "복사됨" : "복사"}
+    </button>
   );
 }
 

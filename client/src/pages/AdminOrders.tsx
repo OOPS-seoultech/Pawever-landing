@@ -35,6 +35,10 @@ export default function AdminOrders() {
   // 새로 긁어 오게 된다.
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(0);
+  // 요구서 4-1 의 굿즈 종류·제출일·사진 수 필터. 상태 필터·검색어와 겹쳐 쓴다.
+  const [submittedFrom, setSubmittedFrom] = useState("");
+  const [submittedTo, setSubmittedTo] = useState("");
+  const [minPhotoCount, setMinPhotoCount] = useState("");
 
   const [data, setData] = useState<AdminOrderListResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +52,9 @@ export default function AdminOrders() {
         await listAdminOrders({
           status: selected,
           q: query,
+          submittedFrom: submittedFrom || undefined,
+          submittedTo: submittedTo || undefined,
+          minPhotoCount: minPhotoCount ? Number(minPhotoCount) : undefined,
           page,
           size: PAGE_SIZE,
         })
@@ -62,7 +69,15 @@ export default function AdminOrders() {
     } finally {
       setLoading(false);
     }
-  }, [selected, query, page, setLocation]);
+  }, [
+    selected,
+    query,
+    submittedFrom,
+    submittedTo,
+    minPhotoCount,
+    page,
+    setLocation,
+  ]);
 
   useEffect(() => {
     if (role) void load();
@@ -132,6 +147,64 @@ export default function AdminOrders() {
           검색
         </Button>
       </form>
+
+      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border bg-background p-3">
+        <label className="text-xs text-muted-foreground">
+          제출일
+          <div className="mt-1 flex items-center gap-1">
+            <Input
+              type="date"
+              value={submittedFrom}
+              onChange={(event) => {
+                setPage(0);
+                setSubmittedFrom(event.target.value);
+              }}
+              className="h-8 w-[9.5rem]"
+            />
+            <span>~</span>
+            <Input
+              type="date"
+              value={submittedTo}
+              onChange={(event) => {
+                setPage(0);
+                setSubmittedTo(event.target.value);
+              }}
+              className="h-8 w-[9.5rem]"
+            />
+          </div>
+        </label>
+
+        <label className="text-xs text-muted-foreground">
+          사진 최소 장수
+          <Input
+            type="number"
+            min={0}
+            max={5}
+            value={minPhotoCount}
+            onChange={(event) => {
+              setPage(0);
+              setMinPhotoCount(event.target.value);
+            }}
+            placeholder="예: 5"
+            className="mt-1 h-8 w-24"
+          />
+        </label>
+
+        {submittedFrom || submittedTo || minPhotoCount ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setPage(0);
+              setSubmittedFrom("");
+              setSubmittedTo("");
+              setMinPhotoCount("");
+            }}
+          >
+            조건 지우기
+          </Button>
+        ) : null}
+      </div>
 
       {error ? <AdminError message={error} /> : null}
 

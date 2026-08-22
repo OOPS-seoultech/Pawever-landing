@@ -4,6 +4,7 @@ import {
   adminSignIn,
   changeAdminOrderStatus,
   clearAdminToken,
+  downloadAdminPhotoArchive,
   listAdminOrders,
   readAdminRole,
   readAdminToken,
@@ -147,6 +148,64 @@ describe("관리자 API", () => {
 
     const [url] = fetchMock.mock.calls[0];
     expect(url).not.toContain("q=");
+  });
+
+  it("제출일과 사진 수 조건을 붙여 보낸다", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({
+        success: true,
+        data: { orders: [], totalCount: 0, page: 0, size: 20, summary: {} },
+      })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await listAdminOrders({
+      submittedFrom: "2026-08-01",
+      submittedTo: "2026-08-20",
+      minPhotoCount: 5,
+    });
+
+    const [url] = fetchMock.mock.calls[0];
+    expect(url).toContain("submittedFrom=2026-08-01");
+    expect(url).toContain("submittedTo=2026-08-20");
+    expect(url).toContain("minPhotoCount=5");
+  });
+
+  it("비어 있는 조건은 아예 보내지 않는다", async () => {
+    // 빈 값을 그대로 실으면 서버가 날짜 형식이 아니라며 400 을 돌려준다.
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({
+        success: true,
+        data: { orders: [], totalCount: 0, page: 0, size: 20, summary: {} },
+      })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await listAdminOrders({ submittedFrom: undefined, minPhotoCount: undefined });
+
+    const [url] = fetchMock.mock.calls[0];
+    expect(url).not.toContain("submittedFrom");
+    expect(url).not.toContain("minPhotoCount");
+  });
+
+  it("사진 묶음은 봉투 없이 파일로 받는다", async () => {
+    // ApiResponse 로 감싸면 zip 바이트가 JSON 안에 들어가 못 쓴다.
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(new Blob(["zip"]), {
+        status: 200,
+        headers: { "Content-Type": "application/octet-stream" },
+      })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    writeAdminToken("token-zip");
+
+    const archive = await downloadAdminPhotoArchive("PE-2026-000001");
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/admin/orders/PE-2026-000001/photos.zip");
+    expect(init.method).toBe("POST");
+    expect(init.headers.Authorization).toBe("Bearer token-zip");
+    expect(archive.fileName).toBe("PE-2026-000001_photos.zip");
   });
 
   it("사진 링크는 POST 로 받는다", async () => {

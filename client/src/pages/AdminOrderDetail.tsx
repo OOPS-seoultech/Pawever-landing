@@ -3,10 +3,16 @@ import { useLocation, useParams } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { AdminError, AdminShell, useAdminGuard } from "@/components/AdminShell";
+import {
+  AdminError,
+  AdminShell,
+  CopyButton,
+  useAdminGuard,
+} from "@/components/AdminShell";
 import {
   AdminApiError,
   changeAdminOrderStatus,
+  downloadAdminPhotoArchive,
   getAdminOrder,
   registerAdminTracking,
   requestPhotoLinks,
@@ -151,7 +157,11 @@ export default function AdminOrderDetail() {
         {order.shipping ? (
           <Section title="배송">
             <Row label="보호자" value={order.shipping.guardianName} />
-            <Row label="연락처" value={order.shipping.phone} />
+            <Row
+              label="연락처"
+              value={order.shipping.phone}
+              copyAs="연락처"
+            />
             <Row
               label="주소"
               value={[
@@ -161,6 +171,7 @@ export default function AdminOrderDetail() {
               ]
                 .filter(Boolean)
                 .join(" ") || "-"}
+              copyAs="주소"
             />
             <Row
               label="송장"
@@ -188,52 +199,85 @@ export default function AdminOrderDetail() {
 
           {/* 올리지 않은 자리도 자리로 남긴다. 빼 버리면 안 올린 것인지
               화면이 못 그린 것인지 구분이 안 된다. */}
-          <ul className="mb-3 space-y-1 text-sm">
+          {/* 미리보기는 원본 링크를 그대로 쓴다. 썸네일을 따로 저장하면
+              고객 사진의 사본이 하나 더 생기고, 파기할 때 그것도 같이
+              지워야 한다 — 빠뜨리기 쉬운 자리가 하나 늘어난다. */}
+          <ul className="mb-3 grid grid-cols-5 gap-2">
             {photoSlotRows(order.photos).map((row) => {
               const link = links?.photos.find((photo) => photo.slot === row.slot);
               return (
-                <li key={row.slot} className="flex items-center gap-2">
-                  <span className="w-12 shrink-0 text-muted-foreground">
+                <li key={row.slot} className="text-center">
+                  {row.filled && link ? (
+                    <a href={link.url} target="_blank" rel="noreferrer noopener">
+                      <img
+                        src={link.url}
+                        alt={`사진 ${row.slot}`}
+                        loading="lazy"
+                        className="aspect-square w-full rounded border object-cover transition hover:opacity-80"
+                      />
+                    </a>
+                  ) : (
+                    <div
+                      className={`flex aspect-square w-full items-center justify-center rounded border text-[11px] ${
+                        row.filled
+                          ? "border-dashed text-muted-foreground"
+                          : "bg-muted/40 text-muted-foreground"
+                      }`}
+                    >
+                      {row.filled ? "링크 받기" : "미기입"}
+                    </div>
+                  )}
+                  <span className="mt-1 block text-[11px] text-muted-foreground">
                     {row.slot}번
                   </span>
-                  {row.filled ? (
-                    link ? (
-                      <a
-                        href={link.url}
-                        target="_blank"
-                        rel="noreferrer noopener"
-                        className="text-primary underline"
-                      >
-                        {row.label} 내려받기
-                      </a>
-                    ) : (
-                      <span>{row.label}</span>
-                    )
-                  ) : (
-                    <span className="text-muted-foreground">{row.label}</span>
-                  )}
-                  {link ? (
-                    <span className="ml-auto text-xs text-muted-foreground">
-                      {formatDateTime(link.expiresAt)}까지
-                    </span>
-                  ) : null}
                 </li>
               );
             })}
           </ul>
 
-          <Button
-            variant="secondary"
-            size="sm"
-            disabled={pending}
-            onClick={() =>
-              run(async () => {
-                setLinks(await requestPhotoLinks(order.orderNumber));
-              }, "다운로드 링크를 받았습니다.")
-            }
-          >
-            다운로드 링크 받기
-          </Button>
+          {links ? (
+            <p className="mb-2 text-xs text-muted-foreground">
+              링크가 {formatDateTime(links.photos[0]?.expiresAt)}까지 열립니다.
+              지나면 다시 받으면 됩니다.
+            </p>
+          ) : null}
+
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={pending}
+              onClick={() =>
+                run(async () => {
+                  setLinks(await requestPhotoLinks(order.orderNumber));
+                }, "미리보기를 열었습니다.")
+              }
+            >
+              미리보기 열기
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={pending || !order.photos.some((photo) => photo.filled)}
+              onClick={() =>
+                run(async () => {
+                  const archive = await downloadAdminPhotoArchive(
+                    order.orderNumber
+                  );
+                  // 브라우저가 파일로 저장하게 한다. 링크를 걸면 로그인
+                  // 토큰을 실을 수 없어서 401 이 돌아온다.
+                  const url = URL.createObjectURL(archive.blob);
+                  const anchor = document.createElement("a");
+                  anchor.href = url;
+                  anchor.download = archive.fileName;
+                  anchor.click();
+                  URL.revokeObjectURL(url);
+                }, "사진을 모두 내려받았습니다.")
+              }
+            >
+              전체 내려받기 (ZIP)
+            </Button>
+          </div>
 
         </Section>
 
@@ -389,11 +433,25 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({
+  label,
+  value,
+  copyAs,
+}: {
+  label: string;
+  value: string;
+  /** 값을 그대로 복사할 수 있게 한다. 송장에 붙여 넣는 값에만 붙인다. */
+  copyAs?: string;
+}) {
   return (
-    <div className="flex gap-3 border-b py-1.5 text-sm last:border-0">
+    <div className="flex items-start gap-3 border-b py-1.5 text-sm last:border-0">
       <span className="w-24 shrink-0 text-muted-foreground">{label}</span>
       <span className="break-all">{value}</span>
+      {copyAs && value !== "-" ? (
+        <span className="ml-auto">
+          <CopyButton value={value} label={copyAs} />
+        </span>
+      ) : null}
     </div>
   );
 }

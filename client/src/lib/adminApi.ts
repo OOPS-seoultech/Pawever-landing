@@ -255,16 +255,30 @@ export const adminAcceptInvite = (inviteToken: string, password: string) =>
     body: JSON.stringify({ inviteToken, password }),
   });
 
-export const listAdminOrders = (params: {
+export type AdminOrderFilter = {
   status?: GoodsOrderStatus[];
   q?: string;
+  /** 굿즈 종류. 지금은 1종이라 걸러지는 게 없다. */
+  goodsType?: string;
+  /** 제출일 범위. 한국 날짜(YYYY-MM-DD)로 보낸다. */
+  submittedFrom?: string;
+  submittedTo?: string;
+  /** 이 장수 이상. 사진이 덜 온 주문을 찾을 때 쓴다. */
+  minPhotoCount?: number;
   page?: number;
   size?: number;
-}) => {
+};
+
+export const listAdminOrders = (params: AdminOrderFilter) => {
   const query = new URLSearchParams();
   // 상태는 값마다 한 번씩 붙인다. 서버가 List<GoodsOrderStatus> 로 받는다.
   (params.status ?? []).forEach((status) => query.append("status", status));
   if (params.q?.trim()) query.set("q", params.q.trim());
+  if (params.goodsType?.trim()) query.set("goodsType", params.goodsType.trim());
+  if (params.submittedFrom) query.set("submittedFrom", params.submittedFrom);
+  if (params.submittedTo) query.set("submittedTo", params.submittedTo);
+  if (params.minPhotoCount != null)
+    query.set("minPhotoCount", String(params.minPhotoCount));
   if (params.page != null) query.set("page", String(params.page));
   if (params.size != null) query.set("size", String(params.size));
 
@@ -285,6 +299,43 @@ export const requestPhotoLinks = (orderNumber: string) =>
     `/api/admin/orders/${encodeURIComponent(orderNumber)}/photo-links`,
     { method: "POST" }
   );
+
+/**
+ * 사진을 한 번에 내려받는다.
+ *
+ * 파일을 그대로 받으므로 봉투(ApiResponse)를 거치지 않는다. 로그인 토큰을
+ * 실어야 해서 링크를 그냥 걸 수 없고, 받아서 blob 으로 저장한다.
+ */
+export const downloadAdminPhotoArchive = async (orderNumber: string) => {
+  const token = readAdminToken();
+  const response = await fetch(
+    resolveApiUrl(
+      `/api/admin/orders/${encodeURIComponent(orderNumber)}/photos.zip`
+    ),
+    {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    }
+  );
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      clearAdminToken();
+    }
+    throw new AdminApiError(
+      response.status === 400
+        ? "받을 사진이 없습니다."
+        : "사진을 받지 못했습니다. 잠시 후 다시 시도해 주세요.",
+      "PHOTO_ARCHIVE_FAILED",
+      response.status
+    );
+  }
+
+  return {
+    blob: await response.blob(),
+    fileName: `${orderNumber}_photos.zip`,
+  };
+};
 
 export const changeAdminOrderStatus = (
   orderNumber: string,
