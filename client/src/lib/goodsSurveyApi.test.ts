@@ -3,6 +3,7 @@ import {
   completeSurvey,
   createSurveyDraft,
   submitSurveyApplication,
+  unsubscribeSurveyNotice,
   type SurveyDraftSession,
 } from "./goodsSurveyApi";
 
@@ -171,5 +172,27 @@ describe("내부 설문 API", () => {
       photoIds: ["photo-public", "photo-private"],
       publicPhotoIds: ["photo-public"],
     });
+  });
+  it("수신거부는 값을 주소가 아니라 본문으로 보낸다", async () => {
+    // 주소에 실으면 링크를 거치는 모든 곳에 남는다. 이메일이든 서명값이든
+    // URL 에 들어가는 순간 우리가 통제하지 못하는 자리에 복사된다.
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ success: true }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await unsubscribeSurveyNotice("서명된-값");
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/public/goods-survey/notice-subscriptions/unsubscribe");
+    expect(url).not.toContain("서명된-값");
+    expect(url).not.toContain("?");
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(init.body)).toEqual({ token: "서명된-값" });
   });
 });
