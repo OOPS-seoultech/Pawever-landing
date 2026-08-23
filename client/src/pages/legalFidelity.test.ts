@@ -65,6 +65,27 @@ describe("개인정보처리방침", () => {
   });
 });
 
+describe("개인정보처리방침 위탁 고지", () => {
+  it("결제대행사를 적어 둔다", () => {
+    // 결제가 붙었는데 여기가 비어 있으면 고지 없는 위탁이 된다.
+    expect(privacy).toContain("포트원");
+    expect(privacy).toContain("KG이니시스");
+  });
+
+  it("텔레그램 국외 이전을 적어 둔다", () => {
+    // 대표님 판단으로 알림에 이름과 연락처를 그대로 싣는다. 그러면 이
+    // 고지가 선택이 아니라 조건이 된다. 보내는 항목을 늘릴 때 이 줄도
+    // 같이 고쳐야 한다.
+    expect(privacy).toContain("Telegram");
+    expect(privacy).toContain("국외 이전");
+    expect(privacy).toContain("신청자 이름·연락처");
+  });
+
+  it("결제수단 정보는 보관하지 않는다고 밝힌다", () => {
+    expect(privacy).toContain("포에버는 보관하지 않습니다");
+  });
+});
+
 describe("데이터 삭제 요청 안내", () => {
   it("불릿과 이메일이 강조 색이다", () => {
     // --accent 와 --primary 는 둘 다 #FF9F43 이다. 피그마는 #FFA94E 다.
