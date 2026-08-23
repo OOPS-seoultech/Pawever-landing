@@ -28,8 +28,9 @@ describe("헤더 기준", () => {
   });
 
   it("로고 높이를 피그마 크기로 둔다", () => {
-    // 피그마에서 잰 값이 61x52 다. 16px 워드마크와는 다른 물건이다.
-    expect(header).toContain('className="h-[52px] w-auto"');
+    // 피그마 5200:1450 이 65x55 다. 16px 워드마크와는 다른 물건이다.
+    // 61x52 로 두었던 적이 있는데, 축소 렌더를 눈으로 재서 나온 값이었다.
+    expect(header).toContain('className="h-[55px] w-auto"');
   });
 
   it("지금 보는 메뉴는 주황이고 밑줄이 깔린다", () => {

@@ -1,6 +1,6 @@
 import SiteFooter from "@/components/SiteFooter";
 import SiteHeader from "@/components/SiteHeader";
-import { STORE_LINKS } from "@/lib/storeLinks";
+import StoreButtons from "@/components/StoreButtons";
 
 /**
  * 서비스 소개.
@@ -150,76 +150,12 @@ export default function Service() {
               </p>
             </div>
 
-            <ul className="flex flex-wrap gap-3">
-              {STORE_LINKS.map(store => (
-                <li key={store.label}>
-                  <StoreButton store={store} />
-                </li>
-              ))}
-            </ul>
+            <StoreButtons />
           </div>
         </section>
       </main>
 
       <SiteFooter />
     </div>
-  );
-}
-
-/**
- * 앱스토어 버튼.
- *
- * 주소를 아직 받지 못했다. 자리를 비우면 피그마와 화면이 달라지고, 빈 링크를
- * 걸면 눌렀을 때 아무 데도 가지 않는다. 주소가 없으면 누를 수 없는 상태로
- * 그려 둔다 — 주소가 들어오면 그대로 링크가 된다.
- */
-function StoreButton({
-  store,
-}: {
-  store: { label: string; href: string; primary: boolean };
-}) {
-  const skin = store.primary
-    ? "bg-primary text-primary-foreground"
-    : "bg-foreground text-background";
-  const shape =
-    "inline-flex items-center gap-2 rounded-[10px] px-6 py-3 text-base font-semibold";
-
-  if (!store.href) {
-    return (
-      <span
-        aria-disabled="true"
-        className={`${shape} ${skin} cursor-default opacity-60`}
-      >
-        {store.label}
-        <Launch />
-      </span>
-    );
-  }
-  return (
-    <a
-      href={store.href}
-      target="_blank"
-      rel="noreferrer noopener"
-      className={`${shape} ${skin} transition-opacity hover:opacity-90`}
-    >
-      {store.label}
-      <Launch />
-    </a>
-  );
-}
-
-function Launch() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 20 20"
-      className="h-5 w-5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-    >
-      <path d="M11 3h6v6M17 3l-8 8" strokeLinecap="round" />
-      <path d="M15 12v4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h4" />
-    </svg>
   );
 }

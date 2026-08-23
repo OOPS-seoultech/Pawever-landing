@@ -53,14 +53,11 @@ describe("서비스 소개 구조", () => {
     expect(flat).toContain("underline underline-offset-4");
   });
 
-  it("스토어 버튼을 두 화면이 같은 자리에서 가져온다", () => {
-    // 각 화면에 따로 적어 두면 주소가 들어올 때 한쪽만 고치게 된다.
-    expect(flat).toContain('from "@/lib/storeLinks"');
-    expect(service).not.toContain("const STORE_LINKS = [");
-  });
-
-  it("주소가 없는 스토어 버튼은 링크로 걸지 않는다", () => {
-    // 빈 링크를 걸면 눌렀을 때 아무 데도 가지 않는다.
-    expect(flat).toContain('aria-disabled="true"');
+  it("스토어 버튼을 두 화면이 같은 것으로 쓴다", () => {
+    // 주소도 모양도 화면마다 따로 두면 한쪽만 고치고 끝난다.
+    // 굿즈 버튼 밑줄이 실제로 그렇게 한 화면만 맞았다.
+    expect(flat).toContain('from "@/components/StoreButtons"');
+    expect(flat).toContain("<StoreButtons />");
+    expect(service).not.toContain("function StoreButton(");
   });
 });
