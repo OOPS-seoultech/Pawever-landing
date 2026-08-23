@@ -87,6 +87,9 @@ const PROCESSOR_ROWS = [
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
     <h2 className="text-2xl font-bold text-foreground mb-4 flex items-center gap-2">
+      {/* 피그마가 #FF8904 로 지정했고 Tailwind orange-400 이 정확히 그
+          값이다. 이 페이지에서 --primary(#FF9F43)가 아닌 색을 쓰는
+          유일한 곳이라 일부러 남긴다. */}
       <span className="w-1 h-8 bg-orange-400 rounded-full"></span>
       {children}
     </h2>
@@ -177,7 +180,7 @@ export default function PrivacyPolicy() {
                         key={row.category}
                         className="border-b border-border last:border-b-0 hover:bg-accent/5"
                       >
-                        <td className="px-4 py-3 font-semibold text-orange-500 whitespace-nowrap">
+                        <td className="px-4 py-3 font-medium text-primary whitespace-nowrap">
                           {row.category}
                         </td>
                         <td className="px-4 py-3">{row.items}</td>
@@ -232,7 +235,7 @@ export default function PrivacyPolicy() {
                 <ul className="space-y-2 text-sm">
                   {PERMISSION_ITEMS.map(item => (
                     <li key={item} className="flex gap-2">
-                      <span className="text-orange-500">•</span>
+                      <span className="text-muted-foreground">•</span>
                       <span>{item}</span>
                     </li>
                   ))}
@@ -360,21 +363,21 @@ export default function PrivacyPolicy() {
             <div className="flex flex-wrap gap-4 text-sm">
               <a
                 href="/"
-                className="text-orange-500 hover:text-orange-600 font-medium"
+                className="text-primary hover:text-primary/80 font-medium"
               >
                 홈으로
               </a>
               <span className="text-border">|</span>
               <a
                 href="/terms"
-                className="text-orange-500 hover:text-orange-600 font-medium"
+                className="text-primary hover:text-primary/80 font-medium"
               >
                 이용약관
               </a>
               <span className="text-border">|</span>
               <a
                 href="/contact"
-                className="text-orange-500 hover:text-orange-600 font-medium"
+                className="text-primary hover:text-primary/80 font-medium"
               >
                 문의하기
               </a>
@@ -387,7 +390,7 @@ export default function PrivacyPolicy() {
       {showScrollTop && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-8 right-8 bg-orange-400 hover:bg-orange-500 text-white rounded-full p-3 shadow-lg transition-all duration-300 animate-fade-in"
+          className="fixed bottom-8 right-8 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full p-3 shadow-lg transition-all duration-300 animate-fade-in"
           aria-label="맨 위로 이동"
         >
           <ChevronUp className="w-6 h-6" />

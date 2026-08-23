@@ -72,7 +72,7 @@ export default function TermsOfService() {
 
             <div className="space-y-6">
               <div>
-                <h4 className="text-lg font-semibold text-foreground mb-2">
+                <h4 className="text-lg font-medium text-primary mb-2">
                   제1조 (목적)
                 </h4>
                 <p className="text-foreground/70 leading-relaxed">
@@ -83,7 +83,7 @@ export default function TermsOfService() {
               </div>
 
               <div>
-                <h4 className="text-lg font-semibold text-foreground mb-2">
+                <h4 className="text-lg font-medium text-primary mb-2">
                   제2조 (약관의 명시, 효력 및 변경)
                 </h4>
                 <ul className="list-disc list-inside space-y-2 text-foreground/70">
@@ -100,7 +100,7 @@ export default function TermsOfService() {
               </div>
 
               <div>
-                <h4 className="text-lg font-semibold text-foreground mb-2">
+                <h4 className="text-lg font-medium text-primary mb-2">
                   제3조 (용어의 정의)
                 </h4>
                 <ul className="list-disc list-inside space-y-2 text-foreground/70">
@@ -129,7 +129,7 @@ export default function TermsOfService() {
 
             <div className="space-y-6">
               <div>
-                <h4 className="text-lg font-semibold text-foreground mb-2">
+                <h4 className="text-lg font-medium text-primary mb-2">
                   제4조 (발자국 남기기 및 음성 녹음 기능)
                 </h4>
                 <ul className="list-disc list-inside space-y-2 text-foreground/70">
@@ -146,7 +146,7 @@ export default function TermsOfService() {
               </div>
 
               <div>
-                <h4 className="text-lg font-semibold text-foreground mb-2">
+                <h4 className="text-lg font-medium text-primary mb-2">
                   제5조 (장례업체 정보 및 위치기반 검색)
                 </h4>
                 <p className="text-foreground/70 leading-relaxed mb-2">
@@ -173,7 +173,7 @@ export default function TermsOfService() {
               </div>
 
               <div>
-                <h4 className="text-lg font-semibold text-foreground mb-2">
+                <h4 className="text-lg font-medium text-primary mb-2">
                   제6조 (커뮤니티 운영)
                 </h4>
                 <ul className="list-disc list-inside space-y-2 text-foreground/70">
@@ -197,7 +197,7 @@ export default function TermsOfService() {
             </h3>
 
             <div>
-              <h4 className="text-lg font-semibold text-foreground mb-2">
+              <h4 className="text-lg font-medium text-primary mb-2">
                 제7조 (콘텐츠·사진의 이용)
               </h4>
               <ul className="list-disc list-inside space-y-2 text-foreground/70">
@@ -221,7 +221,7 @@ export default function TermsOfService() {
 
             <div className="space-y-6">
               <div>
-                <h4 className="text-lg font-semibold text-foreground mb-2">
+                <h4 className="text-lg font-medium text-primary mb-2">
                   제8조 (손해배상 및 책임 제한)
                 </h4>
                 <ul className="list-disc list-inside space-y-2 text-foreground/70">
@@ -237,7 +237,7 @@ export default function TermsOfService() {
               </div>
 
               <div>
-                <h4 className="text-lg font-semibold text-foreground mb-2">
+                <h4 className="text-lg font-medium text-primary mb-2">
                   제9조 (관할법원)
                 </h4>
                 <p className="text-foreground/70 leading-relaxed">
