@@ -107,7 +107,7 @@ const ENTRY_POINTS = [
 ];
 
 function Eyebrow({ children }: { children: React.ReactNode }) {
-  return <p className="mb-3 text-sm font-medium text-primary">{children}</p>;
+  return <p className="mb-3 text-base font-medium text-primary">{children}</p>;
 }
 
 export default function Home() {
@@ -129,13 +129,13 @@ export default function Home() {
 
           <div className="relative mx-auto flex w-full max-w-[1360px] flex-col justify-between gap-16 px-6 py-16 lg:min-h-[720px] lg:py-[88px]">
             <div className="max-w-[658px] lg:pt-[54px]">
-              <p className="mb-3 text-sm font-medium text-white/90">
+              <p className="mb-3 text-base font-medium text-white/90">
                 함께 있는 오늘부터 시작하는 생애주기 케어
               </p>
-              <h1 className="text-3xl font-bold leading-tight text-white md:text-[40px] md:leading-[1.35]">
+              <h1 className="text-3xl font-bold leading-tight text-white md:text-[50px] md:leading-[1.22]">
                 우리 아이, 예전과 무엇이 달라졌는지 기록으로 확인하세요.
               </h1>
-              <p className="mt-6 leading-relaxed text-white/90">
+              <p className="mt-6 text-lg leading-relaxed text-white/90">
                 포에버(PAW-EVER)는 6~11세 반려견의 일상과 건강 변화를 쌓고, 필요한
                 케어와 병원 상담 준비를 돕습니다.
               </p>
@@ -170,7 +170,7 @@ export default function Home() {
         <section className="bg-background">
           <div className="mx-auto w-full max-w-[1248px] px-6 py-20 lg:py-24">
             <Eyebrow>매일의 기록이 다음 케어로</Eyebrow>
-            <h2 className="text-3xl font-bold md:text-[32px]">
+            <h2 className="text-3xl font-bold md:text-[35px]">
               작은 변화를 알아보는 가장 쉬운 흐름
             </h2>
             {/* 카드로 감싸지 않는다. 피그마는 테두리 없이 세 칸으로 나눠 뒀다. */}
@@ -180,7 +180,7 @@ export default function Home() {
                   <p className="text-sm font-semibold text-primary">
                     {step.step}
                   </p>
-                  <h3 className="mt-3 text-lg font-semibold">{step.title}</h3>
+                  <h3 className="mt-3 text-[19px] font-semibold">{step.title}</h3>
                   <p className="mt-2 text-muted-foreground">{step.body}</p>
                 </li>
               ))}
@@ -196,7 +196,7 @@ export default function Home() {
         <section className="bg-card">
           <div className="mx-auto w-full max-w-[1248px] px-6 py-20 lg:py-24">
             <Eyebrow>지금 필요한 길을 선택하세요.</Eyebrow>
-            <h2 className="text-3xl font-bold md:text-[32px]">
+            <h2 className="text-3xl font-bold md:text-[35px]">
               포에버를 시작하는 세 가지 방법
             </h2>
 
@@ -221,7 +221,7 @@ export default function Home() {
                     </p>
 
                     <div>
-                      <h3 className="text-lg font-semibold">{entry.title}</h3>
+                      <h3 className="text-[19px] font-semibold">{entry.title}</h3>
                       <p className="mt-2 text-muted-foreground">{entry.body}</p>
                       {entry.proof && (
                         <p className="mt-3 text-sm font-semibold">
@@ -270,7 +270,7 @@ export default function Home() {
           <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-8 px-6 py-16 lg:flex-row lg:items-center lg:justify-between lg:py-20">
             <div className="max-w-[753px]">
               <Eyebrow>건강한 오늘에서 필요한 다음 케어까지</Eyebrow>
-              <h2 className="text-3xl font-bold md:text-[32px]">
+              <h2 className="text-3xl font-bold md:text-[35px]">
                 기록을 바탕으로 아이와의 접점을 늘려요.
               </h2>
               <p className="mt-6 leading-relaxed text-muted-foreground">
@@ -292,7 +292,7 @@ export default function Home() {
         <section className="bg-card">
           <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-6 px-6 py-16 lg:flex-row lg:items-center lg:justify-between">
             <div className="max-w-[753px]">
-              <h2 className="flex items-center gap-3 text-2xl font-bold md:text-[28px]">
+              <h2 className="flex items-center gap-3 text-2xl font-bold md:text-[32px]">
                 <span
                   aria-hidden="true"
                   className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border text-base font-semibold text-muted-foreground"
