@@ -50,10 +50,13 @@ export default function SiteHeader() {
                   <Link
                     href={item.href}
                     aria-current={current ? "page" : undefined}
-                    // 지금 보는 화면은 주황이다. 검정으로 두면 나머지 메뉴와
-                    // 무게가 비슷해 어디에 있는지 눈에 들어오지 않는다.
+                    // 지금 보는 화면은 주황이고 글자 아래에 선이 깔린다. 색만
+                    // 바꾸면 나머지 메뉴와 무게가 비슷해 어디에 있는지 눈에
+                    // 들어오지 않는다. 피그마는 2px 짜리 선을 함께 둔다.
                     className={`block rounded-[10px] px-3 py-2 text-sm font-medium transition-colors hover:bg-accent/10 ${
-                      current ? "text-primary" : "text-muted-foreground"
+                      current
+                        ? "text-primary underline decoration-2 underline-offset-[6px]"
+                        : "text-muted-foreground"
                     }`}
                   >
                     {item.label}

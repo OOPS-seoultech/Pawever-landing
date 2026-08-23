@@ -1,5 +1,6 @@
 import SiteFooter from "@/components/SiteFooter";
 import SiteHeader from "@/components/SiteHeader";
+import { STORE_LINKS } from "@/lib/storeLinks";
 import { ExternalLink } from "lucide-react";
 
 /**
@@ -14,10 +15,6 @@ import { ExternalLink } from "lucide-react";
  * 아직 받지 못했다. 값이 비어 있으면 버튼을 아예 그리지 않는다.
  * 눌러도 아무 데도 가지 않는 버튼을 두는 것보다 없는 편이 낫다.
  */
-const STORE_LINKS = [
-  { label: "Google Play에서 설치하기", href: "", primary: true },
-  { label: "App Store에서 설치하기", href: "", primary: false },
-];
 
 const FEATURES = [
   {
