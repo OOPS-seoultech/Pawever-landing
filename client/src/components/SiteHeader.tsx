@@ -37,7 +37,7 @@ export default function SiteHeader() {
             alt="PAW-EVER"
             width="132"
             height="112"
-            className="h-[52px] w-auto"
+            className="h-[55px] w-auto"
           />
         </Link>
 
