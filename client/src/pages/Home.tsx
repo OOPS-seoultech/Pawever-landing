@@ -284,8 +284,10 @@ export default function Home() {
                         <p className="pt-3.5 text-sm font-semibold leading-[21px]">
                           {entry.proof}
                           {entry.proofNote && (
-                            // 피그마가 7px 로 두었다. 본문이 아니라 기준일이다.
-                            <span className="text-[7px] font-normal">
+                            // 피그마는 7px 다. 화면에서 거의 읽히지 않아
+                            // 12px 로 올린다 — 이 화면에서 유일하게 피그마
+                            // 값을 따르지 않는 곳이다.
+                            <span className="text-xs font-normal">
                               {" "}
                               {entry.proofNote}
                             </span>
