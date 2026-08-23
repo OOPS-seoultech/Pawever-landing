@@ -267,7 +267,7 @@ export default function Home() {
 
         {/* 향후 방향 */}
         <section className="bg-background">
-          <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-8 px-6 py-16 lg:flex-row lg:items-center lg:justify-between lg:py-20">
+          <div className="mx-auto flex w-full max-w-[1248px] flex-col gap-8 px-6 py-16 lg:flex-row lg:items-center lg:justify-between lg:py-[82px]">
             <div className="max-w-[753px]">
               <Eyebrow>건강한 오늘에서 필요한 다음 케어까지</Eyebrow>
               <h2 className="text-3xl font-bold md:text-[35px]">
@@ -290,7 +290,7 @@ export default function Home() {
 
         {/* 문의 */}
         <section className="bg-card">
-          <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-6 px-6 py-16 lg:flex-row lg:items-center lg:justify-between">
+          <div className="mx-auto flex w-full max-w-[1248px] flex-col gap-6 px-6 py-16 lg:flex-row lg:items-center lg:justify-between lg:py-[76px]">
             <div className="max-w-[753px]">
               <h2 className="flex items-center gap-3 text-2xl font-bold md:text-[32px]">
                 <span
