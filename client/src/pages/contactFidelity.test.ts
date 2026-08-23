@@ -46,6 +46,18 @@ describe("문의 구조", () => {
     expect(flat).not.toContain("availableSocials");
   });
 
+  it("소셜 주소가 채워져 있다", () => {
+    expect(flat).toContain('href: "https://www.instagram.com/pawever.kr/"');
+    expect(flat).toContain('href: "https://www.threads.com/@pawever.kr"');
+    expect(flat).not.toContain('{ label: "Instagram", href: "" }');
+  });
+
+  it("스레드 주소는 threads.com 이다", () => {
+    // 메타가 옛 주소에서 옮겼다. 옛 주소도 아직 넘겨주지만 언젠가 끊긴다.
+    // 주석에도 옛 주소가 나오므로 파일 전체가 아니라 href 만 본다.
+    expect(flat).not.toContain('href: "https://www.threads.net');
+  });
+
   it("화살표는 글자에 붙어 있다", () => {
     // 아이콘 컴포넌트가 아니라 텍스트다. 밑줄은 이름에만 걸린다.
     expect(flat).toContain("이메일 작성 ↗");

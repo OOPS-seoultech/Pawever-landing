@@ -56,13 +56,15 @@ const OPERATOR_INFO = [
 /**
  * 소셜 채널 주소.
  *
- * 아직 받지 못했다. 자리를 지우면 피그마와 화면이 달라지고, 빈 링크를 걸면
- * 눌렀을 때 아무 데도 가지 않는다. 스토어 버튼과 같게, 주소가 없으면 누를 수
- * 없는 상태로 그려 둔다.
+ * 스레드는 threads.net 이 아니라 threads.com 이다. 메타가 주소를 옮겼고,
+ * 옛 주소도 아직 넘겨주지만 언젠가 끊긴다.
+ *
+ * 비면 스토어 버튼과 같게 누를 수 없는 상태로 그린다 — 자리는 피그마대로
+ * 두되 아무 데도 가지 않는 링크는 걸지 않는다.
  */
 const SOCIAL_LINKS = [
-  { label: "Instagram", href: "" },
-  { label: "Threads", href: "" },
+  { label: "Instagram", href: "https://www.instagram.com/pawever.kr/" },
+  { label: "Threads", href: "https://www.threads.com/@pawever.kr" },
 ];
 
 const mailtoHref = (subject: string) =>
