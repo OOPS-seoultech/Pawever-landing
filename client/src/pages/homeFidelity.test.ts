@@ -181,6 +181,14 @@ describe("홈 화면 크기와 모양", () => {
     expect(flat).toContain("md:grid-cols-3 md:gap-14");
   });
 
+  it("설문 기준일만 피그마 값을 따르지 않는다", () => {
+    // 피그마는 7px 다. 앞의 '반려인 731명 조사 완료' 가 14px 인데 그 옆에
+    // 7px 를 두면 화면에서 거의 읽히지 않는다. 12px 로 올려 두었다.
+    // 이 화면에서 값을 일부러 어긋나게 둔 곳은 여기 하나뿐이다.
+    expect(flat).toContain('<span className="text-xs font-normal">');
+    expect(flat).not.toContain("text-[7px]");
+  });
+
   it("고지 문구는 본문보다 흐리다", () => {
     // --muted-foreground 로 두면 본문과 같은 무게라 읽어야 할 문장처럼 보인다.
     expect(flat).toContain("text-[rgba(102,112,133,0.57)]");
