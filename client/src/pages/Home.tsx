@@ -127,7 +127,7 @@ export default function Home() {
             aria-hidden="true"
           />
 
-          <div className="relative mx-auto flex w-full max-w-[1312px] flex-col justify-between gap-16 px-6 py-16 lg:min-h-[720px] lg:px-8 lg:py-[88px]">
+          <div className="relative mx-auto flex w-full max-w-[1360px] flex-col justify-between gap-16 px-6 py-16 lg:min-h-[720px] lg:py-[88px]">
             <div className="max-w-[658px] lg:pt-[54px]">
               <p className="mb-3 text-sm font-medium text-white/90">
                 함께 있는 오늘부터 시작하는 생애주기 케어
@@ -155,7 +155,7 @@ export default function Home() {
               </div>
             </div>
 
-            <ul className="grid gap-8 sm:grid-cols-[351px_minmax(0,1fr)] sm:gap-x-[85px]">
+            <ul className="grid gap-8 sm:grid-cols-[351px_minmax(0,1fr)] sm:gap-x-[90px]">
               {HIGHLIGHTS.map(item => (
                 <li key={item.title}>
                   <p className="font-semibold text-white">{item.title}</p>
@@ -168,7 +168,7 @@ export default function Home() {
 
         {/* 기록에서 케어로 이어지는 흐름 */}
         <section className="bg-background">
-          <div className="mx-auto w-full max-w-[1200px] px-6 py-20 lg:py-24">
+          <div className="mx-auto w-full max-w-[1248px] px-6 py-20 lg:py-24">
             <Eyebrow>매일의 기록이 다음 케어로</Eyebrow>
             <h2 className="text-3xl font-bold md:text-[32px]">
               작은 변화를 알아보는 가장 쉬운 흐름
@@ -194,7 +194,7 @@ export default function Home() {
 
         {/* 시작하는 세 가지 방법 */}
         <section className="bg-card">
-          <div className="mx-auto w-full max-w-[1200px] px-6 py-20 lg:py-24">
+          <div className="mx-auto w-full max-w-[1248px] px-6 py-20 lg:py-24">
             <Eyebrow>지금 필요한 길을 선택하세요.</Eyebrow>
             <h2 className="text-3xl font-bold md:text-[32px]">
               포에버를 시작하는 세 가지 방법
@@ -204,14 +204,18 @@ export default function Home() {
               {ENTRY_POINTS.map(entry => (
                 <li
                   key={entry.title}
-                  className="rounded-[12px]"
+                  // 강조 블록만 배경을 깐다. 줄 사이에 구분선은 없다 —
+                  // 피그마에서 선처럼 보이던 것은 이 블록의 둥근 모서리였다.
+                  className={
+                    entry.highlighted ? "-mx-6 rounded-[12px] px-6" : ""
+                  }
                   style={
                     entry.highlighted
                       ? { backgroundColor: HIGHLIGHT_BG }
                       : undefined
                   }
                 >
-                  <div className="grid items-center gap-6 border-b border-border px-0 py-8 md:grid-cols-[168px_minmax(0,1fr)_auto] md:gap-10 md:px-6">
+                  <div className="grid items-center gap-6 py-8 md:grid-cols-[200px_minmax(0,1fr)_auto] md:gap-x-12 md:py-9">
                     <p className="text-sm text-muted-foreground">
                       {entry.category}
                     </p>
