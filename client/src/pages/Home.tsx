@@ -8,31 +8,48 @@ import { Link } from "wouter";
  * 6~11세 반려견의 일상·건강 변화를 쌓아 병원 상담 준비까지 잇는 흐름을 보여준다.
  * 방문자가 앱·굿즈·설문 중 지금 필요한 길을 고르게 하는 것이 이 화면의 일이다.
  *
- * 피그마 8. Website / Identify and Connect Home Component (5200:1448) 기준이다.
- * 화면 폭·색·여백을 그 프레임에서 그대로 가져왔다. 값을 바꿔야 하면 피그마부터
- * 바꾸고 여기를 맞춘다.
+ * 피그마 8. Website / Identify and Connect Home Component > PawEverHome
+ * (5200:1448) 기준이다.
+ *
+ * 값은 get_design_context 가 준 CSS 다. 예전에는 좌표만 받아서 글자 크기를
+ * "피그마 텍스트 폭 ÷ 브라우저 실측 폭"으로 역산했고, 그래서 36→35, 23→19,
+ * 34→32 처럼 크기가 조금씩 어긋나 있었다. 버튼 높이·모서리·굵기처럼
+ * 좌표에 잡히지 않는 것은 아예 다른 값이었다.
  */
 
-/** 굿즈 줄에 깔리는 강조 배경. 피그마에서 뽑은 값이다. */
+/** 굿즈 줄에 깔리는 강조 배경. 앱 버튼도 같은 색을 쓴다. */
 const HIGHLIGHT_BG = "#FFF9F3";
-/** 조용한 버튼 배경. 강조 줄과 같은 색을 쓴다. */
-const QUIET_BUTTON_BG = "#FFF9F3";
-/** 향후 방향 버튼 배경. */
+/** 히어로 보조 버튼과 향후 방향 버튼 배경. */
 const SOFT_BUTTON_BG = "#FFF0E0";
+/**
+ * 설문 버튼 배경.
+ *
+ * --primary(#FF9F43)와 다른 주황이다. 굿즈 버튼이 --primary 라서 나란히 두면
+ * 설문 쪽이 아주 조금 밝다. 피그마가 그렇게 나눠 두었다.
+ */
+const SURVEY_BUTTON_BG = "#FFA94E";
+/** 히어로 눈썹 글자. 흰색이 아니라 살구빛이 도는 흰색이다. */
+const HERO_EYEBROW = "#FFF0E0";
+/** 히어로 본문과 실적 설명. 순백보다 한 단계 낮다. */
+const HERO_BODY = "#F6F6F6";
+
+/** 공통 버튼 모양. 피그마는 일곱 버튼이 모두 같은 높이·모서리다. */
+const BUTTON =
+  "inline-flex h-[50px] items-center justify-center rounded-[12px] px-6 text-base font-semibold transition-colors";
 
 const CARE_STEPS = [
   {
-    step: "STEP 01",
+    number: "01",
     title: "오늘의 30초 케어 기록",
     body: "식사, 산책, 수면처럼 매일 보이는 변화를 짧게 남겨요.",
   },
   {
-    step: "STEP 02",
+    number: "02",
     title: "주간 변화 비교",
     body: "지난 기록과 나란히 보며 달라진 점을 놓치지 않아요.",
   },
   {
-    step: "STEP 03",
+    number: "03",
     title: "병원 준비 요약",
     body: "관찰한 내용을 정리해 진료 상담 전 정보를 준비해요.",
   },
@@ -105,13 +122,26 @@ const ENTRY_POINTS = [
     action: "15분 설문 참여하기",
     underlined: false,
     href: "/goods-survey/survey",
-    variant: "primary" as const,
+    variant: "survey" as const,
     highlighted: false,
   },
 ];
 
 function Eyebrow({ children }: { children: React.ReactNode }) {
-  return <p className="mb-3 text-base font-medium text-primary">{children}</p>;
+  return (
+    <p className="mb-3 text-base font-medium leading-6 text-primary">
+      {children}
+    </p>
+  );
+}
+
+/** 구역 제목. 네 곳이 같은 값이다. */
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className="text-3xl font-bold tracking-[-0.9px] md:text-[36px] md:leading-[45px]">
+      {children}
+    </h2>
+  );
 }
 
 export default function Home() {
@@ -131,39 +161,55 @@ export default function Home() {
             aria-hidden="true"
           />
 
-          <div className="relative mx-auto flex w-full max-w-[1360px] flex-col justify-between gap-16 px-6 py-16 lg:min-h-[720px] lg:py-[88px]">
-            <div className="max-w-[658px] lg:pt-[54px]">
-              <p className="mb-3 text-base font-medium text-white/90">
+          <div className="relative mx-auto flex w-full max-w-[1360px] flex-col justify-between gap-16 px-6 py-16 lg:min-h-[720px] lg:pb-[58px] lg:pt-[88px]">
+            <div className="lg:pt-[82px]">
+              <p
+                className="text-base font-semibold leading-6"
+                style={{ color: HERO_EYEBROW }}
+              >
                 함께 있는 오늘부터 시작하는 생애주기 케어
               </p>
-              <h1 className="text-3xl font-bold leading-tight text-white md:text-[50px] md:leading-[1.22]">
+              {/* 제목만 칸(658px)보다 넓게 나간다. 오른쪽이 비어 있어서
+                  피그마도 그렇게 두 줄로 흘려 두었다. */}
+              <h1 className="max-w-[920px] pt-4 text-3xl font-bold tracking-[-1.3px] text-white md:text-[52px] md:leading-[60.84px]">
                 우리 아이, 예전과 무엇이 달라졌는지 기록으로 확인하세요.
               </h1>
-              <p className="mt-6 text-lg leading-relaxed text-white/90">
-                포에버(PAW-EVER)는 6~11세 반려견의 일상과 건강 변화를 쌓고, 필요한
-                케어와 병원 상담 준비를 돕습니다.
+              <p
+                className="max-w-[590px] pt-6 text-lg leading-[30.24px]"
+                style={{ color: HERO_BODY }}
+              >
+                포에버(PAW-EVER)는 6~11세 반려견의 일상과 건강 변화를 쌓고
+                필요한 케어와 병원 상담 준비를 돕습니다.
               </p>
-              <div className="mt-8 flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-3 pt-8">
                 <Link
                   href="/service"
-                  className="rounded-[10px] bg-primary px-6 py-3 font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                  className={`${BUTTON} bg-primary text-xl text-white hover:bg-primary/90`}
                 >
                   나에게 맞는 서비스 찾기
                 </Link>
                 <Link
                   href="/goods-survey/survey"
-                  className="rounded-[10px] bg-white px-6 py-3 font-medium text-foreground transition-colors hover:bg-white/90"
+                  className={`${BUTTON} text-xl text-foreground hover:brightness-95`}
+                  style={{ backgroundColor: SOFT_BUTTON_BG }}
                 >
                   15분 설문으로 의견 남기기
                 </Link>
               </div>
             </div>
 
-            <ul className="grid gap-8 sm:grid-cols-[351px_minmax(0,1fr)] sm:gap-x-[90px]">
+            <ul className="grid gap-8 pt-[22px] sm:grid-cols-[max-content_minmax(0,1fr)] sm:gap-x-[90px]">
               {HIGHLIGHTS.map(item => (
                 <li key={item.title}>
-                  <p className="font-semibold text-white">{item.title}</p>
-                  <p className="mt-1 text-sm text-white/85">{item.body}</p>
+                  <p className="text-xl font-bold leading-7 tracking-[-0.3px] text-white">
+                    {item.title}
+                  </p>
+                  <p
+                    className="pt-2 text-[15px] leading-6"
+                    style={{ color: HERO_BODY }}
+                  >
+                    {item.body}
+                  </p>
                 </li>
               ))}
             </ul>
@@ -172,24 +218,27 @@ export default function Home() {
 
         {/* 기록에서 케어로 이어지는 흐름 */}
         <section className="bg-background">
-          <div className="mx-auto w-full max-w-[1248px] px-6 py-20 lg:py-24">
+          <div className="mx-auto w-full max-w-[1248px] px-6 py-[94px]">
             <Eyebrow>매일의 기록이 다음 케어로</Eyebrow>
-            <h2 className="text-3xl font-bold md:text-[35px] md:leading-[45px]">
-              작은 변화를 알아보는 가장 쉬운 흐름
-            </h2>
+            <SectionTitle>작은 변화를 알아보는 가장 쉬운 흐름</SectionTitle>
             {/* 카드로 감싸지 않는다. 피그마는 테두리 없이 세 칸으로 나눠 뒀다. */}
-            <ol className="mt-12 grid gap-10 md:grid-cols-3 md:gap-8">
+            <ol className="grid gap-10 pt-12 md:grid-cols-3 md:gap-14">
               {CARE_STEPS.map(step => (
-                <li key={step.step}>
-                  <p className="text-sm font-semibold text-primary">
-                    {step.step}
+                <li key={step.number}>
+                  <p className="text-sm font-bold leading-[19.6px] text-primary">
+                    STEP {step.number}
                   </p>
-                  <h3 className="mt-[19px] text-[19px] font-semibold leading-7">{step.title}</h3>
-                  <p className="mt-2 text-muted-foreground">{step.body}</p>
+                  <h3 className="pt-[19px] text-xl font-semibold leading-7 tracking-[-0.3px]">
+                    {step.title}
+                  </h3>
+                  <p className="pt-2.5 text-base leading-[26.4px] text-muted-foreground">
+                    {step.body}
+                  </p>
                 </li>
               ))}
             </ol>
-            <p className="mt-20 text-sm text-muted-foreground">
+            {/* 본문보다 흐리다. 고지이지 읽어야 할 문장이 아니다. */}
+            <p className="pt-10 text-sm leading-[21.7px] text-[rgba(102,112,133,0.57)]">
               * 포에버의 기록은 진단이나 치료 지시가 아닌, 보호자의 관찰과 병원
               상담 준비를 돕기 위한 정보입니다.
             </p>
@@ -198,20 +247,20 @@ export default function Home() {
 
         {/* 시작하는 세 가지 방법 */}
         <section className="bg-card">
-          <div className="mx-auto w-full max-w-[1248px] px-6 py-20 lg:py-24">
+          <div className="mx-auto w-full max-w-[1248px] px-6 py-[94px]">
             <Eyebrow>지금 필요한 길을 선택하세요.</Eyebrow>
-            <h2 className="text-3xl font-bold md:text-[35px] md:leading-[45px]">
-              포에버를 시작하는 세 가지 방법
-            </h2>
+            <SectionTitle>포에버를 시작하는 세 가지 방법</SectionTitle>
 
-            <ul className="mt-10">
+            <ul className="pt-10">
               {ENTRY_POINTS.map(entry => (
                 <li
                   key={entry.title}
                   // 강조 블록만 배경을 깐다. 줄 사이에 구분선은 없다 —
                   // 피그마에서 선처럼 보이던 것은 이 블록의 둥근 모서리였다.
                   className={
-                    entry.highlighted ? "-mx-6 rounded-[12px] px-6" : ""
+                    entry.highlighted
+                      ? "-mx-6 rounded-[16px] px-6 shadow-[0_3px_7.5px_rgba(0,0,0,0.06)]"
+                      : ""
                   }
                   style={
                     entry.highlighted
@@ -219,19 +268,25 @@ export default function Home() {
                       : undefined
                   }
                 >
-                  <div className="grid items-center gap-6 py-8 md:grid-cols-[200px_minmax(0,1fr)_auto] md:gap-x-12 md:py-9">
-                    <p className="text-sm text-muted-foreground">
+                  <div className="grid items-center gap-6 py-[30px] md:min-h-[154px] md:grid-cols-[210px_minmax(0,1fr)_238px] md:gap-x-[38px]">
+                    <p className="text-sm font-medium leading-[21px] text-muted-foreground">
                       {entry.category}
                     </p>
 
                     <div>
-                      <h3 className="text-[19px] font-semibold">{entry.title}</h3>
-                      <p className="mt-2 text-muted-foreground">{entry.body}</p>
+                      <h3 className="text-[23px] font-semibold leading-[31.05px] tracking-[-0.345px]">
+                        {entry.title}
+                      </h3>
+                      <p className="pt-2.5 text-base leading-[25.6px] text-muted-foreground">
+                        {entry.body}
+                      </p>
                       {entry.proof && (
-                        <p className="mt-3 text-sm font-semibold">
+                        <p className="pt-3.5 text-sm font-semibold leading-[21px]">
                           {entry.proof}
                           {entry.proofNote && (
-                            <span className="ml-1 text-xs font-normal text-muted-foreground">
+                            // 피그마가 7px 로 두었다. 본문이 아니라 기준일이다.
+                            <span className="text-[7px] font-normal">
+                              {" "}
                               {entry.proofNote}
                             </span>
                           )}
@@ -240,7 +295,7 @@ export default function Home() {
                       {entry.secondary && (
                         <Link
                           href={entry.secondary.href}
-                          className="mt-2 inline-block text-sm underline underline-offset-4 transition-colors hover:text-primary"
+                          className="mt-[7px] inline-block text-sm font-semibold leading-[21px] text-muted-foreground underline underline-offset-4 transition-colors hover:text-primary"
                         >
                           {entry.secondary.label}
                         </Link>
@@ -250,17 +305,22 @@ export default function Home() {
                     <Link
                       href={entry.href}
                       className={[
-                        "justify-self-start rounded-[10px] px-5 py-3 text-sm transition-colors md:justify-self-end",
-                        entry.variant === "primary"
-                          ? "bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
-                          : "font-medium hover:brightness-95",
+                        BUTTON,
+                        "w-[195px] justify-self-start md:justify-self-end",
+                        entry.variant === "quiet"
+                          ? "text-muted-foreground hover:brightness-95"
+                          : "text-white hover:brightness-95",
                         entry.underlined ? "underline underline-offset-4" : "",
                       ].join(" ")}
-                      style={
-                        entry.variant === "quiet"
-                          ? { backgroundColor: QUIET_BUTTON_BG }
-                          : undefined
-                      }
+                      style={{
+                        backgroundColor:
+                          entry.variant === "quiet"
+                            ? HIGHLIGHT_BG
+                            : entry.variant === "survey"
+                              ? SURVEY_BUTTON_BG
+                              : undefined,
+                      }}
+                      data-variant={entry.variant}
                     >
                       {entry.action}
                     </Link>
@@ -276,17 +336,15 @@ export default function Home() {
           <div className="mx-auto flex w-full max-w-[1248px] flex-col gap-8 px-6 py-16 lg:flex-row lg:items-center lg:justify-between lg:py-[82px]">
             <div className="max-w-[753px]">
               <Eyebrow>건강한 오늘에서 필요한 다음 케어까지</Eyebrow>
-              <h2 className="text-3xl font-bold md:text-[35px] md:leading-[45px]">
-                기록을 바탕으로 아이와의 접점을 늘려요.
-              </h2>
-              <p className="mt-6 leading-relaxed text-muted-foreground">
+              <SectionTitle>기록을 바탕으로 아이와의 접점을 늘려요.</SectionTitle>
+              <p className="max-w-[720px] pt-[18px] text-[17px] leading-[28.9px] text-muted-foreground">
                 일상 기록과 병원 상담 준비에서 시작해 건강관리, 보험, 상담,
                 노령기 돌봄 등 생애주기에 필요한 연결을 단계적으로 확장합니다.
               </p>
             </div>
             <Link
               href="/roadmap"
-              className="shrink-0 self-start rounded-[10px] px-5 py-3 text-sm font-medium transition-colors hover:brightness-95 lg:self-auto"
+              className={`${BUTTON} shrink-0 self-start text-foreground hover:brightness-95 lg:self-auto`}
               style={{ backgroundColor: SOFT_BUTTON_BG }}
             >
               향후 방향 보기 →
@@ -298,22 +356,28 @@ export default function Home() {
         <section className="bg-card">
           <div className="mx-auto flex w-full max-w-[1248px] flex-col gap-6 px-6 py-16 lg:flex-row lg:items-center lg:justify-between lg:py-[76px]">
             <div className="max-w-[753px]">
-              <h2 className="flex items-center gap-3 text-2xl font-bold md:text-[32px]">
-                <span
+              <div className="flex items-center">
+                {/* 피그마가 내보낸 자산 그대로다. 테두리 원에 물음표를 그려
+                    넣던 것과는 다른 물건이고, 오른쪽 여백이 도형 안에 있다. */}
+                <img
+                  src="/home/question.svg"
+                  alt=""
+                  width="45"
+                  height="60"
+                  className="h-[60px] w-[45px] shrink-0"
                   aria-hidden="true"
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#505152] text-sm font-bold text-white"
-                >
-                  ?
-                </span>
-                포에버에 궁금한 점이 있나요?
-              </h2>
-              <p className="mt-4 text-muted-foreground">
+                />
+                <h2 className="text-2xl font-bold tracking-[-0.85px] md:text-[34px] md:leading-[42.5px]">
+                  포에버에 궁금한 점이 있나요?
+                </h2>
+              </div>
+              <p className="pt-[18px] text-[17px] leading-[28.9px] text-muted-foreground">
                 앱, 맞춤 굿즈, 설문, 제휴에 관한 문의를 남겨 주세요.
               </p>
             </div>
             <Link
               href="/contact"
-              className="shrink-0 self-start rounded-[10px] bg-background px-5 py-3 text-sm font-medium transition-colors hover:brightness-95 lg:self-auto"
+              className={`${BUTTON} w-[200px] shrink-0 self-start bg-background text-foreground hover:brightness-95 lg:self-auto`}
             >
               문의 유형 선택하기 →
             </Link>
