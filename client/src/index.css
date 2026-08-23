@@ -114,6 +114,15 @@
 }
 
 @layer base {
+  /*
+   * 한글은 단어 안에서 줄이 끊긴다. 기본값(break-word)이면 "기록으로" 가
+   * "기록 / 으로" 로 갈라지고 "돕습니다" 가 "돕습니 / 다" 가 된다.
+   * keep-all 은 어절 단위로만 끊는다.
+   */
+  html {
+    word-break: keep-all;
+  }
+
   * {
     @apply border-border outline-ring/50;
   }

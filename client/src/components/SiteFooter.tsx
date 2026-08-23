@@ -8,7 +8,7 @@ import { Link } from "wouter";
 export default function SiteFooter() {
   return (
     <footer className="w-full border-t border-border">
-      <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-4 px-8 py-10 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mx-auto flex w-full max-w-[1248px] flex-col gap-4 px-6 py-14 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
           © 2026 포에버(PAW-EVER)
         </p>
