@@ -32,8 +32,10 @@ describe("헤더 기준", () => {
     expect(header).toContain('className="h-[52px] w-auto"');
   });
 
-  it("지금 보는 메뉴는 주황이다", () => {
-    expect(header).toContain('current ? "text-primary" : "text-muted-foreground"');
+  it("지금 보는 메뉴는 주황이고 밑줄이 깔린다", () => {
+    // 피그마는 글자 아래에 2px 선을 둔다. 색만으로는 어디에 있는지
+    // 눈에 잘 들어오지 않는다.
+    expect(header).toContain("text-primary underline decoration-2 underline-offset-[6px]");
   });
 
   it("헤더 배경은 흰색이다", () => {
