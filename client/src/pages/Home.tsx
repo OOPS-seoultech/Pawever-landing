@@ -76,6 +76,7 @@ const ENTRY_POINTS = [
     proofNote: "",
     secondary: null,
     action: "앱 서비스 살펴보기 →",
+    underlined: false,
     href: "/app",
     variant: "quiet" as const,
     highlighted: false,
@@ -88,6 +89,8 @@ const ENTRY_POINTS = [
     proofNote: "",
     secondary: { label: "맞춤 굿즈 얼리버드 보기 →", href: "/goods-survey" },
     action: "굿즈 얼리버드 신청하기",
+    // 일곱 버튼 중 이것만 글자에 밑줄이 있다. 확대해 보기 전에는 안 보였다.
+    underlined: true,
     href: "/goods-survey",
     variant: "primary" as const,
     highlighted: true,
@@ -100,6 +103,7 @@ const ENTRY_POINTS = [
     proofNote: "(2026. 08. 12 기준)",
     secondary: null,
     action: "15분 설문 참여하기",
+    underlined: false,
     href: "/goods-survey/survey",
     variant: "primary" as const,
     highlighted: false,
@@ -245,11 +249,13 @@ export default function Home() {
 
                     <Link
                       href={entry.href}
-                      className={
+                      className={[
+                        "justify-self-start rounded-[10px] px-5 py-3 text-sm transition-colors md:justify-self-end",
                         entry.variant === "primary"
-                          ? "justify-self-start rounded-[10px] bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 md:justify-self-end"
-                          : "justify-self-start rounded-[10px] px-5 py-3 text-sm font-medium transition-colors hover:brightness-95 md:justify-self-end"
-                      }
+                          ? "bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
+                          : "font-medium hover:brightness-95",
+                        entry.underlined ? "underline underline-offset-4" : "",
+                      ].join(" ")}
                       style={
                         entry.variant === "quiet"
                           ? { backgroundColor: QUIET_BUTTON_BG }
@@ -295,7 +301,7 @@ export default function Home() {
               <h2 className="flex items-center gap-3 text-2xl font-bold md:text-[32px]">
                 <span
                   aria-hidden="true"
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border text-base font-semibold text-muted-foreground"
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#505152] text-sm font-bold text-white"
                 >
                   ?
                 </span>

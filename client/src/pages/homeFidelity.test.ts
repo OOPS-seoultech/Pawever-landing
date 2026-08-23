@@ -84,6 +84,20 @@ describe("홈 화면 구조", () => {
     expect(flat).not.toContain("15분 설문 참여하기 →");
   });
 
+  it("굿즈 버튼만 글자에 밑줄이 있다", () => {
+    // 피그마에서 일곱 버튼을 확대해 보니 이 하나만 그렇다. 밑줄은 자리도
+    // 크기도 바꾸지 않아서, 좌표와 색만 재던 방식으로는 잡히지 않았다.
+    expect(home.match(/underlined: true/g) ?? []).toHaveLength(1);
+    expect(home.match(/underlined: false/g) ?? []).toHaveLength(2);
+    expect(flat).toContain('entry.underlined ? "underline underline-offset-4" : ""');
+  });
+
+  it("문의 아이콘은 채워진 원이다", () => {
+    // 테두리만 있는 원이 아니라 진회색으로 채우고 물음표를 흰색으로 둔다.
+    expect(flat).toContain("bg-[#505152]");
+    expect(flat).toContain("text-white");
+  });
+
   it("STEP 설명이 피그마 문구다", () => {
     // 다른 프레임에는 '예전과 달라진 점', '진료 상담 전에 필요한 정보'로
     // 적혀 있다. 어느 프레임을 봤는지가 여기서 갈린다.
