@@ -108,7 +108,10 @@ const ENTRY_POINTS = [
     action: "굿즈 얼리버드 신청하기",
     // 일곱 버튼 중 이것만 글자에 밑줄이 있다. 확대해 보기 전에는 안 보였다.
     underlined: true,
-    href: "/goods-survey",
+    // 설문을 건너뛰고 곧장 신청으로 간다 — 대표님 요청 3번의 첫 갈래다.
+    // 이 길은 29,900원이고 설문을 거치는 길은 23,900원이다. 바로 아래
+    // '보기 →' 가 랜딩으로 가는 길을 따로 열어 둔다.
+    href: "/goods-survey/survey?direct=1",
     variant: "primary" as const,
     highlighted: true,
   },
@@ -393,8 +396,9 @@ export default function Home() {
       <div className="h-20" aria-hidden="true" />
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-4 py-3 shadow-lg backdrop-blur">
         <div className="mx-auto flex w-full max-w-[1024px] flex-wrap items-center justify-center gap-3">
+          {/* 위 굿즈 줄의 신청 버튼과 글자가 같다. 같은 곳으로 보낸다. */}
           <Link
-            href="/goods-survey"
+            href="/goods-survey/survey?direct=1"
             className="rounded-[10px] bg-primary px-6 py-2.5 font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
           >
             굿즈 얼리버드 신청하기
