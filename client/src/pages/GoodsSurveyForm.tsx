@@ -1593,11 +1593,13 @@ export default function GoodsSurveyForm() {
           >
             <ArrowLeft aria-hidden="true" />
           </button>
+          {/* 로고는 웹사이트 홈으로 나간다. 왼쪽 뒤로가기와 다른 곳을
+              가리키는 게 맞다 — 그쪽은 방금 떠나온 랜딩으로 돌아간다. */}
           <a
-            href="/goods-survey"
+            href="/"
             onClick={event => {
               event.preventDefault();
-              setLocation("/goods-survey");
+              setLocation("/");
             }}
             className="gsf-brand"
           >

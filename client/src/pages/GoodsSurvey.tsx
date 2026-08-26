@@ -294,7 +294,9 @@ export default function GoodsSurvey() {
     <main className="goods-survey-page">
       <div className="gs-phone">
         <header className="gs-topbar">
-          <a href="/goods-survey" className="gs-wordmark">
+          {/* 자기 자신(/goods-survey)을 가리키고 있었다. 랜딩으로 들어온
+              사람이 웹사이트로 되돌아갈 길이 없었다. */}
+          <a href="/" className="gs-wordmark">
             <img
               src={`${ASSET_BASE}/paw-ever-logo.svg`}
               alt="PAW-EVER"
