@@ -14,7 +14,11 @@ import {
   getSurveyCampaign,
   type SurveyCampaign,
 } from "@/lib/goodsSurveyApi";
-import { GOODS_PRICE, wonText } from "./goodsSurveyContent";
+import {
+  GOODS_PRICE,
+  GOODS_SURVEY_DISCOUNT,
+  wonText,
+} from "./goodsSurveyContent";
 import "./GoodsSurvey.css";
 
 const CAMPAIGN = {
@@ -28,7 +32,6 @@ const CAMPAIGN = {
 // 금액은 goodsSurveyContent.ts 한 곳에서만 관리한다. 설문 완료 화면도 같은 값을 쓴다.
 const PRICE = GOODS_PRICE;
 const won = wonText;
-const MEMBER_DISCOUNT = PRICE.list - PRICE.member;
 
 // 회의록 4번: 주요 CTA 문구는 모든 구간에서 같아야 한다.
 // 가격 카드와 마지막 배너만 회의록이 따로 지정한 문구를 쓴다.
@@ -532,8 +535,10 @@ export default function GoodsSurvey() {
                 />
               </div>
               <div className="gs-offer-card">
+                {/* 적는 값은 정가(34,900)가 아니라 이 사람이 실제로 내는
+                    값이다. 서버의 list-price-krw 와 같아야 한다. */}
                 <span>일반 구매자</span>
-                <strong>{won(PRICE.list)}</strong>
+                <strong>{won(PRICE.presale)}</strong>
                 <ul>
                   <li>설문 없이 바로 신청</li>
                   <li>신청 후 문자로 입금 계좌 안내</li>
@@ -668,7 +673,7 @@ export default function GoodsSurvey() {
           <PrimaryCta
             ctaId={CTA_IDS.final}
             onClick={() => openCta("final")}
-            label={`설문하고 -${won(MEMBER_DISCOUNT)} 혜택 받기`}
+            label={`설문하고 -${won(GOODS_SURVEY_DISCOUNT)} 혜택 받기`}
             disabled={!surveyAvailable}
           />
           <p className="gs-cta-meta">

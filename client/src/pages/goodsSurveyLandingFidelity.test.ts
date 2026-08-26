@@ -34,10 +34,14 @@ describe("굿즈 랜딩 기준 문구", () => {
     expect(contentSource).toContain("member: 23_900");
     expect(landingSource).toContain("const PRICE = GOODS_PRICE");
     expect(formSource).toContain("wonText(GOODS_PRICE.member)");
-    // 할인액은 정가에서 계산한다. 손으로 적으면 가격을 바꿀 때 어긋난다.
-    expect(landingSource).toContain(
-      "const MEMBER_DISCOUNT = PRICE.list - PRICE.member"
-    );
+    // 할인액은 서버가 깎아 주는 값을 쓴다 — survey-discount-krw = 6,000원.
+    //
+    // 여기는 원래 정가에서 빼도록(34,900 - 23,900 = 11,000) 붙들고 있었다.
+    // 손으로 적는 것만 막았을 뿐 계산의 기준이 틀려서, 마지막 CTA 가
+    // '설문하고 -11,000원 혜택 받기' 라고 말하는 동안 서버는 6,000원을
+    // 깎고 있었다. 정가는 아무도 그 값에 사지 않는다.
+    expect(landingSource).toContain("GOODS_SURVEY_DISCOUNT");
+    expect(landingSource).not.toContain("PRICE.list - PRICE.member");
     expect(landingSource).not.toMatch(/-?11,000원/);
   });
 

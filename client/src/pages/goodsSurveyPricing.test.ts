@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { applicablePriceKrw, GOODS_PRICE } from "./goodsSurveyContent";
 
 /**
@@ -33,5 +35,38 @@ describe("굿즈 가격", () => {
   it("서버가 매기는 할인액과 같은 차이를 보여 준다", () => {
     // 서버의 survey-discount-krw = 6000
     expect(GOODS_PRICE.presale - GOODS_PRICE.member).toBe(6_000);
+  });
+});
+
+/**
+ * 랜딩이 화면에 적는 금액이 서버가 청구하는 금액과 같은지 본다.
+ *
+ * 위 묶음은 goodsSurveyContent.ts 의 상수만 봤다. 상수가 맞아도 화면이 어느
+ * 상수를 고르는지가 틀리면 소용이 없다. 실제로 틀어져 있었다.
+ *
+ *   - '일반 구매자' 카드가 정가 34,900원을 적고 있었다. 그 사람이 실제로
+ *     내는 값은 서버의 list-price-krw = 29,900원이다.
+ *   - 마지막 CTA 가 '설문하고 -11,000원 혜택 받기' 였다. 34,900 - 23,900 이다.
+ *     서버가 깎아 주는 값은 survey-discount-krw = 6,000원이다.
+ *
+ * 34,900원은 정가다. 취소선으로 보여 주는 자리에는 그대로 둔다. 실구매가와
+ * 할인폭을 말하는 자리에서만 쓰면 안 된다.
+ */
+const landing = readFileSync(
+  join(__dirname, "GoodsSurvey.tsx"),
+  "utf-8"
+).replace(/\s+/g, " ");
+
+describe("랜딩이 말하는 금액", () => {
+  it("설문 없이 사는 사람에게 실제로 낼 값을 보여 준다", () => {
+    expect(landing).toContain(
+      "<span>일반 구매자</span> <strong>{won(PRICE.presale)}</strong>"
+    );
+  });
+
+  it("할인폭을 서버가 깎아 주는 액수로 말한다", () => {
+    // 정가에서 빼면 안 된다. 정가는 아무도 그 값에 사지 않는다.
+    expect(landing).toContain("won(GOODS_SURVEY_DISCOUNT)");
+    expect(landing).not.toContain("PRICE.list - PRICE.member");
   });
 });
