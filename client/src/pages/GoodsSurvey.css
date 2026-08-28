@@ -197,193 +197,313 @@
   margin-bottom: 22px;
 }
 
-.gs-hero-grid {
+/* ── 사진 자리 ────────────────────────────────────────────────
+   굿즈팀 실물 사진이 오기 전까지 무엇이 들어올 자리인지 글로 남겨 둔다.
+   빈 회색 상자만 두면 검수하는 사람도 무엇이 빠졌는지 알 수 없다. */
+.gs-figure {
+  width: 100%;
+  border-radius: 16px;
+  background: #eee7df;
+}
+
+.gs-figure--wide {
+  margin: 22px 0;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.gs-figure--pending {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 3px;
-  overflow: hidden;
-  border-radius: 3px;
+  place-items: center;
+  padding: 18px;
+  border: 1px dashed #cfc7bf;
+  background: repeating-linear-gradient(
+    135deg,
+    #f3eee8 0 10px,
+    #eee7df 10px 20px
+  );
+  text-align: center;
+}
+
+.gs-figure--pending span {
+  max-width: 22em;
+  color: #89827b;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.gs-figure--pending::before {
+  content: "사진 준비 중";
+  display: block;
+  margin-bottom: 6px;
+  color: var(--gs-orange);
+  font-size: 8.5px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+}
+
+.gs-note {
+  margin: 12px 0 0;
+  color: #a49c96;
+  font-size: 9.5px;
+  line-height: 1.7;
+  text-align: center;
+}
+
+/* ── 01 ORDER: 무엇을 얼마에 파는지 먼저 ────────────────────── */
+.gs-product-card {
+  margin-bottom: 14px;
+  padding: 18px 20px;
+  border: 1px solid var(--gs-line);
+  border-radius: 16px;
   background: #ffffff;
 }
 
-.gs-hero-cell {
-  position: relative;
-  min-width: 0;
+.gs-product-card > span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--gs-muted);
+  font-size: 12px;
+  font-weight: 800;
 }
 
-.gs-hero-image {
-  width: 100%;
-  aspect-ratio: 1;
-  object-fit: cover;
-  background: #f7f1eb;
+.gs-product-card > strong {
+  display: block;
+  font-size: 30px;
+  font-weight: 950;
+  letter-spacing: -0.04em;
 }
 
-.gs-hero-tag {
-  position: absolute;
-  left: 7px;
-  bottom: 7px;
-  padding: 3px 9px;
-  border-radius: 7px;
-  background: rgba(255, 255, 255, 0.92);
-  color: #43352e;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  box-shadow: 0 1px 4px rgba(67, 53, 46, 0.18);
+.gs-product-card > small {
+  display: block;
+  margin-top: 8px;
+  color: var(--gs-muted);
+  font-size: 10.5px;
 }
 
-.gs-hero-limit {
-  margin: 15px 0 14px;
-  color: #79716b;
+/* 설문은 '더 싼 길'로만 안내한다. 구매 버튼보다 눈에 덜 띄어야 위계가 산다. */
+.gs-hero-sub {
+  margin-top: 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--gs-orange-soft);
+  text-align: center;
+}
+
+.gs-hero-sub > span {
+  display: block;
+  color: var(--gs-orange-dark);
+  font-size: 10.5px;
+  font-weight: 850;
+}
+
+.gs-hero-sub > strong {
+  display: block;
+  margin: 4px 0 3px;
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.gs-hero-sub > small {
+  color: var(--gs-muted);
+  font-size: 10px;
+}
+
+/* ── 02 WHY NOW ───────────────────────────────────────────── */
+.gs-why-now {
+  background: var(--gs-cream);
+}
+
+.gs-why-now h2 em {
+  color: var(--gs-orange);
+  font-style: normal;
+}
+
+.gs-quotes {
+  display: grid;
+  gap: 10px;
+}
+
+.gs-quotes blockquote {
+  margin: 0;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.gs-quotes cite {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--gs-muted);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.gs-quotes blockquote p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.gs-why-now-close {
+  margin: 22px 0 0;
+  font-size: 14px;
+  font-weight: 850;
+  line-height: 1.7;
+  letter-spacing: -0.035em;
+}
+
+/* ── 03 THE FIGURE ────────────────────────────────────────── */
+.gs-badges {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.gs-badges span {
+  padding: 12px 4px;
+  border: 1px solid var(--gs-line);
+  border-radius: 12px;
+  background: #ffffff;
   font-size: 11px;
   font-weight: 800;
   text-align: center;
 }
 
-.gs-cta-meta {
-  margin: 11px 0 0;
-  color: #a49c96;
-  font-size: 9.5px;
-  text-align: center;
+/* ── 04 PROOF ─────────────────────────────────────────────── */
+.gs-closed-card {
+  position: relative;
+  overflow: hidden;
+  padding: 20px;
+  border: 1px solid var(--gs-line);
+  border-radius: 16px;
+  background: #ffffff;
 }
 
-.gs-hero-limit + .gs-cta-meta {
-  margin: 0 0 14px;
-}
-
-.gs-promise {
-  padding-top: 60px;
-}
-
-.gs-promise-question {
-  margin-bottom: 48px;
-  padding: 21px 24px;
-  border-radius: 20px 20px 20px 0;
-  background: var(--gs-orange-soft);
-}
-
-.gs-promise-question h2 {
-  margin: 0;
-  font-size: 21px;
-}
-
-.gs-promise-answer strong {
+.gs-closed-card > span {
   display: block;
-  margin-bottom: 24px;
-  font-size: 16px;
-  font-weight: 900;
-  letter-spacing: -0.035em;
-}
-
-/* 뒤따르는 본문이 없으면 아래 여백도 필요 없다. */
-.gs-promise-answer strong:last-child {
-  margin-bottom: 0;
-}
-
-.gs-promise-answer p {
-  margin: 0;
+  margin-bottom: 6px;
   color: var(--gs-muted);
-  font-size: 13px;
+  font-size: 11px;
+  font-weight: 800;
 }
 
-.gs-price-comparison {
-  width: 100%;
-  height: auto;
-  margin: 25px 0 10px;
-  border-radius: 12px;
+.gs-closed-card > strong {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+  font-weight: 950;
+  letter-spacing: -0.04em;
 }
 
-.gs-source-note,
-.gs-process-note {
-  color: #aaa29c;
-  font-size: 9px;
-  text-align: center;
+/* 코멘트 #20: 마감되었다 글자 밑에 도장 이미지로 팍. */
+.gs-closed-card > strong i {
+  padding: 3px 8px;
+  border: 2px solid #d0342c;
+  border-radius: 4px;
+  color: #d0342c;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  transform: rotate(-8deg);
 }
 
-.gs-emotion h2 {
-  margin-bottom: 16px;
-}
-
-.gs-story-stack {
-  display: grid;
-  gap: 15px;
-  margin-top: 26px;
-}
-
-.gs-process-list {
-  position: relative;
-  display: grid;
-  gap: 18px;
-  margin: 28px 0;
-}
-
-.gs-process-list::before {
-  content: "";
-  position: absolute;
-  top: 7px;
-  bottom: 7px;
-  left: 3px;
-  width: 1px;
-  background: #e8e1db;
-}
-
-.gs-process-step {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: 8px 1fr;
-  gap: 13px;
-}
-
-.gs-process-step > span {
-  width: 7px;
-  height: 7px;
-  margin-top: 7px;
-  border-radius: 50%;
-  background: var(--gs-ink);
-}
-
-.gs-process-step:first-child > span {
-  background: var(--gs-orange);
-}
-
-.gs-process-step strong {
+.gs-closed-card > small {
   display: block;
-  margin-bottom: 3px;
-  font-size: 13px;
-}
-
-.gs-process-step p {
-  margin: 0;
+  margin-top: 8px;
   color: var(--gs-muted);
   font-size: 10.5px;
 }
 
-.gs-process-visual {
-  width: 100%;
-  height: auto;
-  margin-bottom: 11px;
-  border-radius: 13px;
+.gs-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 12px;
 }
 
-.gs-why-free-image {
-  width: 100%;
-  height: auto;
-  margin-bottom: 23px;
+.gs-stats > div {
+  padding: 16px 4px;
   border-radius: 14px;
+  background: var(--gs-orange-soft);
+  text-align: center;
 }
 
-.gs-story-copy > p {
-  color: var(--gs-muted);
-  font-size: 12.5px;
-}
-
-.gs-story-copy > strong {
+.gs-stats strong {
   display: block;
-  margin: 22px 0;
-  color: var(--gs-orange);
-  font-size: 15px;
-  line-height: 1.7;
+  color: var(--gs-orange-dark);
+  font-size: 19px;
+  font-weight: 950;
+  letter-spacing: -0.04em;
+}
+
+.gs-stats span {
+  color: var(--gs-muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* ── 05 PROCESS ───────────────────────────────────────────── */
+.gs-steps {
+  display: grid;
+  gap: 12px;
+}
+
+.gs-step {
+  padding: 20px;
+  border: 1px solid var(--gs-line);
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.gs-step-number {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--gs-orange-soft);
+  color: var(--gs-orange-dark);
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.gs-step h3 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.gs-step > p {
+  margin: 0 0 14px;
+  color: var(--gs-muted);
+  font-size: 11.5px;
+}
+
+.gs-step-figures {
+  display: grid;
+  gap: 8px;
+}
+
+.gs-step-figures.is-triple {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.gs-step-figures .gs-figure {
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.gs-step-figures.is-triple .gs-figure {
+  aspect-ratio: 2 / 3;
+}
+
+.gs-step-figures.is-triple .gs-figure--pending span {
+  font-size: 9px;
 }
 
 .gs-remaining-card {
@@ -412,12 +532,14 @@
   height: 12px;
 }
 
-.gs-remaining-card h2 {
-  margin-bottom: 18px;
+.gs-remaining-card h3 {
+  margin: 0 0 18px;
   font-size: 21px;
+  font-weight: 900;
+  letter-spacing: -0.045em;
 }
 
-.gs-remaining-card h2 em {
+.gs-remaining-card h3 em {
   color: var(--gs-orange);
   font-size: 30px;
   font-style: normal;
@@ -445,41 +567,88 @@
   font-size: 8.5px;
 }
 
-.gs-timeline {
-  display: grid;
-  gap: 24px;
-  margin: 28px 0;
+/* ── 06 LIMITED ───────────────────────────────────────────── */
+.gs-limit-card {
+  padding: 20px;
+  border: 1px solid var(--gs-line);
+  border-radius: 16px;
+  background: #ffffff;
 }
 
-.gs-timeline-item {
-  display: grid;
-  grid-template-columns: 31px 1fr;
-  gap: 14px;
-  /* 제목 한 줄만 남아 위로 붙으면 숫자 원과 어긋나 보인다. */
-  align-items: center;
-}
-
-.gs-timeline-item > span {
-  width: 31px;
-  height: 31px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #ff9a44, var(--gs-orange));
-  color: #ffffff;
-  font-size: 11px;
-  font-weight: 900;
-}
-
-.gs-timeline-item strong {
+.gs-limit-card > span {
   display: block;
-  font-size: 13px;
+  margin-bottom: 6px;
+  color: var(--gs-muted);
+  font-size: 11px;
+  font-weight: 800;
 }
 
-.gs-timeline-item p {
-  margin: 0;
+.gs-limit-card > strong {
+  display: block;
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: -0.035em;
+}
+
+.gs-limit-card > small {
+  display: block;
+  margin-top: 8px;
   color: var(--gs-muted);
   font-size: 10.5px;
+  line-height: 1.7;
+}
+
+/* ── 07 VOICES ────────────────────────────────────────────── */
+.gs-voice-list {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.gs-voice {
+  padding: 18px;
+  border: 1px solid var(--gs-line);
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.gs-voice header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.gs-voice header strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.gs-voice header span {
+  color: var(--gs-muted);
+  font-size: 10px;
+}
+
+.gs-voice-stars {
+  flex: none;
+  color: var(--gs-orange);
+  font-size: 12px;
+  letter-spacing: 0.05em;
+}
+
+.gs-voice > p {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+/* 확보되지 않은 후기라는 사실을 카드 안에서 밝힌다. */
+.gs-voice > small {
+  color: #aaa29c;
+  font-size: 9px;
 }
 
 .gs-privacy-summary ul,
@@ -600,21 +769,12 @@
   background: var(--gs-cream);
 }
 
-.gs-final-image {
-  width: 100%;
-  height: auto;
-  margin-bottom: 22px;
-  border-radius: 14px;
-}
-
 .gs-final h2 {
-  font-size: 22px;
+  font-size: 24px;
 }
 
-.gs-final > p {
-  margin-bottom: 20px;
-  color: var(--gs-muted);
-  font-size: 11.5px;
+.gs-final .gs-note {
+  margin-bottom: 14px;
 }
 
 .gs-footer {
@@ -709,98 +869,137 @@
   }
 }
 
-/* ── 2차 판매 가격 표시 ─────────────────────────────────────────
-   첫 화면에서 무엇을 얼마에 받는지 먼저 보여준다(회의록 6-1). */
-.gs-price-headline {
-  margin: 18px 0 14px;
-  padding: 14px 16px;
-  border: 1px solid var(--gs-orange);
-  border-radius: 14px;
-  background: var(--gs-orange-soft);
-  text-align: center;
-}
-
-.gs-price-headline p {
-  margin: 0;
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.gs-price-headline s {
-  color: var(--gs-muted);
-  font-size: 13px;
-}
-
-.gs-price-headline strong {
-  color: var(--gs-orange-dark);
-  font-size: 21px;
-  font-weight: 900;
-}
-
-.gs-price-headline small {
-  display: block;
-  margin-top: 5px;
-  color: var(--gs-muted);
-  font-size: 11px;
-}
-
-/* ── 가격 카드 두 장 ───────────────────────────────────────────
-   굿즈가 닫혀 있는 동안 "남은 자리" 카드 자리에 들어간다(회의록 6-7). */
-.gs-offer-cards {
+/* ── 08 PURCHASE: 두 갈래 ───────────────────────────────────
+   바로 주문이 위, 설문 후 주문이 아래다(코멘트 #15). 순서가 곧 위계라
+   두 카드의 모양을 뒤집지 않는다. */
+.gs-buy-cards {
   display: grid;
   gap: 12px;
 }
 
-.gs-offer-card {
-  padding: 18px;
+.gs-buy-card {
+  padding: 20px;
   border: 1px solid var(--gs-line);
   border-radius: 18px;
   background: #ffffff;
 }
 
-.gs-offer-card.is-member {
+.gs-buy-card.is-member {
   border-color: var(--gs-orange);
   background: var(--gs-cream);
   box-shadow: 0 10px 24px rgba(255, 122, 25, 0.12);
 }
 
-.gs-offer-card > span {
+.gs-buy-card > span {
   display: inline-block;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   color: var(--gs-muted);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
 }
 
-.gs-offer-card.is-member > span {
+.gs-buy-card.is-member > span {
   color: var(--gs-orange-dark);
 }
 
-.gs-offer-card > strong {
-  display: block;
-  margin-bottom: 10px;
-  font-size: 27px;
+.gs-buy-card h3 {
+  margin: 0 0 8px;
+  font-size: 19px;
   font-weight: 900;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.04em;
 }
 
-.gs-offer-card ul {
+.gs-buy-card > strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 30px;
+  font-weight: 950;
+  letter-spacing: -0.04em;
+}
+
+.gs-buy-card > p {
   margin: 0 0 14px;
-  padding-left: 16px;
   color: var(--gs-muted);
-  font-size: 12.5px;
+  font-size: 11.5px;
 }
 
-.gs-offer-card ul li + li {
-  margin-top: 4px;
-}
-
-.gs-offer-cards > .gs-source-note {
-  margin-top: 2px;
+/* ── 잠깐! 왜 더 싼가 ───────────────────────────────────────
+   구매 갈림길 뒤에서 설문을 설득한다(코멘트 #24의 노란 손 표시). */
+.gs-wait {
+  background: var(--gs-orange-soft);
   text-align: center;
+}
+
+.gs-wait-hand {
+  margin: 0;
+  font-size: 56px;
+  line-height: 1;
+}
+
+.gs-wait-badge {
+  display: inline-block;
+  margin: 10px 0 12px;
+  padding: 5px 14px;
+  border-radius: 999px;
+  background: var(--gs-orange);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.gs-wait h2 {
+  font-size: 22px;
+}
+
+.gs-wait .gs-copy {
+  text-align: left;
+}
+
+/* 코멘트 #10: 29,900원에서 23,900원으로 깎이는 걸 크고 직관적으로. */
+.gs-wait-drop {
+  margin-bottom: 16px;
+  padding: 18px;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.gs-wait-drop > span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--gs-muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.gs-wait-drop > strong {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.gs-wait-drop s {
+  color: var(--gs-muted);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.gs-wait-drop em {
+  color: var(--gs-orange-dark);
+  font-size: 30px;
+  font-style: normal;
+  font-weight: 950;
+  letter-spacing: -0.04em;
+}
+
+.gs-wait-drop > small {
+  display: block;
+  margin-top: 8px;
+  color: var(--gs-muted);
+  font-size: 10px;
 }
 
 /* ── CTA 안내 모달 ─────────────────────────────────────────────

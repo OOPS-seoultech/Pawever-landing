@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const landingSource = readFileSync(
@@ -17,14 +17,16 @@ const contentSource = readFileSync(
 );
 
 describe("굿즈 랜딩 기준 문구", () => {
-  it("본문은 11차 회의록이 정한 문장만 쓴다", () => {
-    // 회의록에 대응이 없는 1차 랜딩 문구는 화면에서 걷어냈다.
-    // 근거를 되짚을 수 없는 문장이 화면에 서 있으면 안 된다.
-    expect(landingSource).toContain(
-      "막상 우리 아이의 귀 모양과 털무늬, 자주 짓는 표정까지 닮게 만들기는 어렵습니다."
-    );
+  it("설문을 앞세우던 옛 본문을 더 이상 쓰지 않는다", () => {
+    // 이 자리는 원래 11차 회의록이 정한 설문 우선 문장을 붙들고 있었다.
+    // 피그마 코멘트 #8에서 대표가 그 구성을 물렸다 — "그래서 굿즈 사라는
+    // 거야 말라는 거야", 판매를 먼저 말하라. 지금 화면의 근거는 회의록이
+    // 아니라 나혜님 Body 프레임이고, 그쪽은 goodsSurveySalesFidelity가 고정한다.
+    // 여기서는 되살아나면 안 되는 옛 문장만 막는다.
     expect(landingSource).not.toContain("한쪽만 접히는 귀");
     expect(landingSource).not.toContain("사진첩 속에만 있던 그 표정을");
+    expect(landingSource).not.toContain("사진만 넣으면 된다는");
+    expect(landingSource).not.toContain("15분으로 반려동물 문화에 기여하고");
   });
 
   it("2차 가격을 한 곳에서만 관리한다", () => {
@@ -52,17 +54,28 @@ describe("굿즈 랜딩 기준 문구", () => {
     expect(landingSource).toContain("제품과 제작 과정 더 보기");
   });
 
-  it("제공받은 실제 이미지 자산을 사용하고 임시 스프라이트를 사용하지 않는다", () => {
-    [
-      "hero-original.png",
-      "hero-acrylic.png",
-      "hero-face-keyring.png",
-      "hero-fullbody.png",
-      "price-comparison.png",
-      "process-reference.png",
-      "why-free.png",
-      "final-banner.png",
-    ].forEach(asset => expect(landingSource).toContain(asset));
+  it("화면에 거는 이미지는 실제로 있는 파일이어야 한다", () => {
+    // 새 디자인의 사진 열네 칸은 굿즈팀 실물 사진을 기다리는 중이라
+    // ready: false로 두고 자리만 그린다. 사진이 도착해 ready를 true로
+    // 바꾸면서 파일 넣는 것을 잊으면, 그 순간 화면에 깨진 그림이 뜬다.
+    // 배포 전에 그걸 잡는 자리다.
+    const slots = [
+      ...landingSource.matchAll(
+        /src:\s*"([^"]+)",\s*alt:\s*"[^"]*",\s*ready:\s*(true|false)/g
+      ),
+    ];
+    expect(slots.length).toBeGreaterThan(0);
+
+    slots
+      .filter(([, , ready]) => ready === "true")
+      .forEach(([, src]) => {
+        expect(
+          existsSync(
+            new URL(`../../public/goods-survey/${src}`, import.meta.url)
+          ),
+          `ready: true인데 public/goods-survey/${src} 가 없다`
+        ).toBe(true);
+      });
 
     expect(landingSource).not.toContain("ProductSprite");
     expect(landingSource).not.toContain("StorySprite");
@@ -203,14 +216,16 @@ describe("굿즈 제작 정보 화면", () => {
   });
 
   it("바로 신청 버튼은 굿즈가 열렸을 때 그린다", () => {
-    // 오퍼 카드는 굿즈가 닫혔을 때만 뜨고 버튼은 열렸을 때만 눌리게 두면,
-    // 두 조건이 엇갈려 버튼을 영영 누를 수 없다. 보일 땐 비활성, 활성일 땐
-    // 화면에 없는 상태가 된다.
+    // 판매 우선으로 바꾸면서 구매 버튼이 화면 곳곳(히어로·두 갈래·마지막·하단
+    // 고정)에 생겼다. 자리마다 조건을 따로 쓰면 하나만 어긋나도 누를 수 없는
+    // 버튼이 남으므로, buyCta 한 곳에서 굿즈 스위치를 본다.
     expect(landingSource).toMatch(
-      /\{goodsAvailable \? \(\s*<PrimaryCta[\s\S]{0,200}?startDirectPurchase/
+      /const buyCta =[\s\S]{0,120}?goodsAvailable \? \(\s*<PrimaryCta/
     );
+    expect(landingSource).toContain("2차 오픈 시 신청할 수 있어요");
+    // 비활성 버튼으로 두면 눌러도 아무 일이 없는 자리를 보여주는 셈이 된다.
     expect(landingSource).not.toMatch(
-      /onClick=\{startDirectPurchase\}[\s\S]{0,200}?disabled=\{!goodsAvailable\}/
+      /startDirectPurchase[\s\S]{0,200}?disabled=\{!goodsAvailable\}/
     );
   });
 
@@ -220,7 +235,9 @@ describe("굿즈 제작 정보 화면", () => {
     expect(landingSource).toContain(
       "const hasSlotLimit = remaining >= 0 && capacity > 0;"
     );
-    expect(landingSource).toContain("{goodsAvailable && hasSlotLimit ? (");
+    // 예전에는 이 카드가 없을 때 가격 카드를 대신 그려서 삼항이었다. 지금은
+    // 가격 카드가 08 PURCHASE로 따로 서 있어, 셀 수 없으면 그냥 그리지 않는다.
+    expect(landingSource).toContain("{goodsAvailable && hasSlotLimit && (");
     expect(formSource).toContain("{remaining >= 0 && (");
   });
 

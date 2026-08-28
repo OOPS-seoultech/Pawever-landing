@@ -59,9 +59,13 @@ const landing = readFileSync(
 
 describe("랜딩이 말하는 금액", () => {
   it("설문 없이 사는 사람에게 실제로 낼 값을 보여 준다", () => {
-    expect(landing).toContain(
-      "<span>일반 구매자</span> <strong>{won(PRICE.presale)}</strong>"
-    );
+    // 판매 우선 화면이 되면서 구매가를 말하는 자리가 여럿으로 늘었다 —
+    // 히어로 상품 카드, 08 PURCHASE 의 '바로 주문하기', 09 FINAL, 하단 고정
+    // 버튼, 그리고 '잠깐!' 의 취소선. 자리마다 확인하는 대신, 아무도 그 값에
+    // 사지 않는 정가를 화면이 아예 입에 담지 않는지로 본다.
+    expect(landing).not.toContain("PRICE.list");
+    expect(landing).not.toMatch(/34,900/);
+    expect(landing).toContain("{won(PRICE.presale)}");
   });
 
   it("할인폭을 서버가 깎아 주는 액수로 말한다", () => {

@@ -83,31 +83,59 @@ describe("GA4 전송 방식", () => {
   });
 });
 
+/**
+ * 랜딩을 판매 우선으로 다시 세우면서 버튼 자리가 바뀌었다.
+ *
+ * 예전에는 다섯 자리가 전부 설문으로 가는 버튼이라 openCta 하나로 묶였다.
+ * 지금은 구매로 가는 자리(hero·purchase_now·final)와 설문으로 가는
+ * 자리(purchase_survey·wait)가 갈리고, 하단 고정 버튼은 굿즈 스위치에 따라
+ * 둘 중 하나가 된다. 규격 자체 — 위에서부터 A1…A5, 하단 고정이 B — 는 그대로다.
+ */
+const CTA_PLACEMENTS = [
+  "hero",
+  "purchase_now",
+  "purchase_survey",
+  "wait",
+  "final",
+  "sticky",
+];
+
 describe("랜딩 CTA 식별자", () => {
-  it("노션 규격대로 위에서부터 btn_A1~A4, 하단 고정이 btn_B다", () => {
+  it("위에서부터 btn_A1~A5, 하단 고정이 btn_B다", () => {
     expect(landingSource).toContain('hero: "btn_A1"');
-    expect(landingSource).toContain('price_comparison: "btn_A2"');
-    expect(landingSource).toContain('offer: "btn_A3"');
-    expect(landingSource).toContain('final: "btn_A4"');
+    expect(landingSource).toContain('purchase_now: "btn_A2"');
+    expect(landingSource).toContain('purchase_survey: "btn_A3"');
+    expect(landingSource).toContain('wait: "btn_A4"');
+    expect(landingSource).toContain('final: "btn_A5"');
     expect(landingSource).toContain('sticky: "btn_B"');
   });
 
-  it("다섯 개 CTA가 모두 규격 식별자를 갖는다", () => {
-    const placements = ["hero", "price_comparison", "offer", "final", "sticky"];
-    for (const placement of placements) {
-      expect(landingSource).toContain(`openCta("${placement}")`);
+  it("여섯 자리가 모두 어느 한 갈래로 연결된다", () => {
+    for (const placement of CTA_PLACEMENTS) {
+      expect(
+        landingSource.includes(`openCta("${placement}")`) ||
+          landingSource.includes(`startDirectPurchase("${placement}")`) ||
+          landingSource.includes(`buyCta("${placement}"`),
+        `연결되지 않은 CTA 자리: ${placement}`
+      ).toBe(true);
     }
-    expect(landingSource).toContain("cta_id: CTA_IDS[placement]");
+    // 두 갈래 모두 같은 자리 식별자를 이벤트에 실어야 한 지표로 볼 수 있다.
+    expect(
+      landingSource.match(/cta_id: CTA_IDS\[placement\]/g) ?? []
+    ).toHaveLength(2);
   });
 
-  it("다섯 개 CTA가 DOM에도 규격 식별자를 드러낸다", () => {
-    // Meta 이벤트 설정 도구와 GTM 클릭 트리거는 DOM만 본다. 히어로와 가격 비교
-    // 버튼은 클래스도 문구도 같아서, 식별자가 없으면 두 버튼을 구분할 수 없다.
-    const placements = ["hero", "price_comparison", "offer", "final", "sticky"];
+  it("여섯 자리가 DOM에도 규격 식별자를 드러낸다", () => {
+    // Meta 이벤트 설정 도구와 GTM 클릭 트리거는 DOM만 본다. 구매 버튼 셋은
+    // 클래스도 문구도 비슷해서, 식별자가 없으면 서로 구분할 수 없다.
     expect(landingSource).toContain("data-cta-id={ctaId}");
-    for (const placement of placements) {
+    for (const placement of CTA_PLACEMENTS) {
       expect(landingSource).toMatch(
-        new RegExp(`(ctaId|data-cta-id)=\\{CTA_IDS\\.${placement}\\}`)
+        // 구매 버튼은 buyCta가 CTA_IDS[placement]로 넘겨주므로,
+        // 자리 이름이 buyCta 호출에 나타나는 것으로 갈음한다.
+        new RegExp(
+          `(ctaId|data-cta-id)=\\{CTA_IDS\\.${placement}\\}|buyCta\\("${placement}"`
+        )
       );
     }
   });
