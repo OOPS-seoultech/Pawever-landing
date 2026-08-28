@@ -47,6 +47,10 @@ import {
   saveGoodsSurveyDraftSnapshot,
 } from "@/lib/goodsSurveyDraftStorage";
 import {
+  clearGoodsSurveyPhotoHandoff,
+  loadGoodsSurveyPhotoHandoff,
+} from "@/lib/goodsSurveyPhotoHandoff";
+import {
   FREE_TEXT_MAX_LENGTH,
   freeTextKey,
   getNextMultiSelection,
@@ -684,7 +688,9 @@ export default function GoodsSurveyForm() {
     address: "",
     addressDetail: "",
   });
-  const [photos, setPhotos] = useState<File[]>([]);
+  // 랜딩 09 FINAL 의 사진 등록 카드에서 골라 온 사진이 있으면 붙은 채로 연다.
+  // 없으면 빈 배열이라, 설문을 거쳐 들어온 사람에게는 달라지는 것이 없다.
+  const [photos, setPhotos] = useState<File[]>(loadGoodsSurveyPhotoHandoff);
   // 사진 공개 동의는 사연 공개 동의와 별개다. 사연에 동의했다고 해서 사진까지
   // 공개해도 된다는 뜻은 아니다.
   const [photoPublishConsent, setPhotoPublishConsent] = useState(false);
@@ -1538,6 +1544,9 @@ export default function GoodsSurveyForm() {
         );
       }
       clearGoodsSurveyDraftSnapshot();
+      // 사진은 서버에 올라갔다. 랜딩에서 들고 온 원본을 계속 쥐고 있으면
+      // 다음에 다시 들어온 사람에게 지난번 사진이 붙은 채로 열린다.
+      clearGoodsSurveyPhotoHandoff();
       setStage("complete");
     } catch (error) {
       setApiError(apiMessage(error));

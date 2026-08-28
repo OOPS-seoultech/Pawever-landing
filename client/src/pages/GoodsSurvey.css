@@ -869,6 +869,160 @@
   }
 }
 
+/* ── 09 FINAL 사진 등록 카드 ────────────────────────────────
+   Figma Article 5425:1411. 값은 디자인에서 그대로 가져왔다. */
+.gs-intake {
+  padding: 24px;
+  border: 1px solid #eee7df;
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow: 0 10px 15px rgba(76, 48, 22, 0.07);
+}
+
+.gs-intake-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.gs-intake-head > div > span {
+  display: block;
+  color: #89827b;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.gs-intake-head > div > strong {
+  display: block;
+  margin-top: 10px;
+  color: #292725;
+  font-size: 23px;
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: -0.035em;
+}
+
+.gs-intake-count {
+  flex: none;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #f4f1ee;
+  color: #5f5a55;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.gs-intake-lead {
+  margin: 10px 0 0;
+  color: #5f5a55;
+  font-size: 13px;
+}
+
+.gs-intake-slots {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 20px;
+}
+
+/* 칸 자체가 파일 선택 버튼이다. 안의 input은 화면에서 감춘다. */
+.gs-intake-slot {
+  position: relative;
+  height: 128px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  overflow: hidden;
+  border: 1px dashed #cfc7bf;
+  border-radius: 14px;
+  background: #faf8f6;
+  cursor: pointer;
+}
+
+.gs-intake-slot input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gs-intake-slot:focus-within {
+  outline: 2px solid var(--gs-orange);
+  outline-offset: 2px;
+}
+
+.gs-intake-slot i {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 17px;
+  background: #6a645f;
+  color: #ffffff;
+  font-size: 27px;
+  font-style: normal;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.gs-intake-slot span {
+  padding: 0 4px;
+  color: #9a8270;
+  font-size: 9px;
+  text-align: center;
+}
+
+.gs-intake-slot.is-filled {
+  border-style: solid;
+  border-color: var(--gs-orange);
+}
+
+.gs-intake-slot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gs-intake-error {
+  margin: 10px 0 0;
+  color: #d0342c;
+  font-size: 10.5px;
+}
+
+.gs-intake-submit {
+  width: 100%;
+  min-height: 56px;
+  margin-top: 18px;
+  padding: 16px 18px;
+  border: 0;
+  border-radius: 14px;
+  background: #ff8e2f;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* 세 장을 다 고르기 전까지는 눌러도 할 일이 없다. 디자인의 Default 상태다. */
+.gs-intake-submit:disabled {
+  background: #e8e3df;
+  color: #aaa19a;
+  cursor: not-allowed;
+}
+
+.gs-intake > small {
+  display: block;
+  margin-top: 10px;
+  color: #89827b;
+  font-size: 11px;
+}
+
 /* ── 08 PURCHASE: 두 갈래 ───────────────────────────────────
    바로 주문이 위, 설문 후 주문이 아래다(코멘트 #15). 순서가 곧 위계라
    두 카드의 모양을 뒤집지 않는다. */
