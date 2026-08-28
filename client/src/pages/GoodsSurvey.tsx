@@ -22,7 +22,7 @@ import {
 import "./GoodsSurvey.css";
 
 const CAMPAIGN = {
-  duration: "약 15분",
+  duration: "약 10~15분",
   capacity: GOODS_SURVEY_CAPACITY,
   // 서버 응답이 오기 전에 쓰는 값이다. 실제 신청 수를 그대로 보여주기로 했으므로
   // 여기에 임의의 숫자를 두면 화면이 잠깐 사실과 다른 수를 보여준다.
@@ -33,100 +33,205 @@ const CAMPAIGN = {
 const PRICE = GOODS_PRICE;
 const won = wonText;
 
-// 회의록 4번: 주요 CTA 문구는 모든 구간에서 같아야 한다.
-// 가격 카드와 마지막 배너만 회의록이 따로 지정한 문구를 쓴다.
-const CTA_LABEL = "15분 설문하고 얼리버드 가격 받기";
-
 const ASSET_BASE = "/goods-survey";
 
-// 노션 3번: 이동 목적지는 같지만 어느 위치의 버튼이 설문 시작에 효과적인지 봐야 한다.
-// 위에서부터 순서대로 btn_A1~A4, 화면 하단 고정 버튼이 btn_B다.
-//
-// 이벤트 파라미터로만 쓰지 않고 data-cta-id로 DOM에도 내보낸다. Meta 이벤트 설정
-// 도구나 GTM 클릭 트리거는 DOM만 보는데, 히어로와 가격 비교 버튼은 클래스도
-// 문구도 같아서 식별자가 없으면 둘을 구분하지 못하고 같은 규칙에 겹쳐 잡힌다.
+/**
+ * 버튼 식별자. 이동 목적지가 같아도 어느 자리의 버튼이 눌리는지 따로 봐야 한다.
+ *
+ * 이벤트 파라미터로만 쓰지 않고 data-cta-id로 DOM에도 내보낸다. Meta 이벤트 설정
+ * 도구나 GTM 클릭 트리거는 DOM만 보는데, 구매 버튼 셋은 클래스도 문구도 비슷해서
+ * 식별자가 없으면 같은 규칙에 겹쳐 잡힌다.
+ *
+ * A1~A5는 위에서 아래 순서, B는 화면 하단 고정 버튼이다.
+ */
 const CTA_IDS = {
   hero: "btn_A1",
-  price_comparison: "btn_A2",
-  offer: "btn_A3",
-  final: "btn_A4",
+  purchase_now: "btn_A2",
+  purchase_survey: "btn_A3",
+  wait: "btn_A4",
+  final: "btn_A5",
   sticky: "btn_B",
 } as const;
 
-const heroImages = [
-  {
-    src: "hero-original.png",
-    alt: "굿즈 제작에 사용한 반려견 원본 사진",
-    label: "원본 사진",
-  },
-  {
-    src: "hero-acrylic.png",
-    alt: "반려견 사진으로 만든 아크릴 얼굴 키링",
-    label: "아크릴",
-  },
-  {
-    src: "hero-face-keyring.png",
-    alt: "반려견 얼굴을 입체적으로 만든 3D 얼굴 키링",
-    label: "3D 얼굴",
-  },
-  {
-    src: "hero-fullbody.png",
-    alt: "반려견 사진으로 만든 3D 전신 피규어",
-    label: "3D 전신",
-  },
-] as const;
+type Placement = keyof typeof CTA_IDS;
 
 /**
- * 회의록 6-11번의 FAQ 다섯 개. 여기에 임의로 더하지 않는다.
+ * 굿즈팀 실물 사진을 기다리는 자리들.
  *
- * 마지막 두 개는 회의록이 카카오톡을 전제로 쓴 문답이다. 연락 수단을
- * 이메일로 유지하기로 해(goods-round2-checklist.md) 채널 이름만 뺐다.
- * 휴대전화·카카오톡으로 전환할 때 회의록 원문대로 되돌린다.
+ * 나혜님 디자인(Figma 5423:1415)이 지정한 열네 칸인데, 사진은 아직 오지 않았다.
+ * 없는 파일을 <img src>로 걸면 깨진 그림이 뜨고, 자리를 통째로 지우면 사진이
+ * 왔을 때 어디에 무엇을 넣어야 하는지 알 수 없게 된다. 그래서 파일 이름과
+ * 설명을 미리 못 박아 두고, 사진이 도착하면 public/goods-survey/ 에 같은
+ * 이름으로 넣고 ready만 true로 바꾼다.
  */
+type FigureSlot = { src: string; alt: string; ready: boolean };
+
+const FIGURES: Record<string, FigureSlot> = {
+  hero: {
+    src: "sales-hero-figure.png",
+    alt: "크림색 포메라니안과 같은 모습을 본뜬 작은 전신 피규어",
+    ready: false,
+  },
+  whyNow: {
+    src: "sales-why-now.png",
+    alt: "햇살이 드는 창가에서 편안하게 쉬는 크림색 포메라니안",
+    ready: false,
+  },
+  figureCompare: {
+    src: "sales-figure-compare.png",
+    alt: "반려견 사진과 같은 특징을 살려 제작한 맞춤 피규어 비교",
+    ready: false,
+  },
+  proof: {
+    src: "sales-proof-desk.png",
+    alt: "책상 위 사진 곁에 놓인 작은 반려견 피규어",
+    ready: false,
+  },
+  stepFace: {
+    src: "sales-step-face.png",
+    alt: "반려견 얼굴 사진",
+    ready: false,
+  },
+  stepBody: {
+    src: "sales-step-body.png",
+    alt: "반려견 전신 사진",
+    ready: false,
+  },
+  stepCoat: {
+    src: "sales-step-coat.png",
+    alt: "반려견 털색과 무늬 사진",
+    ready: false,
+  },
+  stepTrait: {
+    src: "sales-step-trait.png",
+    alt: "반려견 사진과 피규어의 특징을 대조하는 과정",
+    ready: false,
+  },
+  stepPrint: {
+    src: "sales-step-print.png",
+    alt: "모니터의 3D 모델과 출력기, 출력물을 검수하는 제작 스튜디오",
+    ready: false,
+  },
+  stepFinish: {
+    src: "sales-step-finish.png",
+    alt: "작은 반려견 피규어를 손으로 정교하게 마감하는 작업 장면",
+    ready: false,
+  },
+  limited: {
+    src: "sales-limited-shelf.png",
+    alt: "여러 종류의 완성 반려견 피규어가 진열된 모습",
+    ready: false,
+  },
+  final: {
+    src: "sales-final-desk.png",
+    alt: "반려견 사진과 함께 책상 위에 놓인 작은 맞춤 피규어",
+    ready: false,
+  },
+};
+
+/** 디자인 10 FAQ의 일곱 문답. 여기에 임의로 더하지 않는다. */
 const faqs = [
   {
-    question: "1차랑 2차랑 무엇이 다른가요?",
-    answer: `1차는 제품 가능성과 보호자 선호를 확인하기 위한 ${CAMPAIGN.capacity}명 한정 체험단이었습니다. 2차부터는 피드백을 반영한 정식 제작으로 전환합니다. 설문에 참여한 분께는 리서치 멤버 가격을 제공합니다.`,
+    question: "설문을 하지 않아도 구매할 수 있나요?",
+    answer: `네. ${won(PRICE.presale)}으로 바로 구매할 수 있으며 설문은 선택 사항입니다.`,
   },
   {
-    question: "설문을 하면 반드시 구매해야 하나요?",
-    answer:
-      "아니요. 설문 완료 후 참여자 가격을 받을 수 있지만 구매 여부는 자유입니다.",
+    question: "설문하면 무엇이 달라지나요?",
+    answer: `약 10~15분 설문 완료 시 2차 제작비 지원가 ${won(PRICE.member)}으로 구매할 수 있습니다.`,
   },
   {
-    question: "광고 수신에 동의하지 않으면 할인받을 수 없나요?",
-    answer:
-      "아니요. 광고 수신 여부는 할인에 영향을 끼치지 않아요. 다만 광고 수신에 동의해주셔야 상품이 공개됐을 때 알림을 받아보실 수 있어요.",
+    question: "사진은 어떤 걸 보내야 하나요?",
+    answer: "얼굴, 전신, 털색과 무늬가 잘 보이는 사진 3장을 준비해 주세요.",
   },
   {
-    question: "언제 결제하나요?",
+    question: "실제 반려견과 얼마나 비슷하게 나오나요?",
     answer:
-      "2차 제작이 열리면 전용 구매 페이지에서 사진과 배송지를 입력하고 결제합니다. 지금은 사진이나 배송지를 받지 않습니다.",
+      "사진 속 특징을 최대한 반영하지만 사진 화질과 출력 특성에 따라 일부 차이가 있을 수 있습니다.",
   },
   {
-    question: "판매 소식은 어떻게 오나요?",
-    answer:
-      "판매 오픈과 할인 소식은 광고성 정보 수신에 동의한 채널로만 안내합니다. 구매 후 주문·제작·배송 안내는 정보성 알림으로 따로 받습니다.",
+    question: "2차는 몇 개만 판매하나요?",
+    answer: "안정적으로 제작 가능한 수량을 확인한 뒤 오픈 시 공개합니다.",
+  },
+  {
+    question: "배송비와 제작 기간은 어떻게 되나요?",
+    answer: `배송비 ${won(PRICE.shipping)}은 별도이며 정확한 제작 기간은 주문 단계에서 안내합니다.`,
+  },
+  {
+    question: "광고 수신에 동의해야 할인받을 수 있나요?",
+    answer: "아니요. 광고성 정보 수신 동의는 선택 사항입니다.",
   },
 ];
 
-function LandingImage({
-  src,
-  alt,
+/** 05 PROCESS의 네 단계. 각 단계마다 제작 장면 사진이 붙는다(코멘트 #11). */
+const processSteps = [
+  {
+    number: "01",
+    title: "사진 3장",
+    caption: "얼굴·전신·무늬가 잘 보이는 사진",
+    figures: [FIGURES.stepFace, FIGURES.stepBody, FIGURES.stepCoat],
+  },
+  {
+    number: "02",
+    title: "특징 정리",
+    caption: "귀·얼굴형·털색·체형 확인",
+    figures: [FIGURES.stepTrait],
+  },
+  {
+    number: "03",
+    title: "3D 제작",
+    caption: "모델링부터 출력까지 여러 작업 장면",
+    figures: [FIGURES.stepPrint],
+  },
+  {
+    number: "04",
+    title: "수작업 검수",
+    caption: "세척·표면 마감·상태 확인 후 포장",
+    figures: [FIGURES.stepFinish],
+  },
+];
+
+/**
+ * 07 VOICES의 후기 세 개.
+ *
+ * 아직 검증된 후기가 아니다. 실제 문장을 확보하기 전까지는 후기처럼 보이는
+ * 예시일 뿐이라, 카드마다 그 사실을 함께 적는다(코멘트 #18은 "좀 더 실제
+ * 리뷰 작성된 것처럼"이지만, 확보 전에 진짜처럼 두는 것은 없는 후기를
+ * 지어내는 것과 같다).
+ */
+const voices = [
+  { who: "1차 참여자 A", text: "귀 모양 보고 바로 우리 애인 줄 알았어요." },
+  {
+    who: "1차 참여자 B",
+    text: "책상 위에 두니까 사진이랑은 또 다른 느낌이에요.",
+  },
+  { who: "1차 참여자 C", text: "작은데 우리 아이 특징이 보여서 신기했어요." },
+];
+
+function LandingFigure({
+  slot,
   className = "",
-  eager = false,
 }: {
-  src: string;
-  alt: string;
+  slot: FigureSlot;
   className?: string;
-  eager?: boolean;
 }) {
+  if (!slot.ready) {
+    return (
+      <div
+        className={`gs-figure gs-figure--pending ${className}`.trim()}
+        role="img"
+        aria-label={slot.alt}
+      >
+        <span>{slot.alt}</span>
+      </div>
+    );
+  }
+
   return (
     <img
-      src={`${ASSET_BASE}/${src}`}
-      alt={alt}
-      className={className}
-      loading={eager ? "eager" : "lazy"}
+      src={`${ASSET_BASE}/${slot.src}`}
+      alt={slot.alt}
+      className={`gs-figure ${className}`.trim()}
+      loading="lazy"
       decoding="async"
     />
   );
@@ -135,15 +240,17 @@ function LandingImage({
 function PrimaryCta({
   onClick,
   ctaId,
-  label = CTA_LABEL,
+  label,
   compact = false,
   disabled = false,
+  disabledLabel = "지금은 신청할 수 없어요",
 }: {
   onClick: () => void;
   ctaId?: string;
-  label?: string;
+  label: string;
   compact?: boolean;
   disabled?: boolean;
+  disabledLabel?: string;
 }) {
   return (
     <button
@@ -153,7 +260,7 @@ function PrimaryCta({
       onClick={onClick}
       disabled={disabled}
     >
-      <span>{disabled ? "설문 접수 마감" : label}</span>
+      <span>{disabled ? disabledLabel : label}</span>
       <ArrowRight aria-hidden="true" />
     </button>
   );
@@ -162,9 +269,7 @@ function PrimaryCta({
 export default function GoodsSurvey() {
   const [, setLocation] = useLocation();
   // 열려 있으면 어느 버튼에서 왔는지 담는다. 닫혀 있으면 null이다.
-  const [ctaPlacement, setCtaPlacement] = useState<keyof typeof CTA_IDS | null>(
-    null
-  );
+  const [ctaPlacement, setCtaPlacement] = useState<Placement | null>(null);
   const [campaign, setCampaign] = useState<SurveyCampaign | null>(null);
   const capacity = campaign?.capacity ?? CAMPAIGN.capacity;
   const completed = campaign?.allocated ?? CAMPAIGN.completed;
@@ -182,17 +287,15 @@ export default function GoodsSurvey() {
   useScrollDepth("goods_survey_landing");
 
   /**
-   * CTA를 누르면 설문으로 바로 보내지 않고 안내를 한 번 보여준다(회의록 4번).
+   * 설문 CTA를 누르면 설문으로 바로 보내지 않고 안내를 한 번 보여준다.
    *
-   * 설문이 15분짜리라, 무엇을 받는지 모른 채 들어가면 중간에 나간다.
-   * survey_cta_click은 예전처럼 버튼을 누른 시점에 남긴다. 위치별 버튼 효과를
-   * 재는 지표라 그대로 두고, 모달에서 돌아선 사람은 설문 진입 이벤트가 없는
-   * 것으로 구분된다.
+   * 설문이 10~15분짜리라, 무엇을 받는지 모른 채 들어가면 중간에 나간다.
+   * 구매 CTA에는 이 단계를 두지 않는다. 사러 온 사람을 한 번 더 세우면
+   * 그게 코멘트 #27이 지적한 불필요한 뎁스다.
    */
-  const openCta = (placement: keyof typeof CTA_IDS) => {
+  const openCta = (placement: Placement) => {
     if (!surveyAvailable) return;
     trackEvent("survey_cta_click", {
-      // 노션 3번이 요구한 버튼 식별자. placement는 사람이 읽기 위해 함께 남긴다.
       cta_id: CTA_IDS[placement],
       cta_placement: placement,
     });
@@ -210,13 +313,14 @@ export default function GoodsSurvey() {
   /**
    * 설문을 건너뛰고 바로 신청하러 간다.
    *
-   * 설문에 답하면 더 싸다는 것을 이미 카드에서 보여준 뒤에 누르는 길이라,
-   * 여기서 다시 붙잡지 않는다. 값이 갈리는 것은 서버가 판정한다.
+   * 판매를 앞세운 화면이라 이 길이 기본이다. 설문에 답하면 더 싸다는 것을
+   * 같은 화면에서 이미 보여준 뒤에 누르는 버튼이라, 여기서 다시 붙잡지 않는다.
+   * 값이 갈리는 것은 서버가 판정한다.
    */
-  const startDirectPurchase = () => {
+  const startDirectPurchase = (placement: Placement) => {
     trackEvent("survey_cta_click", {
-      cta_id: CTA_IDS.offer,
-      cta_placement: "direct_purchase",
+      cta_id: CTA_IDS[placement],
+      cta_placement: `${placement}_direct_purchase`,
     });
     setLocation("/goods-survey/survey?direct=1");
   };
@@ -270,7 +374,7 @@ export default function GoodsSurvey() {
       document.head.appendChild(robots);
     }
 
-    document.title = "우리 아이 맞춤 굿즈 | Pawever";
+    document.title = "우리 아이 맞춤 3D 전신 피규어 | Pawever";
     robots.content = "noindex, nofollow";
 
     return () => {
@@ -293,6 +397,19 @@ export default function GoodsSurvey() {
       ?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  /** 구매 버튼은 굿즈 스위치가 켜져 있을 때만 그린다. */
+  const buyCta = (placement: Placement, label: string, compact = false) =>
+    goodsAvailable ? (
+      <PrimaryCta
+        ctaId={CTA_IDS[placement]}
+        onClick={() => startDirectPurchase(placement)}
+        label={label}
+        compact={compact}
+      />
+    ) : (
+      <p className="gs-note">2차 오픈 시 신청할 수 있어요</p>
+    );
+
   return (
     <main className="goods-survey-page">
       <div className="gs-phone">
@@ -307,184 +424,233 @@ export default function GoodsSurvey() {
               height="16"
             />
           </a>
-          <span>2차 굿즈 사전 예약중</span>
+          <span>2차 참여자 모집중</span>
         </header>
 
-        <section className="gs-section gs-hero">
+        {/* 01 — 사러 온 사람에게 무엇을 파는지 먼저 말한다(코멘트 #8).
+            디자인의 구간 이름은 '01.구매가 1순위'라는 내부 메모였다. 다른
+            구간이 전부 'NN ENGLISH'라 같은 형식으로 맞췄다. */}
+        <section className="gs-section gs-hero" id="order">
+          <span className="gs-kicker">01 ORDER</span>
           <h1>
-            {CAMPAIGN.capacity}명의 보호자와 시작한
+            오늘의 모습은
             <br />
-            <em>우리 아이 맞춤 3D 피규어</em>
+            지금만 남길 수 있으니까.
           </h1>
           <p className="gs-lead">
-            1차 체험단은 하루 만에 마감되었습니다.
+            우리 아이 사진으로 만드는
             <br />
-            지금 설문에 참여하면 커스텀 3D 피규어 v.2를
-            <br />
-            얼리버드 전용가로 만나볼 수 있어요.
+            세상에 하나뿐인 3D 전신 피규어
           </p>
 
-          <div className="gs-hero-grid">
-            {heroImages.map(({ src, alt, label }, index) => (
-              <div className="gs-hero-cell" key={label}>
-                <LandingImage
-                  src={src}
-                  alt={alt}
-                  className={`gs-hero-image gs-hero-image--${index + 1}`}
-                  eager
-                />
-                <span className="gs-hero-tag">{label}</span>
+          <LandingFigure slot={FIGURES.hero} className="gs-figure--wide" />
+
+          <div className="gs-product-card">
+            <span>PAWEVER 커스텀 3D 전신 피규어</span>
+            <strong>{won(PRICE.presale)}</strong>
+            <small>
+              배송비 {won(PRICE.shipping)} 별도 · 사진 3장 제출 · 수작업 검수
+            </small>
+          </div>
+
+          {buyCta("hero", `${won(PRICE.presale)}에 우리 아이 피규어 구매하기`)}
+
+          {/* 설문은 같은 자리에서 '더 싼 길'로만 안내한다. 코멘트 #15가 세운
+              위계 — 바로 구매가 위, 설문 후 구매가 아래 — 를 여기서부터 지킨다. */}
+          <div className="gs-hero-sub">
+            <span>설문으로 할인은 처음이죠</span>
+            <strong>설문 참여 시 {won(PRICE.member)}</strong>
+            <small>설문하지 않아도 바로 구매할 수 있어요</small>
+          </div>
+        </section>
+
+        <section className="gs-section gs-why-now">
+          <span className="gs-kicker">02 WHY NOW</span>
+          <h2>
+            300장도 넘는 사진
+            <br />
+            그중 가장 <em>우리 아이다운 모습</em>을
+            <br />
+            작품으로 남겨보세요.
+          </h2>
+          <p className="gs-copy">
+            매일 보던 표정, 살짝 접힌 귀, 털끝의 작은 무늬. 지금은 너무 익숙해서
+            지나치는 모습들이 언젠가 가장 보고싶은 장면이 되기도 합니다.
+          </p>
+
+          <LandingFigure slot={FIGURES.whyNow} className="gs-figure--wide" />
+
+          {/* 1차 참여자에게 받은 실제 메시지다. 문장을 다듬지 않고 그대로 둔다. */}
+          <div className="gs-quotes">
+            <blockquote>
+              <cite>12135 님</cite>
+              <p>
+                그때 사진을 더 찍어둘걸, 조금 더 많이 남겨둘걸 생각하게
+                되더라고요
+              </p>
+            </blockquote>
+            <blockquote>
+              <cite>1차 참여자</cite>
+              <p>잘받았습니다 우리애기랑 비슷하게 생겨서 너무 귀여워요 :)</p>
+            </blockquote>
+          </div>
+
+          <p className="gs-why-now-close">
+            그래서 포에버는 그냥 ‘강아지 피규어’가 아니라
+            <br />
+            세상에 하나뿐인 우리 아이의 모습을 만듭니다.
+          </p>
+        </section>
+
+        <section className="gs-section gs-the-figure">
+          <span className="gs-kicker">03 THE FIGURE</span>
+          <h2>
+            가족끼리만 알아보는
+            <br />
+            우리 아이만의 특징까지.
+          </h2>
+          <p className="gs-copy">
+            같은 견종이어도 얼굴형, 귀 모양, 털색과 무늬, 체형은 모두 다르니까,
+            사진 속 특징을 최대한 찾아 3D 형태로 옮깁니다.
+          </p>
+
+          <LandingFigure
+            slot={FIGURES.figureCompare}
+            className="gs-figure--wide"
+          />
+
+          <div className="gs-badges">
+            {["접힌 귀", "입 주변 털", "꼬리 무늬"].map(trait => (
+              <span key={trait}>{trait}</span>
+            ))}
+          </div>
+        </section>
+
+        <section className="gs-section gs-proof">
+          <span className="gs-kicker">04 PROOF</span>
+          <h2>
+            1차 모집 선착순 {CAMPAIGN.capacity}명,
+            <br />
+            하루 만에 마감됐습니다.
+          </h2>
+          <p className="gs-copy">
+            {CAMPAIGN.capacity}개의 피규어를 직접 제작하며 소중한 모습을 담기
+            위해 사진 선택, 모델링, 출력과 검수 방식을 지속해서 발전시키고
+            있습니다.
+          </p>
+
+          {/* 코멘트 #14: '하루만에' '선착순' '100명' 마감 강조.
+              코멘트 #20: 마감되었다 글자 밑에 도장 이미지로 팍. */}
+          <div className="gs-closed-card">
+            <span>1차 체험단</span>
+            <strong>
+              {CAMPAIGN.capacity}명 모집 완료
+              <i aria-hidden="true">CLOSED</i>
+            </strong>
+            <small>오픈 하루 만에 신청이 마감됐어요</small>
+          </div>
+
+          <div className="gs-stats">
+            {[
+              [`${CAMPAIGN.capacity}명`, "1차 체험단"],
+              ["1일", "모집 마감"],
+              [`${CAMPAIGN.capacity}개`, "직접 제작"],
+            ].map(([value, label]) => (
+              <div key={label}>
+                <strong>{value}</strong>
+                <span>{label}</span>
               </div>
             ))}
           </div>
 
-          <div className="gs-price-headline">
-            <p>
-              <s>정가 {won(PRICE.list)}</s>
-              <strong>설문 참여자 {won(PRICE.member)}</strong>
-            </p>
-            <small>타사 판매가 {won(PRICE.competitor)} 비교</small>
-          </div>
-          <PrimaryCta
-            ctaId={CTA_IDS.hero}
-            onClick={() => openCta("hero")}
-            disabled={!surveyAvailable}
-          />
-        </section>
+          <LandingFigure slot={FIGURES.proof} className="gs-figure--wide" />
 
-        <section className="gs-section gs-promise">
-          <span className="gs-kicker">1차 결과</span>
-          <div className="gs-promise-question">
-            <h2>
-              1차 체험단 ‘하루만에’
-              <br />
-              {CAMPAIGN.capacity}명 모집 마감
-            </h2>
-          </div>
-          {/* 회의록 6-2는 이 두 줄만 정했다. 확인된 수치가 아니면 여기에
-              숫자를 덧붙이지 않는다. */}
-          <div className="gs-promise-answer">
-            <strong>
-              많은 보호자분이 가장 갖고 싶은 굿즈로 3D 전신 피규어를
-              선택했습니다
-            </strong>
-          </div>
-        </section>
-
-        <section className="gs-section gs-price-section">
-          <h2>
-            사진만 넣으면 된다는
-            <br />
-            맞춤 굿즈는 많지만,
-          </h2>
-          <p className="gs-copy">
-            {
-              "막상 우리 아이의 귀 모양과 털무늬, 자주 짓는 표정까지 닮게 만들기는 어렵습니다."
-            }
+          <p className="gs-note">
+            ※ 사진의 화질·각도와 3D 출력 특성에 따라 실제 반려견과 색상 및
+            형태에 일부 차이가 있을 수 있습니다.
           </p>
-
-          <LandingImage
-            src="price-comparison.png"
-            alt="아크릴 얼굴 키링 7,900원대, 3D 얼굴 커스텀 220,000원대, 3D 전신 피규어 210,000원대 가격 비교"
-            className="gs-price-comparison"
-          />
-          <p className="gs-source-note">
-            시중 커스텀 제작 A·B·C사 실판매가 기준(2026.07)
-          </p>
-          {/* "왜 설문 참여자가 더 저렴한가"는 아래 Offer 단락에서 따로 다룬다.
-              여기서 먼저 말하면 중복이고, 제작비 지원을 시간과 맞바꾸는 것처럼
-              읽힌다. 회의록 6-6이 구분하라고 못 박은 지점이다. */}
-          <PrimaryCta
-            ctaId={CTA_IDS.price_comparison}
-            onClick={() => openCta("price_comparison")}
-            disabled={!surveyAvailable}
-          />
-        </section>
-
-        <section className="gs-section gs-emotion">
-          <h2>
-            갖고 싶은 건 흔한 강아지 피규어가 아니라
-            <br />
-            우리 가족만 알아보는 ‘우리 아이의 모습’이니까요.
-          </h2>
-          {/* 회의록 6-4는 이 제목만 정했다. 1차 랜딩의 본문은 걷어냈다. */}
-          <div className="gs-story-stack">
-            <LandingImage
-              src="story-phone-figure.png"
-              alt="휴대폰 속 반려견 사진과 완성된 전신 피규어"
-            />
-            <LandingImage
-              src="story-photo-keyring.png"
-              alt="반려견 원본 사진과 완성된 얼굴 키링"
-            />
-            <LandingImage
-              src="story-dalmatian.png"
-              alt="반려견 원본 사진과 완성된 아크릴 얼굴 키링"
-            />
-          </div>
         </section>
 
         <section className="gs-section gs-process" id="process">
-          <h2>사진에서 아이의 특징을 찾아 만듭니다.</h2>
+          <span className="gs-kicker">05 PROCESS</span>
+          <h2>한 아이씩 한땀한땀, 천천히.</h2>
+          <p className="gs-copy">
+            빠르게 많이 만드는 것보다, 사진 속 특징을 놓치지 않는 과정을
+            우선합니다.
+          </p>
 
-          {/* 회의록 6-5가 정한 네 단계. 설명을 덧붙이지 않는다. */}
-          <div className="gs-process-list">
-            {[
-              ["01", "얼굴·전신 사진 3장 제출"],
-              ["02", "귀·얼굴형·털색·자세 특징 정리"],
-              ["03", "3D 모델 제작 및 출력"],
-              ["04", "수작업 검수 후 발송"],
-            ].map(([number, title]) => (
-              <div className="gs-process-step" key={number}>
-                <span aria-hidden="true" />
-                <div>
-                  <strong>
-                    {number}. {title}
-                  </strong>
+          <div className="gs-steps">
+            {processSteps.map(({ number, title, caption, figures }) => (
+              <article className="gs-step" key={number}>
+                <span className="gs-step-number">{number}</span>
+                <h3>{title}</h3>
+                <p>{caption}</p>
+                <div
+                  className={`gs-step-figures${
+                    figures.length > 1 ? " is-triple" : ""
+                  }`}
+                >
+                  {figures.map(slot => (
+                    <LandingFigure key={slot.src} slot={slot} />
+                  ))}
                 </div>
-              </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="gs-section gs-limited">
+          <span className="gs-kicker">06 LIMITED</span>
+          <h2>이번에도 {CAMPAIGN.capacity}개만 제작합니다.</h2>
+          <p className="gs-copy">
+            사진을 보고 특징을 정리하고, 출력 상태를 하나씩 확인해야 하는 맞춤
+            제작입니다. 그래서 2차 역시 제대로 만들 수 있는 수량만 오픈합니다.
+          </p>
+
+          <div className="gs-limit-card">
+            <span>2차 준비 수량</span>
+            <strong>1차 제작 데이터를 확인한 뒤 공개</strong>
+            <small>
+              2주 동안 안정적으로 제작 가능한 수량에서 재제작 여유분을 제외해
+              확정합니다.
+            </small>
+          </div>
+
+          <LandingFigure slot={FIGURES.limited} className="gs-figure--wide" />
+        </section>
+
+        <section className="gs-section gs-voices">
+          <span className="gs-kicker">07 VOICES</span>
+          <h2>
+            가족들이 알아본
+            <br />
+            ‘우리 아이’의 모습.
+          </h2>
+
+          <div className="gs-voice-list">
+            {voices.map(({ who, text }) => (
+              <article className="gs-voice" key={who}>
+                <header>
+                  <div>
+                    <strong>{who}</strong>
+                    <span>구매·제작 참여 확인</span>
+                  </div>
+                  <span className="gs-voice-stars" aria-label="별점 5점">
+                    ★★★★★
+                  </span>
+                </header>
+                <p>{text}</p>
+                <small>
+                  ※ 실제 후기 확보 후 검증된 문장과 참여자 정보로 교체
+                </small>
+              </article>
             ))}
           </div>
 
-          <LandingImage
-            src="process-reference.png"
-            alt="반려견 원본 사진, 3D 모델링 화면, 완성 피규어로 이어지는 제작 과정"
-            className="gs-process-visual"
-          />
-          <p className="gs-process-note">
-            * AI가 사진을 그대로 복제하는 방식은 아닙니다.
-            <br />
-            제작 방식과 사진 상태에 따라 차이가 생길 수 있어요.
-          </p>
-        </section>
-
-        <section className="gs-section gs-story-copy">
-          <span className="gs-kicker">왜 설문 참여자는 더 저렴한가요?</span>
-          <h2>여러분의 이야기가 제품과 서비스를 더 정확하게 만듭니다.</h2>
-          <LandingImage
-            src="why-free.png"
-            alt="소파에서 반려견과 편안한 시간을 보내는 보호자"
-            className="gs-why-free-image"
-          />
-          <p>
-            포에버는 반려견의 작은 변화를 기록하고, 필요한 돌봄을 제때
-            준비하도록 돕는 서비스를 만들고 있습니다.
-          </p>
-          <strong>
-            설문 참여자의 경험은
-            <br />
-            제품 선택과 서비스 설계에 직접 쓰입니다
-          </strong>
-          {/* 민감 문항 예고는 설문 안내 화면(goodsSurveyContent.ts)에 남겨 두었다.
-              랜딩에서 뺐으므로 그쪽 문구는 지우면 안 된다. 아무 예고 없이
-              노화·이별에 관한 질문을 마주하게 된다. */}
-          <p>그 기여에 대한 감사로 2차 제작비 일부를 지원합니다.</p>
-        </section>
-
-        {/* 굿즈가 열려 있으면 남은 자리를, 닫혀 있으면 2차 가격을 보여준다.
-            줄 수 없는 것을 준다고 말하지 않으려면 두 화면이 갈라져야 한다. */}
-        <section className="gs-section" id="offer">
-          {goodsAvailable && hasSlotLimit ? (
+          {/* 코멘트 #25: 지난번 랜딩처럼 수량이 계속 줄고 있는 모습 보여주기.
+              디자인에는 1차 무료 체험단 때 쓰던 수식어가 그대로 남아 있었다.
+              2차는 29,900원을 받는 판매라 옮겨 적으면 화면이 거짓말을 한다. */}
+          {goodsAvailable && hasSlotLimit && (
             <div
               className="gs-remaining-card"
               data-remaining={remaining}
@@ -494,9 +660,9 @@ export default function GoodsSurvey() {
                 <Hourglass aria-hidden="true" />
                 선착순 {capacity}명 한정
               </span>
-              <h2>
+              <h3>
                 지금 <em>{remaining}명</em>만 더 받을 수 있어요!
-              </h2>
+              </h3>
               <div
                 className="gs-remaining-progress"
                 role="progressbar"
@@ -513,109 +679,106 @@ export default function GoodsSurvey() {
                 </span>
               </p>
             </div>
-          ) : (
-            <div className="gs-offer-cards">
-              <div className="gs-offer-card is-member">
-                <span>설문 참여자</span>
-                <strong>{won(PRICE.member)}</strong>
-                <ul>
-                  <li>{CAMPAIGN.duration} 설문 완료</li>
-                  <li>
-                    {goodsAvailable
-                      ? "설문을 마치면 이어서 신청"
-                      : "2차 오픈 시 전용 구매 링크 제공"}
-                  </li>
-                </ul>
-                <PrimaryCta
-                  ctaId={CTA_IDS.offer}
-                  onClick={() => openCta("offer")}
-                  label="설문하고 멤버가 받기"
-                  compact
-                  disabled={!surveyAvailable}
-                />
-              </div>
-              <div className="gs-offer-card">
-                {/* 적는 값은 정가(34,900)가 아니라 이 사람이 실제로 내는
-                    값이다. 서버의 list-price-krw 와 같아야 한다. */}
-                <span>일반 구매자</span>
-                <strong>{won(PRICE.presale)}</strong>
-                <ul>
-                  <li>설문 없이 바로 신청</li>
-                  <li>신청 후 문자로 입금 계좌 안내</li>
-                </ul>
-                {/* 굿즈가 닫혀 있으면 버튼을 두지 않는다. 눌러도 신청할 수 없는
-                    버튼은 줄 수 없는 것을 준다고 말하는 것과 같다. */}
-                {goodsAvailable ? (
-                  <PrimaryCta
-                    ctaId={CTA_IDS.offer}
-                    onClick={startDirectPurchase}
-                    label="바로 신청하기"
-                    compact
-                  />
-                ) : (
-                  <p className="gs-source-note">2차 오픈 시 신청할 수 있어요</p>
-                )}
-              </div>
-              <p className="gs-source-note">
-                배송비 {won(PRICE.shipping)} 별도
-                {hasSlotLimit ? " · 2차 수량 한정" : ""}
-              </p>
-            </div>
           )}
         </section>
 
-        <section className="gs-section gs-timeline-section">
-          <span className="gs-kicker">왜 계속 설문을 받나요?</span>
+        {/* 08 — 두 갈래를 나란히 놓되 바로 주문이 위다(코멘트 #15). */}
+        <section className="gs-section gs-purchase" id="offer">
+          <span className="gs-kicker">08 PURCHASE</span>
+          <h2>설문은 구매 조건이 아닙니다. 원하는 방식으로 선택하세요.</h2>
+
+          <div className="gs-buy-cards">
+            <article className="gs-buy-card">
+              <span>가장 간단하게</span>
+              <h3>바로 주문하기</h3>
+              <strong>{won(PRICE.presale)}</strong>
+              <p>설문 없이 바로 구매</p>
+              {buyCta("purchase_now", `${won(PRICE.presale)}에 구매하기`, true)}
+            </article>
+
+            <article className="gs-buy-card is-member">
+              <span>조금 더 저렴하게</span>
+              <h3>설문과 함께 주문하기</h3>
+              <strong>{won(PRICE.member)}</strong>
+              <p>
+                {CAMPAIGN.duration} 설문 참여 · {won(GOODS_SURVEY_DISCOUNT)}{" "}
+                할인
+              </p>
+              <PrimaryCta
+                ctaId={CTA_IDS.purchase_survey}
+                onClick={() => openCta("purchase_survey")}
+                label={`설문 참여하고 ${won(PRICE.member)}에 구매하기`}
+                compact
+                disabled={!surveyAvailable}
+                disabledLabel="설문 접수 마감"
+              />
+            </article>
+          </div>
+
+          <p className="gs-note">
+            배송비 {won(PRICE.shipping)} 별도 · 두 방식 모두 동일한 맞춤 3D 전신
+            피규어 제작
+          </p>
+        </section>
+
+        {/* 코멘트 #24: 여기 위에 노란색 손모양으로 직관적이고 강렬하게 '잠깐!'.
+            설문 설득은 구매 갈림길 뒤에 온다. 앞에 두면 다시 설문 랜딩이 된다. */}
+        <section className="gs-section gs-wait" id="why-survey">
+          <p className="gs-wait-hand" aria-hidden="true">
+            ✋
+          </p>
+          <span className="gs-wait-badge">잠깐!</span>
           <h2>
-            반려견의 변화는
+            그런데 왜 {won(PRICE.member)}에
             <br />
-            모든 가족에게 다르게 찾아옵니다.
+            구매할 수 있나요?
           </h2>
           <p className="gs-copy">
-            {
-              "언제 변화를 느꼈고 무엇이 필요했는지 알아야, 포에버가 필요한 순간에 자연스럽게 도움을 건넬 수 있습니다."
-            }
+            포에버는 반려동물과 함께한 오늘을 기록하고, 필요한 순간의 돌봄으로
+            이어지는 서비스를 만들고 있습니다. 실제 반려인의 경험을 더 정확히
+            듣기 위해 설문에 참여해주신 분께 2차 제작비 일부를 지원합니다.
           </p>
-          {/* 회의록 6-9가 정한 다섯 단계. 설명을 덧붙이지 않는다. */}
-          <div className="gs-timeline">
-            {[
-              ["1", "약 15분 설문 참여"],
-              ["2", "설문 참여자 가격 즉시 확인"],
-              ["3", "광고성 정보 수신 여부 선택"],
-              ["4", "2차 오픈 시 전용 링크 확인"],
-              ["5", "구매할 경우 사진·배송지 입력 후 결제"],
-            ].map(([number, title]) => (
-              <div className="gs-timeline-item" key={number}>
-                {/* 순서는 왼쪽 원 안의 숫자가 이미 말한다. */}
-                <span>{number}</span>
-                <div>
-                  <strong>{title}</strong>
-                </div>
-              </div>
-            ))}
+
+          {/* 코멘트 #10: 가격 깎이는 걸 더 직관적으로 크게. */}
+          <div className="gs-wait-drop">
+            <span>{CAMPAIGN.duration} 설문 참여</span>
+            <strong>
+              <s>{won(PRICE.presale)}</s> → <em>{won(PRICE.member)}</em>
+            </strong>
+            <small>구매 의무 없음 · 광고성 정보 수신 선택</small>
           </div>
+
+          <PrimaryCta
+            ctaId={CTA_IDS.wait}
+            onClick={() => openCta("wait")}
+            label={`15분 설문하고 ${won(PRICE.member)} 혜택 받기`}
+            disabled={!surveyAvailable}
+            disabledLabel="설문 접수 마감"
+          />
         </section>
 
-        <section className="gs-section gs-privacy-summary">
+        <section className="gs-section gs-final" id="survey-start">
+          <span className="gs-kicker">09 FINAL</span>
           <h2>
-            설문 응답과 연락처는
+            지금의 우리 아이를,
             <br />
-            필요한 목적에만 사용합니다.
+            지금 남겨두세요.
           </h2>
-          {/* 회의록 6-10의 목록. 연락 수단은 휴대전화 전환을 미루고
-              이메일을 유지하기로 해, 그 항목만 실제 수집값으로 적는다. */}
-          <ul>
-            <li>설문 응답: 서비스 연구와 통계 분석</li>
-            <li>이메일 주소: 참여자 식별과 선택한 알림 발송</li>
-            <li>반려견 사진: 구매 후 피규어 제작</li>
-            <li>배송지: 구매가 확정된 뒤 배송 목적</li>
-            <li>광고·SNS 활용: 별도 선택 동의</li>
-          </ul>
+          <p className="gs-copy">
+            오래 곁에 두고 싶은 모습 하나를 작은 피규어로 만들어드립니다.
+          </p>
+
+          <LandingFigure slot={FIGURES.final} className="gs-figure--wide" />
+
+          <p className="gs-note">배송비 별도 · 준비 수량 소진 시 마감</p>
+
+          {buyCta("final", `${won(PRICE.presale)}에 우리 아이 피규어 구매하기`)}
         </section>
 
-        <section className="gs-section gs-faq-section">
-          <span className="gs-kicker">미리 답해드릴게요</span>
-          <h2>참여 전에 궁금한 점</h2>
+        {/* 코멘트 #13: 자주 묻는 질문 최하단 이동. */}
+        <section className="gs-section gs-faq-section" id="faq">
+          <span className="gs-kicker">10 FAQ</span>
+          <h2>자주 묻는 질문</h2>
           <div className="gs-faq-list">
             {faqs.map(({ question, answer }, index) => (
               <details key={question} open={index === 0}>
@@ -629,6 +792,8 @@ export default function GoodsSurvey() {
           </div>
         </section>
 
+        {/* 아래 두 단락은 디자인에 없지만 뺄 수 없다. 제품 안전 고지와 개인정보
+            처리 안내는 판매 화면이 지고 있는 의무다. */}
         <section className="gs-section" id="safety">
           <div className="gs-safety">
             <ShieldCheck aria-hidden="true" />
@@ -659,26 +824,19 @@ export default function GoodsSurvey() {
           </div>
         </section>
 
-        <section className="gs-section gs-final" id="survey-start">
-          <LandingImage
-            src="final-banner.png"
-            alt="반려견 원본 사진과 완성된 얼굴 키링 두 종류"
-            className="gs-final-image"
-          />
+        <section className="gs-section gs-privacy-summary">
           <h2>
-            15분으로 반려동물 문화에 기여하고,
+            설문 응답과 연락처는
             <br />
-            우리 아이의 모습을 더 오래 남겨보세요.
+            필요한 목적에만 사용합니다.
           </h2>
-          <PrimaryCta
-            ctaId={CTA_IDS.final}
-            onClick={() => openCta("final")}
-            label={`설문하고 -${won(GOODS_SURVEY_DISCOUNT)} 혜택 받기`}
-            disabled={!surveyAvailable}
-          />
-          <p className="gs-cta-meta">
-            설문 완료 즉시 참여자 자격 부여 · 구매 의무 없음 · 광고 수신 선택
-          </p>
+          <ul>
+            <li>설문 응답: 서비스 연구와 통계 분석</li>
+            <li>이메일 주소: 참여자 식별과 선택한 알림 발송</li>
+            <li>반려견 사진: 구매 후 피규어 제작</li>
+            <li>배송지: 구매가 확정된 뒤 배송 목적</li>
+            <li>광고·SNS 활용: 별도 선택 동의</li>
+          </ul>
         </section>
 
         <footer className="gs-footer">
@@ -703,23 +861,41 @@ export default function GoodsSurvey() {
           </p>
         </footer>
 
+        {/* 화면 하단 고정 버튼도 판매를 앞세운다. 굿즈가 닫혀 있을 때만
+            설문으로 보낸다 — 그때는 그게 유일하게 할 수 있는 일이다. */}
         <div className="gs-stickybar">
-          <button
-            type="button"
-            data-cta-id={CTA_IDS.sticky}
-            onClick={() => openCta("sticky")}
-            disabled={!surveyAvailable}
-          >
-            <span>
-              {surveyAvailable ? CTA_LABEL : "설문 접수 마감"}
-              <small>설문 완료 즉시 참여자 자격 부여 · 구매 의무 없음</small>
-            </span>
-            <ArrowRight aria-hidden="true" />
-          </button>
+          {goodsAvailable ? (
+            <button
+              type="button"
+              data-cta-id={CTA_IDS.sticky}
+              onClick={() => startDirectPurchase("sticky")}
+            >
+              <span>
+                {won(PRICE.presale)}에 구매하기
+                <small>설문 참여 시 {won(PRICE.member)} · 배송비 별도</small>
+              </span>
+              <ArrowRight aria-hidden="true" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              data-cta-id={CTA_IDS.sticky}
+              onClick={() => openCta("sticky")}
+              disabled={!surveyAvailable}
+            >
+              <span>
+                {surveyAvailable
+                  ? `설문하고 ${won(PRICE.member)} 혜택 받기`
+                  : "설문 접수 마감"}
+                <small>구매 의무 없음 · 광고성 정보 수신 선택</small>
+              </span>
+              <ArrowRight aria-hidden="true" />
+            </button>
+          )}
         </div>
       </div>
 
-      {/* 회의록 5번의 안내 모달. 15분을 들이기 전에 무엇을 받는지 먼저 보여준다. */}
+      {/* 설문에 10~15분을 들이기 전에 무엇을 받는지 먼저 보여준다. */}
       {ctaPlacement && (
         <div
           className="gs-modal-backdrop"
@@ -745,23 +921,21 @@ export default function GoodsSurvey() {
             <h2 id="gs-cta-modal-title">
               설문을 완료하면
               <br />
-              2차 멤버가로 구매할 수 있어요
+              {won(PRICE.member)}에 구매할 수 있어요
             </h2>
             <p>
-              1차 무료 체험단 {CAMPAIGN.capacity}명의 선택에서 4명 중 한 명이 3D
-              전신 피규어를 선택했어요. 더 나은 결과물을 만들기 위해 여러분의
-              이야기를 계속 듣고 있어요.
+              실제 반려인의 경험을 더 정확히 듣기 위한 설문입니다. 응답은 제품
+              선택과 서비스 설계에 직접 쓰입니다.
             </p>
             <div className="gs-modal-price">
               <span>{CAMPAIGN.duration} 설문을 완료하면</span>
               <p>
-                <s>정가 {won(PRICE.list)}</s>
-                <small>타사 판매가 {won(PRICE.competitor)}</small>
+                <s>{won(PRICE.presale)}</s>
               </p>
               <strong>설문 참여자 전용가 {won(PRICE.member)}</strong>
             </div>
             <p className="gs-modal-terms">
-              배송비 별도 · 2차 수량 한정 · 설문 완료 즉시 참여자 자격 부여
+              배송비 별도 · 구매 의무 없음 · 광고성 정보 수신 선택
             </p>
             <PrimaryCta
               onClick={startSurvey}
