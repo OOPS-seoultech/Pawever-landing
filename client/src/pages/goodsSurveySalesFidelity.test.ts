@@ -121,6 +121,28 @@ describe("2차 랜딩은 사는 이야기를 먼저 한다", () => {
     expect(landing).not.toContain("무료 선착순");
   });
 
+  it("구매 버튼에서 설문 안내로 내려가는 화살표를 둔다", () => {
+    // 디자인 5423:1457. 구매 버튼과 '더 싼 길' 카드를 잇는 표시다.
+    expect(landing).toContain("down-arrow.png");
+  });
+
+  it("설문 할인가를 주황 밑줄로 눈에 띄게 적는다", () => {
+    // 디자인은 이 한 줄만 #ed7d1a 22px 밑줄이다. 구매가 옆에서 유일하게
+    // 눈에 걸리는 자리라, 평범한 글씨로 두면 '더 싼 길'이 보이지 않는다.
+    expect(landing).toContain("gs-hero-sub-price");
+  });
+
+  it("후기마다 작성자 자리를 둔다", () => {
+    // 디자인 5423:1660. 이름과 별점만 있으면 후기 카드로 읽히지 않는다.
+    expect(landing).toContain("gs-voice-avatar");
+  });
+
+  it("자주 묻는 질문은 모두 닫힌 채로 연다", () => {
+    // 디자인은 일곱 개가 전부 닫혀 있다. 하나를 열어 두면 그 답만 읽힌다.
+    expect(landing).not.toContain("open={index === 0}");
+    expect(landing).toContain("gs-faq-toggle");
+  });
+
   it("자주 묻는 질문 일곱 개를 디자인대로 싣는다", () => {
     [
       "설문을 하지 않아도 구매할 수 있나요?",
