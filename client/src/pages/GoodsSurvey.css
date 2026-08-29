@@ -71,9 +71,11 @@
   font-weight: 750;
 }
 
+/* 디자인은 모든 구간이 px-20 py-80 이다. 52로 좁혀 두는 바람에 구간마다
+   위아래 28px씩, 페이지 전체로 670px 가까이 짧았다.
+   구간을 가르는 것은 선이 아니라 번갈아 깔리는 바탕색이다. */
 .gs-section {
-  padding: 52px 24px;
-  border-top: 1px solid var(--gs-line);
+  padding: 80px 20px;
 }
 
 .gs-section[id] {
@@ -93,11 +95,13 @@
   letter-spacing: -0.045em;
 }
 
+/* 디자인의 구간 제목은 30px 이다. 23으로 줄여 놓아 전 구간이 짧고
+   목소리가 작았다. 크기가 다른 네 곳은 아래에서 따로 적는다. */
 .gs-section h2 {
   margin-bottom: 16px;
-  font-size: 23px;
-  font-weight: 900;
-  line-height: 1.4;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.27;
 }
 
 .gs-kicker {
@@ -333,6 +337,13 @@
   background: #fffaf4;
 }
 
+/* 두 갈래 안내는 제목이 아니라 한 줄 설명이다(디자인 15px). */
+.gs-purchase h2 {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
 /* ── 02 WHY NOW ───────────────────────────────────────────── */
 
 .gs-why-now h2 em {
@@ -342,29 +353,38 @@
 
 .gs-quotes {
   display: grid;
-  gap: 10px;
+  gap: 18px;
+  padding: 20px 0;
 }
 
 .gs-quotes blockquote {
   margin: 0;
-  padding: 16px 18px;
-  border-radius: 14px;
+  padding: 24px 25px;
+  border-radius: 23px;
   background: #ffffff;
+  box-shadow: 0 4px 7.5px rgba(0, 0, 0, 0.09);
+}
+
+.gs-quotes header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 18px;
 }
 
 .gs-quotes cite {
-  display: block;
-  margin-bottom: 6px;
-  color: var(--gs-muted);
-  font-size: 10px;
+  flex: 1 1 auto;
+  color: #000000;
+  font-size: 11px;
   font-style: normal;
-  font-weight: 800;
 }
 
 .gs-quotes blockquote p {
   margin: 0;
-  font-size: 12px;
-  line-height: 1.65;
+  color: #393430;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
 }
 
 .gs-why-now-close {
@@ -493,10 +513,12 @@
   font-weight: 900;
 }
 
+/* 디자인의 Heading 3 은 어디서나 20px / 28 이다. */
 .gs-step h3 {
   margin: 0 0 4px;
-  font-size: 18px;
-  font-weight: 900;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 28px;
 }
 
 .gs-step > p {
@@ -826,8 +848,9 @@
   color: #ffffff;
 }
 
+/* 마지막으로 말을 거는 자리라 디자인이 여기만 제목을 키웠다. */
 .gs-final h2 {
-  font-size: 24px;
+  font-size: 34px;
 }
 
 .gs-final .gs-copy,
@@ -1121,8 +1144,9 @@
 
 .gs-buy-card h3 {
   margin: 0 0 8px;
-  font-size: 19px;
-  font-weight: 900;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 28px;
   letter-spacing: -0.04em;
 }
 
@@ -1179,7 +1203,7 @@
 .gs-wait-card h2 {
   margin: 14px 0 0;
   color: #292725;
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 800;
   line-height: 1.35;
   letter-spacing: -0.04em;
