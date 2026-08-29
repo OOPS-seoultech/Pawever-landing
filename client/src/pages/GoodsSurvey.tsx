@@ -1,10 +1,4 @@
-import {
-  ArrowRight,
-  ChevronDown,
-  Hourglass,
-  ShieldCheck,
-  X,
-} from "lucide-react";
+import { ArrowRight, Hourglass, ShieldCheck, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { setSurveyPhaseContext, trackEvent } from "@/lib/analytics/analytics";
@@ -611,11 +605,23 @@ export default function GoodsSurvey() {
 
           {buyCta("hero", `${won(PRICE.presale)}에 우리 아이 피규어 구매하기`)}
 
+          {/* 구매 버튼에서 아래 '더 싼 길' 카드로 눈을 내려 준다(5423:1457). */}
+          <img
+            className="gs-hero-arrow"
+            src={`${ASSET_BASE}/down-arrow.png`}
+            alt=""
+            width="197"
+            height="84"
+            decoding="async"
+          />
+
           {/* 설문은 같은 자리에서 '더 싼 길'로만 안내한다. 코멘트 #15가 세운
               위계 — 바로 구매가 위, 설문 후 구매가 아래 — 를 여기서부터 지킨다. */}
           <div className="gs-hero-sub">
             <span>설문으로 할인은 처음이죠</span>
-            <strong>설문 참여 시 {won(PRICE.member)}</strong>
+            <strong className="gs-hero-sub-price">
+              설문 참여 시 {won(PRICE.member)}
+            </strong>
             <small>설문하지 않아도 바로 구매할 수 있어요</small>
           </div>
         </section>
@@ -797,6 +803,8 @@ export default function GoodsSurvey() {
             {voices.map(({ who, text }) => (
               <article className="gs-voice" key={who}>
                 <header>
+                  {/* 작성자 자리. 실제 사진을 받기 전까지는 빈 원으로 둔다. */}
+                  <i className="gs-voice-avatar" aria-hidden="true" />
                   <div>
                     <strong>{who}</strong>
                     <span>구매·제작 참여 확인</span>
@@ -965,12 +973,13 @@ export default function GoodsSurvey() {
         <section className="gs-section gs-faq-section" id="faq">
           <span className="gs-kicker">10 FAQ</span>
           <h2>자주 묻는 질문</h2>
+          {/* 디자인은 일곱 개가 전부 닫혀 있다. 하나를 열어 두면 그 답만 읽힌다. */}
           <div className="gs-faq-list">
-            {faqs.map(({ question, answer }, index) => (
-              <details key={question} open={index === 0}>
+            {faqs.map(({ question, answer }) => (
+              <details key={question}>
                 <summary>
                   {question}
-                  <ChevronDown aria-hidden="true" />
+                  <i className="gs-faq-toggle" aria-hidden="true" />
                 </summary>
                 <p>{answer}</p>
               </details>
