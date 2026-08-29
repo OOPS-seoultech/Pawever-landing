@@ -43,74 +43,74 @@
 }
 
 :root {
-  --primary: #FF9F43;
-  --primary-foreground: #FAFAF8;
-  --sidebar-primary: #FF9F43;
-  --sidebar-primary-foreground: #FAFAF8;
-  --chart-1: #FFD4A3;
-  --chart-2: #FF9F43;
-  --chart-3: #FF8C1F;
-  --chart-4: #E67E22;
-  --chart-5: #D35400;
+  --primary: #ff9f43;
+  --primary-foreground: #fafaf8;
+  --sidebar-primary: #ff9f43;
+  --sidebar-primary-foreground: #fafaf8;
+  --chart-1: #ffd4a3;
+  --chart-2: #ff9f43;
+  --chart-3: #ff8c1f;
+  --chart-4: #e67e22;
+  --chart-5: #d35400;
   --radius: 0.75rem;
-  --background: #FAFAF8;
-  --foreground: #2C2C2C;
-  --card: #FFFFFF;
-  --card-foreground: #2C2C2C;
-  --popover: #FFFFFF;
-  --popover-foreground: #2C2C2C;
-  --secondary: #F5F5F3;
-  --secondary-foreground: #2C2C2C;
-  --muted: #F5F5F3;
+  --background: #fafaf8;
+  --foreground: #2c2c2c;
+  --card: #ffffff;
+  --card-foreground: #2c2c2c;
+  --popover: #ffffff;
+  --popover-foreground: #2c2c2c;
+  --secondary: #f5f5f3;
+  --secondary-foreground: #2c2c2c;
+  --muted: #f5f5f3;
   --muted-foreground: #666666;
-  --accent: #FF9F43;
-  --accent-foreground: #FFFFFF;
-  --destructive: #EF4444;
-  --destructive-foreground: #FAFAF8;
-  --border: #E8E8E6;
-  --input: #F5F5F3;
-  --ring: #FF9F43;
-  --sidebar: #FFFFFF;
-  --sidebar-foreground: #2C2C2C;
-  --sidebar-accent: #FF9F43;
-  --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: #E8E8E6;
-  --sidebar-ring: #FF9F43;
+  --accent: #ff9f43;
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --destructive-foreground: #fafaf8;
+  --border: #e8e8e6;
+  --input: #f5f5f3;
+  --ring: #ff9f43;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #2c2c2c;
+  --sidebar-accent: #ff9f43;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #e8e8e6;
+  --sidebar-ring: #ff9f43;
 }
 
 .dark {
-  --primary: #FF9F43;
-  --primary-foreground: #1A1A1A;
-  --sidebar-primary: #FF9F43;
-  --sidebar-primary-foreground: #1A1A1A;
-  --background: #1A1A1A;
-  --foreground: #E8E8E6;
-  --card: #2C2C2C;
-  --card-foreground: #E8E8E6;
-  --popover: #2C2C2C;
-  --popover-foreground: #E8E8E6;
-  --secondary: #3A3A3A;
-  --secondary-foreground: #D0D0CD;
-  --muted: #3A3A3A;
+  --primary: #ff9f43;
+  --primary-foreground: #1a1a1a;
+  --sidebar-primary: #ff9f43;
+  --sidebar-primary-foreground: #1a1a1a;
+  --background: #1a1a1a;
+  --foreground: #e8e8e6;
+  --card: #2c2c2c;
+  --card-foreground: #e8e8e6;
+  --popover: #2c2c2c;
+  --popover-foreground: #e8e8e6;
+  --secondary: #3a3a3a;
+  --secondary-foreground: #d0d0cd;
+  --muted: #3a3a3a;
   --muted-foreground: #999999;
-  --accent: #FF9F43;
-  --accent-foreground: #1A1A1A;
-  --destructive: #F87171;
-  --destructive-foreground: #1A1A1A;
-  --border: #3A3A3A;
-  --input: #2C2C2C;
-  --ring: #FF9F43;
-  --chart-1: #FFD4A3;
-  --chart-2: #FF9F43;
-  --chart-3: #FF8C1F;
-  --chart-4: #E67E22;
-  --chart-5: #D35400;
-  --sidebar: #2C2C2C;
-  --sidebar-foreground: #E8E8E6;
-  --sidebar-accent: #FF9F43;
-  --sidebar-accent-foreground: #1A1A1A;
-  --sidebar-border: #3A3A3A;
-  --sidebar-ring: #FF9F43;
+  --accent: #ff9f43;
+  --accent-foreground: #1a1a1a;
+  --destructive: #f87171;
+  --destructive-foreground: #1a1a1a;
+  --border: #3a3a3a;
+  --input: #2c2c2c;
+  --ring: #ff9f43;
+  --chart-1: #ffd4a3;
+  --chart-2: #ff9f43;
+  --chart-3: #ff8c1f;
+  --chart-4: #e67e22;
+  --chart-5: #d35400;
+  --sidebar: #2c2c2c;
+  --sidebar-foreground: #e8e8e6;
+  --sidebar-accent: #ff9f43;
+  --sidebar-accent-foreground: #1a1a1a;
+  --sidebar-border: #3a3a3a;
+  --sidebar-ring: #ff9f43;
 }
 
 @layer base {
@@ -127,7 +127,19 @@
     @apply border-border outline-ring/50;
   }
   html {
-    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    /* 웹에서 받는 가변 폰트는 'Pretendard Variable' 로 등록된다. 뒤의
+       'Pretendard' 는 로컬에 깔아 둔 사람을 위한 것이고, 한글이 없는
+       Segoe UI 앞에 Noto Sans KR 을 둬야 마지막 대체도 한글이 나온다. */
+    font-family:
+      "Pretendard Variable",
+      Pretendard,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Apple SD Gothic Neo",
+      "Noto Sans KR",
+      "Malgun Gothic",
+      "Segoe UI",
+      sans-serif;
   }
   body {
     @apply bg-background text-foreground;
