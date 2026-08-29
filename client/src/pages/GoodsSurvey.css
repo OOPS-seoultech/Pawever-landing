@@ -469,24 +469,27 @@
 }
 
 .gs-stats > div {
-  padding: 16px 4px;
-  border-radius: 14px;
-  background: var(--gs-orange-soft);
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 18px 14px;
+  border: 1px solid #eee7df;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 6px 9px rgba(76, 48, 22, 0.04);
 }
 
 .gs-stats strong {
-  display: block;
-  color: var(--gs-orange-dark);
-  font-size: 19px;
-  font-weight: 950;
-  letter-spacing: -0.04em;
+  color: #ed7d1a;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 28px;
 }
 
 .gs-stats span {
-  color: var(--gs-muted);
-  font-size: 10px;
-  font-weight: 700;
+  color: #89827b;
+  font-size: 11px;
+  line-height: 16px;
 }
 
 /* ── 05 PROCESS ───────────────────────────────────────────── */
@@ -657,13 +660,26 @@
   margin-bottom: 12px;
 }
 
-/* 작성자 자리. 실제 사진을 받기 전까지는 디자인의 회색 원 그대로 둔다. */
-.gs-voice-avatar {
+/* 07 후기는 아직 예시라 작성자 자리를 회색 원으로 둔다. */
+.gs-voice header > .gs-voice-avatar {
   flex: none;
   width: 36px;
   height: 36px;
   border-radius: 50%;
   background: linear-gradient(180deg, #d7cfc6 45%, #aaa198 46%);
+}
+
+/* 02 는 실제로 받은 메시지라 디자인이 넣어 둔 프로필 그림을 그대로 쓴다. */
+.gs-quotes .gs-voice-avatar {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+}
+
+.gs-voice-stars i {
+  color: #d9d4cf;
+  font-style: normal;
 }
 
 .gs-voice header > div {

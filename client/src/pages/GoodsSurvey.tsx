@@ -646,20 +646,37 @@ export default function GoodsSurvey() {
           <div className="gs-quotes">
             {[
               {
+                avatar: "voice-avatar-1.png",
                 who: "12135 님",
+                stars: 5,
                 text: "그때 사진을 더 찍어둘걸, 조금 더 많이 남겨둘걸 생각하게 되더라고요",
               },
               {
-                who: "1차 참여자",
+                avatar: "voice-avatar-2.png",
+                // 디자인은 두 장 모두 같은 이름, 별점은 4점이다. 받은 그대로 둔다.
+                who: "12135 님",
+                stars: 4,
                 text: "잘받았습니다 우리애기랑 비슷하게 생겨서 너무 귀여워요 :)",
               },
-            ].map(({ who, text }) => (
-              <blockquote key={who}>
+            ].map(({ avatar, who, stars, text }) => (
+              <blockquote key={avatar}>
                 <header>
-                  <i className="gs-voice-avatar" aria-hidden="true" />
+                  <img
+                    className="gs-voice-avatar"
+                    src={`${ASSET_BASE}/${avatar}`}
+                    alt=""
+                    width="34"
+                    height="34"
+                    decoding="async"
+                  />
                   <cite>{who}</cite>
-                  <span className="gs-voice-stars" aria-label="별점 5점">
-                    ★★★★★
+                  {/* 디자인은 못 받은 별이 앞쪽에 회색으로 남는다. */}
+                  <span
+                    className="gs-voice-stars"
+                    aria-label={`별점 ${stars}점`}
+                  >
+                    <i>{"★".repeat(5 - stars)}</i>
+                    {"★".repeat(stars)}
                   </span>
                 </header>
                 <p>{text}</p>
