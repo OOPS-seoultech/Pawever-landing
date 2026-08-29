@@ -137,16 +137,31 @@ describe("2차 랜딩은 사는 이야기를 먼저 한다", () => {
 });
 
 describe("아직 오지 않은 것은 오지 않았다고 그린다", () => {
-  it("사진 자리를 빈 상자가 아니라 무엇이 들어올 자리인지로 남긴다", () => {
-    // 굿즈팀 실물 사진을 기다리는 자리다. 없는 파일을 <img>로 걸면
-    // 깨진 그림이 뜨고, 그냥 지우면 사진이 왔을 때 어디에 넣을지 알 수 없다.
+  it("디자인에 사진이 들어 있는 자리는 그 사진을 쓴다", () => {
+    // 나혜님은 "플레이스홀더로 남겨 놓은 부분도 있다"고 했는데 전부로 읽고
+    // 열두 칸을 모두 비워 놨었다. 실제로는 아홉 칸에 사진이 들어 있었다.
+    const ready = landing.match(/ready: true/g) ?? [];
+    expect(ready).toHaveLength(9);
+    [
+      "sales-hero-figure.png",
+      "sales-why-now.png",
+      "sales-step-trait.png",
+    ].forEach(asset => expect(landing).toContain(asset));
+  });
+
+  it("아직 빈 세 칸만 무엇이 들어올 자리인지로 남긴다", () => {
+    // 04 책상 위 · 05 3D 제작 · 05 수작업 검수. 디자인에도 체커보드다.
+    const pending = landing.match(/ready: false/g) ?? [];
+    expect(pending).toHaveLength(3);
     expect(landing).toContain("gs-figure--pending");
-    expect(landing).toContain("ready: false");
     expect(landing).toContain('role="img"');
-    expect(landing).toContain(
-      "크림색 포메라니안과 같은 모습을 본뜬 작은 전신 피규어"
-    );
     expect(landing).toContain("모니터의 3D 모델과 출력기");
+  });
+
+  it("사진은 디자인이 정한 크기를 두 축 모두 들고 있다", () => {
+    // 늦게 불러오는 동안 높이가 0이면 자리가 밀린다. 도장에서 이미 겪었다.
+    expect(landing).toContain("width={slot.w}");
+    expect(landing).toContain("height={slot.h}");
   });
 
   it("1차 마감 도장은 실제 그래픽을 쓴다", () => {

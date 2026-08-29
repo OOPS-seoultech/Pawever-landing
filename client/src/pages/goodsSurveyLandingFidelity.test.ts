@@ -61,10 +61,10 @@ describe("굿즈 랜딩 기준 문구", () => {
     // 배포 전에 그걸 잡는 자리다.
     const slots = [
       ...landingSource.matchAll(
-        /src:\s*"([^"]+)",\s*alt:\s*"[^"]*",\s*ready:\s*(true|false)/g
+        /src:\s*"([^"]+)",\s*alt:\s*"[^"]*",\s*w:\s*\d+,\s*h:\s*\d+,\s*ready:\s*(true|false)/g
       ),
     ];
-    expect(slots.length).toBeGreaterThan(0);
+    expect(slots.length).toBe(12);
 
     slots
       .filter(([, , ready]) => ready === "true")

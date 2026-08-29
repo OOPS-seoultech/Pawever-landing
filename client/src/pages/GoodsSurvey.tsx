@@ -57,76 +57,109 @@ const CTA_IDS = {
 type Placement = keyof typeof CTA_IDS;
 
 /**
- * 굿즈팀 실물 사진을 기다리는 자리들.
+ * 디자인(Figma 5423:1415)의 사진 열두 칸.
  *
- * 나혜님 디자인(Figma 5423:1415)이 지정한 열네 칸인데, 사진은 아직 오지 않았다.
- * 없는 파일을 <img src>로 걸면 깨진 그림이 뜨고, 자리를 통째로 지우면 사진이
- * 왔을 때 어디에 무엇을 넣어야 하는지 알 수 없게 된다. 그래서 파일 이름과
- * 설명을 미리 못 박아 두고, 사진이 도착하면 public/goods-survey/ 에 같은
- * 이름으로 넣고 ready만 true로 바꾼다.
+ * 나혜님이 "이미지를 받지 않아서 플레이스홀더로 남겨 놓은 부분도 있다"고 했는데
+ * 처음에는 전부로 읽고 열두 칸을 모두 비워 놨었다. 실제로는 아홉 칸에 사진이
+ * 들어 있었고, 화면에는 회색 상자가 나가고 있었다.
+ *
+ * ready가 false인 셋(04 책상 위 · 05 3D 제작 · 05 수작업 검수)은 디자인에도
+ * 체커보드다. 사진이 오면 public/goods-survey/ 에 같은 이름으로 넣고 ready만
+ * true로 바꾼다. w·h는 디자인이 정한 크기이고, 늦게 불러오는 동안에도 자리가
+ * 밀리지 않도록 두 축 모두 들고 있는다.
  */
-type FigureSlot = { src: string; alt: string; ready: boolean };
+type FigureSlot = {
+  src: string;
+  alt: string;
+  w: number;
+  h: number;
+  ready: boolean;
+};
 
 const FIGURES: Record<string, FigureSlot> = {
   hero: {
     src: "sales-hero-figure.png",
     alt: "크림색 포메라니안과 같은 모습을 본뜬 작은 전신 피규어",
-    ready: false,
+    w: 376,
+    h: 286,
+    ready: true,
   },
   whyNow: {
     src: "sales-why-now.png",
     alt: "햇살이 드는 창가에서 편안하게 쉬는 크림색 포메라니안",
-    ready: false,
+    w: 376,
+    h: 286,
+    ready: true,
   },
   figureCompare: {
     src: "sales-figure-compare.png",
     alt: "반려견 사진과 같은 특징을 살려 제작한 맞춤 피규어 비교",
-    ready: false,
+    w: 376,
+    h: 286,
+    ready: true,
   },
   proof: {
     src: "sales-proof-desk.png",
     alt: "책상 위 사진 곁에 놓인 작은 반려견 피규어",
+    w: 376,
+    h: 252,
     ready: false,
   },
   stepFace: {
     src: "sales-step-face.png",
     alt: "반려견 얼굴 사진",
-    ready: false,
+    w: 105,
+    h: 158,
+    ready: true,
   },
   stepBody: {
     src: "sales-step-body.png",
     alt: "반려견 전신 사진",
-    ready: false,
+    w: 105,
+    h: 158,
+    ready: true,
   },
   stepCoat: {
     src: "sales-step-coat.png",
     alt: "반려견 털색과 무늬 사진",
-    ready: false,
+    w: 105,
+    h: 158,
+    ready: true,
   },
   stepTrait: {
     src: "sales-step-trait.png",
     alt: "반려견 사진과 피규어의 특징을 대조하는 과정",
-    ready: false,
+    w: 330,
+    h: 244,
+    ready: true,
   },
   stepPrint: {
     src: "sales-step-print.png",
     alt: "모니터의 3D 모델과 출력기, 출력물을 검수하는 제작 스튜디오",
+    w: 330,
+    h: 244,
     ready: false,
   },
   stepFinish: {
     src: "sales-step-finish.png",
     alt: "작은 반려견 피규어를 손으로 정교하게 마감하는 작업 장면",
+    w: 330,
+    h: 244,
     ready: false,
   },
   limited: {
     src: "sales-limited-shelf.png",
     alt: "여러 종류의 완성 반려견 피규어가 진열된 모습",
-    ready: false,
+    w: 376,
+    h: 252,
+    ready: true,
   },
   final: {
     src: "sales-final-desk.png",
     alt: "반려견 사진과 함께 책상 위에 놓인 작은 맞춤 피규어",
-    ready: false,
+    w: 376,
+    h: 270,
+    ready: true,
   },
 };
 
@@ -221,6 +254,7 @@ function LandingFigure({
         className={`gs-figure gs-figure--pending ${className}`.trim()}
         role="img"
         aria-label={slot.alt}
+        style={{ aspectRatio: `${slot.w} / ${slot.h}` }}
       >
         <span>{slot.alt}</span>
       </div>
@@ -232,7 +266,8 @@ function LandingFigure({
       src={`${ASSET_BASE}/${slot.src}`}
       alt={slot.alt}
       className={`gs-figure ${className}`.trim()}
-      loading="lazy"
+      width={slot.w}
+      height={slot.h}
       decoding="async"
     />
   );
