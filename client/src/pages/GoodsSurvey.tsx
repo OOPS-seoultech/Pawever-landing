@@ -644,17 +644,27 @@ export default function GoodsSurvey() {
 
           {/* 1차 참여자에게 받은 실제 메시지다. 문장을 다듬지 않고 그대로 둔다. */}
           <div className="gs-quotes">
-            <blockquote>
-              <cite>12135 님</cite>
-              <p>
-                그때 사진을 더 찍어둘걸, 조금 더 많이 남겨둘걸 생각하게
-                되더라고요
-              </p>
-            </blockquote>
-            <blockquote>
-              <cite>1차 참여자</cite>
-              <p>잘받았습니다 우리애기랑 비슷하게 생겨서 너무 귀여워요 :)</p>
-            </blockquote>
+            {[
+              {
+                who: "12135 님",
+                text: "그때 사진을 더 찍어둘걸, 조금 더 많이 남겨둘걸 생각하게 되더라고요",
+              },
+              {
+                who: "1차 참여자",
+                text: "잘받았습니다 우리애기랑 비슷하게 생겨서 너무 귀여워요 :)",
+              },
+            ].map(({ who, text }) => (
+              <blockquote key={who}>
+                <header>
+                  <i className="gs-voice-avatar" aria-hidden="true" />
+                  <cite>{who}</cite>
+                  <span className="gs-voice-stars" aria-label="별점 5점">
+                    ★★★★★
+                  </span>
+                </header>
+                <p>{text}</p>
+              </blockquote>
+            ))}
           </div>
 
           <p className="gs-why-now-close">
