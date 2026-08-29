@@ -664,11 +664,21 @@ export default function GoodsSurvey() {
               코멘트 #20: 마감되었다 글자 밑에 도장 이미지로 팍. */}
           <div className="gs-closed-card">
             <span>1차 체험단</span>
-            <strong>
-              {CAMPAIGN.capacity}명 모집 완료
-              <i aria-hidden="true">CLOSED</i>
-            </strong>
+            <strong>{CAMPAIGN.capacity}명 모집 완료</strong>
             <small>오픈 하루 만에 신청이 마감됐어요</small>
+            {/* 디자인이 카드를 가로지르게 키워 둔 실물 도장이다(5423:1520).
+                문구는 위 세 줄이 이미 말하므로 그림에는 대체 텍스트를 두지 않는다. */}
+            {/* lazy 로 두면 절대배치 + overflow:hidden 조합에서 브라우저가
+                가시 판정을 못 해 끝내 안 불러온다. 실제로 화면에서 도장이
+                통째로 사라졌다. 작은 장식이라 바로 받는다. */}
+            <img
+              className="gs-closed-stamp"
+              src={`${ASSET_BASE}/closed-stamp.png`}
+              alt=""
+              width="318"
+              height="199"
+              decoding="async"
+            />
           </div>
 
           <div className="gs-stats">
@@ -848,23 +858,31 @@ export default function GoodsSurvey() {
           <p className="gs-wait-hand" aria-hidden="true">
             ✋
           </p>
-          <span className="gs-wait-badge">잠깐!</span>
-          <h2>
-            그런데 왜 {won(PRICE.member)}에
-            <br />
-            구매할 수 있나요?
-          </h2>
-          <p className="gs-copy">
-            포에버는 반려동물과 함께한 오늘을 기록하고, 필요한 순간의 돌봄으로
-            이어지는 서비스를 만들고 있습니다. 실제 반려인의 경험을 더 정확히
-            듣기 위해 설문에 참여해주신 분께 2차 제작비 일부를 지원합니다.
-          </p>
+
+          {/* 잠깐!·제목·이유는 한 장의 카드다(5423:1750). 배경 위에 흩어 두면
+              구매 갈림길을 끊고 들어오는 힘이 없다. */}
+          <div className="gs-wait-card">
+            <span>잠깐!</span>
+            <h2>
+              {/* 파는 값이 아니라 깎아 주는 액수를 묻는다. 그래야 아래 답이
+                  '설문에 참여해주셔서'로 이어진다(8/30 디자인 수정). */}
+              그런데 왜 {won(GOODS_SURVEY_DISCOUNT)}이나 저렴하게
+              <br />
+              구매할 수 있나요?
+            </h2>
+            <p>
+              포에버는 반려동물과 함께한 오늘을 기록하고, 필요한 순간의 돌봄으로
+              이어지는 서비스를 만들고 있습니다. 실제 반려인의 경험을 더 정확히
+              듣기 위해 설문에 참여해주신 분께 2차 제작비 일부를 지원합니다.
+            </p>
+          </div>
 
           {/* 코멘트 #10: 가격 깎이는 걸 더 직관적으로 크게. */}
           <div className="gs-wait-drop">
             <span>{CAMPAIGN.duration} 설문 참여</span>
             <strong>
-              <s>{won(PRICE.presale)}</s> → <em>{won(PRICE.member)}</em>
+              {/* 화살표는 깎인 쪽에 붙는다. 디자인에서 주황 글자 한 덩어리다. */}
+              <s>{won(PRICE.presale)}</s> <em>→ {won(PRICE.member)}</em>
             </strong>
             <small>구매 의무 없음 · 광고성 정보 수신 선택</small>
           </div>

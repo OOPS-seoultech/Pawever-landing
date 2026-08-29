@@ -85,9 +85,17 @@ describe("2차 랜딩은 사는 이야기를 먼저 한다", () => {
   it("설문으로 얼마가 깎이는지 두 금액을 나란히 보여준다", () => {
     // 코멘트 #10: 29,900원에서 23,900원 가격 깎이는 거 더 직관적으로 크게.
     expect(landing).toContain("gs-wait-drop");
-    expect(landing).toContain("그런데 왜");
     expect(landing).toContain("구매할 수 있나요?");
     expect(landing).toContain("구매 의무 없음 · 광고성 정보 수신 선택");
+  });
+
+  it("제목이 값이 아니라 깎이는 액수를 말한다", () => {
+    // 8/30 디자인 수정. "그런데 왜 23,900원에 구매할 수 있나요?" 였다.
+    // 파는 값이 아니라 깎아 주는 액수를 물어야 다음 문단의 답(설문 참여)과 이어진다.
+    expect(landing).toContain(
+      "그런데 왜 {won(GOODS_SURVEY_DISCOUNT)}이나 저렴하게"
+    );
+    expect(landing).not.toContain("그런데 왜 {won(PRICE.member)}에");
   });
 
   it("노란 손 표시로 설문 설득 구간을 끊어 준다", () => {
@@ -95,6 +103,15 @@ describe("2차 랜딩은 사는 이야기를 먼저 한다", () => {
     expect(landing).toContain("gs-wait");
     expect(landing).toContain("잠깐!");
     expect(landing).toContain("✋");
+  });
+
+  it("잠깐! 과 제목과 이유를 한 장의 카드에 담는다", () => {
+    // 디자인은 이 셋을 주황 테두리 흰 카드로 묶는다(5423:1750). 처음 옮길 때
+    // 카드를 빼먹어 세 덩어리가 배경 위에 흩어져 있었다.
+    expect(landing).toContain("gs-wait-card");
+    expect(landing).toMatch(
+      /gs-wait-card[\s\S]{0,120}?잠깐![\s\S]{0,400}?제작비 일부를 지원합니다/
+    );
   });
 
   it("남은 자리를 유료 판매 문구로 말한다", () => {
@@ -130,6 +147,13 @@ describe("아직 오지 않은 것은 오지 않았다고 그린다", () => {
       "크림색 포메라니안과 같은 모습을 본뜬 작은 전신 피규어"
     );
     expect(landing).toContain("모니터의 3D 모델과 출력기");
+  });
+
+  it("1차 마감 도장은 실제 그래픽을 쓴다", () => {
+    // 디자인의 Image (CLOSED) 는 자리표시가 아니라 실물 도장 이미지다
+    // (8/30 수정에서 더 크게, 카드를 가로지르도록 바뀌었다).
+    expect(landing).toContain("closed-stamp.png");
+    expect(landing).toContain('alt=""');
   });
 
   it("후기가 확보되지 않았음을 후기 옆에 밝힌다", () => {

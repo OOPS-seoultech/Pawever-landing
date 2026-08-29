@@ -380,6 +380,8 @@
   border: 1px solid var(--gs-line);
   border-radius: 16px;
   background: #ffffff;
+  /* 도장이 들어갈 자리다. 디자인의 카드 높이(5423:1514, 176px)를 지킨다. */
+  min-height: 176px;
 }
 
 .gs-closed-card > span {
@@ -391,25 +393,24 @@
 }
 
 .gs-closed-card > strong {
-  display: flex;
-  align-items: center;
-  gap: 10px;
   font-size: 20px;
   font-weight: 950;
   letter-spacing: -0.04em;
 }
 
-/* 코멘트 #20: 마감되었다 글자 밑에 도장 이미지로 팍. */
-.gs-closed-card > strong i {
-  padding: 3px 8px;
-  border: 2px solid #d0342c;
-  border-radius: 4px;
-  color: #d0342c;
-  font-size: 11px;
-  font-style: normal;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  transform: rotate(-8deg);
+/* 코멘트 #20: 마감되었다 글자 밑에 도장 이미지로 팍.
+   디자인(5423:1520)이 카드 폭보다 크게, 글자를 가로지르도록 얹어 둔다. */
+.gs-closed-stamp {
+  position: absolute;
+  top: 8px;
+  left: 36px;
+  /* 디자인이 정한 크기를 두 축 모두 적는다. height: auto 로 두면 늦게 불러오는
+     동안 높이가 0이라 자리가 잡히지 않는다. */
+  width: 318px;
+  height: 199px;
+  max-width: none;
+  object-fit: contain;
+  pointer-events: none;
 }
 
 .gs-closed-card > small {
@@ -1085,75 +1086,87 @@
 }
 
 .gs-wait-hand {
-  margin: 0;
-  font-size: 56px;
-  line-height: 1;
+  margin: 0 0 20px;
+  font-size: 96px;
+  line-height: 1.1;
 }
 
-.gs-wait-badge {
-  display: inline-block;
-  margin: 10px 0 12px;
-  padding: 5px 14px;
-  border-radius: 999px;
-  background: var(--gs-orange);
-  color: #ffffff;
-  font-size: 12px;
-  font-weight: 950;
+/* 잠깐!·제목·이유를 묶는 카드(5423:1750). */
+.gs-wait-card {
+  margin-bottom: 20px;
+  padding: 28px 24px;
+  border: 2px solid #ff9636;
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow: 0 12px 15px rgba(242, 125, 26, 0.1);
 }
 
-.gs-wait h2 {
-  font-size: 22px;
+.gs-wait-card > span {
+  display: block;
+  color: #ed7d1a;
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 24px;
 }
 
-.gs-wait .gs-copy {
+.gs-wait-card h2 {
+  margin: 14px 0 0;
+  color: #292725;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: -0.04em;
+}
+
+.gs-wait-card > p {
+  margin: 20px 0 0;
+  color: #5f5a55;
+  font-size: 15px;
+  line-height: 24px;
   text-align: left;
 }
 
 /* 코멘트 #10: 29,900원에서 23,900원으로 깎이는 걸 크고 직관적으로. */
 .gs-wait-drop {
-  margin-bottom: 16px;
-  padding: 18px;
-  border-radius: 16px;
+  margin-bottom: 20px;
+  padding: 22px;
+  border: 1px solid #ffd4aa;
+  border-radius: 20px;
   background: #ffffff;
+  text-align: left;
 }
 
 .gs-wait-drop > span {
   display: block;
-  margin-bottom: 6px;
-  color: var(--gs-muted);
-  font-size: 11px;
-  font-weight: 800;
+  color: #796857;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
 }
 
 .gs-wait-drop > strong {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  font-size: 20px;
-  font-weight: 900;
+  display: block;
+  margin: 7px 0;
+  font-size: 25px;
+  font-weight: 700;
+  line-height: 32px;
+  letter-spacing: -0.035em;
 }
 
 .gs-wait-drop s {
-  color: var(--gs-muted);
-  font-size: 16px;
-  font-weight: 700;
+  color: #5e5e5e;
 }
 
 .gs-wait-drop em {
-  color: var(--gs-orange-dark);
-  font-size: 30px;
+  color: #ed7d1a;
   font-style: normal;
-  font-weight: 950;
-  letter-spacing: -0.04em;
 }
 
 .gs-wait-drop > small {
   display: block;
-  margin-top: 8px;
-  color: var(--gs-muted);
-  font-size: 10px;
+  color: #89827b;
+  font-size: 12px;
+  line-height: 18px;
 }
 
 /* ── CTA 안내 모달 ─────────────────────────────────────────────
