@@ -1,11 +1,20 @@
+/* 색은 전부 디자인(Figma Body 5423:1415)에서 뽑은 값이다.
+   1차 랜딩 때 쓰던 값이 그대로 남아 있어서, 이 변수를 타는 키커·본문·강조가
+   한꺼번에 어긋나 있었다. 손으로 고른 자리만 맞추면 또 빠지므로 뿌리에서 맞춘다.
+
+   회색이 둘인 것에 이유가 있다. 본문은 진하고(#5f5a55) 각주·라벨은 연하다(#89827b).
+   하나로 합치면 어느 쪽이든 한쪽이 틀린다. */
 .goods-survey-page {
-  --gs-ink: #25211f;
-  --gs-muted: #7b746e;
-  --gs-line: #eeeae6;
-  --gs-orange: #ff7a19;
-  --gs-orange-dark: #eb6410;
-  --gs-orange-soft: #fff2e7;
-  --gs-cream: #fff9f3;
+  --gs-ink: #292725;
+  --gs-body: #5f5a55;
+  --gs-muted: #89827b;
+  --gs-line: #eee7df;
+  /* 글자 강조와 버튼이 다른 주황이다. 버튼만 더 밝다. */
+  --gs-orange: #ed7d1a;
+  --gs-orange-btn: #ff9636;
+  --gs-orange-dark: #a65d21;
+  --gs-orange-soft: #fff0df;
+  --gs-cream: #fffaf4;
   min-height: 100vh;
   display: flex;
   justify-content: center;
@@ -62,13 +71,14 @@
   height: 16px;
 }
 
+/* 1차 랜딩 때 회색 배지였다. 디자인은 주황이다. */
 .gs-topbar > span {
-  padding: 6px 10px;
+  padding: 7px 12px;
   border-radius: 999px;
-  background: #f4f2f0;
-  color: #8a837e;
-  font-size: 9px;
-  font-weight: 750;
+  background: var(--gs-orange-soft);
+  color: var(--gs-orange);
+  font-size: 11px;
+  font-weight: 800;
 }
 
 /* 디자인은 모든 구간이 px-20 py-80 이다. 52로 좁혀 두는 바람에 구간마다
@@ -108,16 +118,18 @@
   display: block;
   margin-bottom: 15px;
   color: var(--gs-orange);
-  font-size: 10.5px;
-  font-weight: 850;
-  letter-spacing: 0.01em;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
 }
 
+/* 본문은 15px 이다. 13px 로 줄여 놓아 전 구간이 작고 답답했다. */
 .gs-lead,
 .gs-copy {
   margin-bottom: 22px;
-  color: var(--gs-muted);
-  font-size: 13px;
+  color: var(--gs-body);
+  font-size: 15px;
+  line-height: 24px;
 }
 
 .goods-survey-page img {
@@ -142,7 +154,7 @@
   padding: 13px 16px;
   border: 0;
   border-radius: 11px;
-  background: linear-gradient(135deg, #ff922f, var(--gs-orange));
+  background: linear-gradient(171.5deg, #ffa04a, var(--gs-orange-btn));
   color: #ffffff;
   font-size: 14px;
   font-weight: 900;
@@ -268,15 +280,16 @@
 .gs-product-card > span {
   display: block;
   margin-bottom: 4px;
-  color: var(--gs-muted);
+  color: var(--gs-orange);
   font-size: 12px;
   font-weight: 800;
 }
 
 .gs-product-card > strong {
   display: block;
-  font-size: 30px;
-  font-weight: 950;
+  color: var(--gs-ink);
+  font-size: 36px;
+  font-weight: 800;
   letter-spacing: -0.04em;
 }
 
@@ -284,7 +297,7 @@
   display: block;
   margin-top: 8px;
   color: var(--gs-muted);
-  font-size: 10.5px;
+  font-size: 12px;
 }
 
 /* 설문은 '더 싼 길'로만 안내한다. 구매 버튼보다 눈에 덜 띄어야 위계가 산다. */
@@ -298,9 +311,8 @@
 
 .gs-hero-sub > span {
   display: block;
-  color: var(--gs-orange-dark);
-  font-size: 10.5px;
-  font-weight: 850;
+  color: #866a54;
+  font-size: 12px;
 }
 
 /* 구매 버튼에서 아래 카드로 눈을 내려 준다. */
@@ -324,8 +336,8 @@
 }
 
 .gs-hero-sub > small {
-  color: var(--gs-muted);
-  font-size: 10px;
+  color: #7d7065;
+  font-size: 12px;
 }
 
 /* 구간 배경은 흰색과 #fffaf4 가 번갈아 간다. 디자인이 그 리듬으로 구간을
@@ -597,7 +609,7 @@
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #ff9b45, var(--gs-orange));
+  background: linear-gradient(90deg, #ffa04a, var(--gs-orange-btn));
 }
 
 .gs-remaining-card > p {
@@ -693,9 +705,11 @@
   font-weight: 850;
 }
 
-.gs-voice header span {
+/* .gs-voice-stars 보다 명시도가 높아 별 색을 덮고 있었다.
+   작성자 줄에만 걸리도록 좁힌다. */
+.gs-voice header > div > span {
   color: var(--gs-muted);
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .gs-voice-stars {
@@ -929,7 +943,7 @@
   padding: 10px 14px;
   border: 0;
   border-radius: 11px;
-  background: linear-gradient(135deg, #ff922f, var(--gs-orange));
+  background: linear-gradient(171.5deg, #ffa04a, var(--gs-orange-btn));
   color: #ffffff;
   font-size: 13px;
   font-weight: 900;
