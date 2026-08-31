@@ -78,3 +78,59 @@ test.describe("굿즈에서 웹사이트로 나가는 길", () => {
     await expect(page).toHaveURL(/\/goods-survey$/);
   });
 });
+
+/**
+ * 굿즈가 닫혀 있을 때 홈의 신청 버튼.
+ *
+ * 랜딩은 굿즈 스위치를 보고 구매 버튼을 지운다. 홈은 보지 않아서, 닫아 둔
+ * 동안에도 "굿즈 얼리버드 신청하기"가 주문 화면까지 사람을 들여보냈다.
+ * 서버가 접수를 거절하므로 결제까지 가지는 않지만, 사진·주소·연락처를
+ * 다 넣은 뒤에 막히는 막다른 길이었다.
+ *
+ * 근거: [카톡 8/24 14:03 단톡, 대표] 요청 3번은 세 갈래를 열어 두라는 것이지
+ *       팔 수 없을 때도 구매로 보내라는 것이 아니다.
+ * 근거: [서버] V6__split_goods_survey_gates.sql — 굿즈 스위치는 "지금 팔 수
+ *       있는가"를 뜻한다. 화면 세 곳(랜딩·하단 바·홈)이 같은 값을 봐야 한다.
+ */
+test.describe("굿즈가 닫혀 있을 때 홈 진입", () => {
+  test.beforeEach(async ({ page }) => {
+    await mockCampaign(page, { goodsOpen: false, surveyOpen: true });
+    await mockDraft(page);
+    await page.goto("/");
+  });
+
+  test("신청 버튼 둘 다 주문 화면 대신 랜딩으로 보낸다", async ({ page }) => {
+    // 랜딩은 닫힌 상태를 설명할 줄 안다("2차 오픈 시 신청할 수 있어요").
+    // 주문 화면은 그 말을 할 자리가 없다.
+    const cta = page.getByRole("link", { name: "굿즈 얼리버드 신청하기" });
+    await expect(cta).toHaveCount(2);
+
+    for (const index of [0, 1]) {
+      await page.goto("/");
+      await cta.nth(index).click();
+      await expect(page).toHaveURL(/\/goods-survey$/);
+    }
+  });
+
+  test("설문 갈래는 닫히지 않는다", async ({ page }) => {
+    // 굿즈가 닫혀도 설문은 따로 열려 있다. 같이 막으면 그때 할 수 있는
+    // 유일한 일까지 사라진다.
+    await page.getByRole("link", { name: "15분 설문으로 의견 남기기" }).click();
+    await expect(page).toHaveURL(/\/goods-survey\/survey$/);
+  });
+
+  test("캠페인을 못 읽으면 팔지 않는 쪽으로 넘어진다", async ({ page }) => {
+    // 열려 있는데 랜딩으로 보내는 것은 한 번 더 누르면 되는 일이고,
+    // 닫혀 있는데 주문으로 보내는 것은 개인정보를 받아 놓고 거절하는 일이다.
+    await page.unrouteAll();
+    await page.route("**/api/public/goods-survey/campaign", route =>
+      route.abort("failed")
+    );
+    await page.goto("/");
+    await page
+      .getByRole("link", { name: "굿즈 얼리버드 신청하기" })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/\/goods-survey$/);
+  });
+});

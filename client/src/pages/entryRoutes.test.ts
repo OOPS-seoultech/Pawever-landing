@@ -64,8 +64,26 @@ describe("굿즈 랜딩·설문에서 웹사이트로 나가는 길", () => {
 describe("웹사이트에서 굿즈로 들어가는 세 갈래", () => {
   it("바로 굿즈 구매 — 신청 버튼이 설문을 건너뛴다", () => {
     // 같은 이름의 신청 버튼이 세 가지 방법 줄과 아래 고정 바 두 곳에 있다.
-    // 한쪽만 고치면 같은 글자가 다른 곳으로 간다.
-    expect(home.match(/goods-survey\/survey\?direct=1/g) ?? []).toHaveLength(2);
+    // 한쪽만 고치면 같은 글자가 다른 곳으로 간다. 주소는 상수 한 곳에 두고
+    // 두 자리 모두 buyHref 를 거치게 해서 둘이 갈릴 수 없게 만들었다.
+    expect(home).toContain(
+      'const DIRECT_PURCHASE = "/goods-survey/survey?direct=1";'
+    );
+    expect(home.match(/buyHref\(/g) ?? []).toHaveLength(2);
+  });
+
+  it("굿즈가 닫혀 있으면 신청 버튼이 랜딩으로 비킨다", () => {
+    // 랜딩은 굿즈 스위치를 보고 구매 버튼을 지우는데 홈은 보지 않았다. 닫아 둔
+    // 동안에도 신청 버튼이 주문 화면까지 사람을 들여보냈고, 사진·주소·연락처를
+    // 다 넣은 뒤에 서버가 거절했다.
+    //
+    // 실제로 눌러서 어디로 가는지는 e2e/entry-routes.spec.ts 가 본다. 여기서는
+    // 판정 기준이 남아 있는지만 붙든다 — 기본값이 닫힘이어야 하고(못 읽었을 때
+    // 파는 쪽으로 넘어지면 안 된다), 조건이 goodsOpen 이어야 한다.
+    expect(home).toContain("useState(false)");
+    expect(home).toContain(
+      "href === DIRECT_PURCHASE && !goodsOpen ? GOODS_LANDING : href"
+    );
   });
 
   it("굿즈 랜딩 — 보기 링크는 랜딩에 남는다", () => {
