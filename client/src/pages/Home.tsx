@@ -392,9 +392,13 @@ export default function Home() {
 
       <SiteFooter />
 
-      {/* 전환 바 — 화면을 가리지 않도록 본문 아래 여백을 함께 둔다 */}
-      <div className="h-20" aria-hidden="true" />
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-4 py-3 shadow-lg backdrop-blur">
+      {/* 전환 바 — 흐름 안에 두고 sticky 로 띄운다.
+          fixed 로 띄우고 아래에 h-20 여백을 대신 두고 있었는데, 모바일에서는
+          버튼 두 개가 두 줄로 접히면서 바가 151px 이 된다. 여백 80px 로는 71px
+          이 모자라 푸터의 이용약관·개인정보처리방침 링크가 덮여 눌리지 않았다.
+          sticky 는 자기 높이만큼 자리를 직접 차지하므로 글자가 바뀌어도 어긋나지
+          않는다. */}
+      <div className="sticky bottom-0 z-40 border-t border-border bg-background/95 px-4 py-3 shadow-lg backdrop-blur">
         <div className="mx-auto flex w-full max-w-[1024px] flex-wrap items-center justify-center gap-3">
           {/* 위 굿즈 줄의 신청 버튼과 글자가 같다. 같은 곳으로 보낸다. */}
           <Link
