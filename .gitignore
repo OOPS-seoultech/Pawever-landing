@@ -107,3 +107,12 @@ temp/
 
 # Webdev artifacts (checkpoint zips, migrations, etc.)
 .webdev/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/.playwright/
+
+# Vite 가 설정을 다시 읽을 때 남기는 임시 파일
+vite.config.ts.timestamp-*.mjs

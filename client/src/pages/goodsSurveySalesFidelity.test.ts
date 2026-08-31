@@ -123,7 +123,7 @@ describe("2차 랜딩은 사는 이야기를 먼저 한다", () => {
 
   it("구매 버튼에서 설문 안내로 내려가는 화살표를 둔다", () => {
     // 디자인 5423:1457. 구매 버튼과 '더 싼 길' 카드를 잇는 표시다.
-    expect(landing).toContain("down-arrow.png");
+    expect(landing).toContain("down-arrow.webp");
   });
 
   it("설문 할인가를 주황 밑줄로 눈에 띄게 적는다", () => {
@@ -165,9 +165,9 @@ describe("아직 오지 않은 것은 오지 않았다고 그린다", () => {
     const ready = landing.match(/ready: true/g) ?? [];
     expect(ready).toHaveLength(9);
     [
-      "sales-hero-figure.png",
-      "sales-why-now.png",
-      "sales-step-trait.png",
+      "sales-hero-figure.webp",
+      "sales-why-now.webp",
+      "sales-step-trait.webp",
     ].forEach(asset => expect(landing).toContain(asset));
   });
 
@@ -189,7 +189,7 @@ describe("아직 오지 않은 것은 오지 않았다고 그린다", () => {
   it("1차 마감 도장은 실제 그래픽을 쓴다", () => {
     // 디자인의 Image (CLOSED) 는 자리표시가 아니라 실물 도장 이미지다
     // (8/30 수정에서 더 크게, 카드를 가로지르도록 바뀌었다).
-    expect(landing).toContain("closed-stamp.png");
+    expect(landing).toContain("closed-stamp.webp");
     expect(landing).toContain('alt=""');
   });
 

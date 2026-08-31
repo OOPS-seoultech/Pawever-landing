@@ -1,5 +1,7 @@
 import SiteFooter from "@/components/SiteFooter";
 import SiteHeader from "@/components/SiteHeader";
+import { getSurveyCampaign } from "@/lib/goodsSurveyApi";
+import { useEffect, useState } from "react";
 import { Link } from "wouter";
 
 /**
@@ -36,6 +38,11 @@ const HERO_BODY = "#F6F6F6";
 /** 공통 버튼 모양. 피그마는 일곱 버튼이 모두 같은 높이·모서리다. */
 const BUTTON =
   "inline-flex h-[50px] items-center justify-center rounded-[12px] px-6 text-base font-semibold transition-colors";
+
+/** 설문을 건너뛰고 곧장 주문으로 — 대표님 요청 3번의 첫 갈래다. */
+const DIRECT_PURCHASE = "/goods-survey/survey?direct=1";
+/** 굿즈를 팔지 않는 동안 신청 버튼이 대신 가는 곳. */
+const GOODS_LANDING = "/goods-survey";
 
 const CARE_STEPS = [
   {
@@ -111,7 +118,7 @@ const ENTRY_POINTS = [
     // 설문을 건너뛰고 곧장 신청으로 간다 — 대표님 요청 3번의 첫 갈래다.
     // 이 길은 29,900원이고 설문을 거치는 길은 23,900원이다. 바로 아래
     // '보기 →' 가 랜딩으로 가는 길을 따로 열어 둔다.
-    href: "/goods-survey/survey?direct=1",
+    href: DIRECT_PURCHASE,
     variant: "primary" as const,
     highlighted: true,
   },
@@ -148,6 +155,44 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 export default function Home() {
+  /**
+   * 굿즈를 지금 팔 수 있는지.
+   *
+   * 랜딩은 이 값을 보고 구매 버튼을 지우는데 홈은 보지 않았다. 그래서 굿즈를
+   * 닫아 둔 동안에도 여기 신청 버튼이 주문 화면까지 사람을 들여보냈다. 서버가
+   * 접수를 거절하니 결제까지 가지는 않지만, 사진·주소·연락처를 다 넣은 뒤에
+   * 막히는 막다른 길이었다.
+   *
+   * 기본값은 랜딩과 같이 닫힘이다. 열려 있는데 랜딩으로 보내는 것은 한 번 더
+   * 누르면 되는 일이고, 닫혀 있는데 주문으로 보내는 것은 개인정보를 받아 놓고
+   * 거절하는 일이다. 틀렸을 때 덜 나쁜 쪽으로 넘어진다.
+   */
+  const [goodsOpen, setGoodsOpen] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    void getSurveyCampaign()
+      .then(campaign => {
+        if (!cancelled) setGoodsOpen(campaign.goodsOpen);
+      })
+      .catch(() => {
+        // 못 읽으면 닫힌 채로 둔다. 위 기본값 그대로다.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  /**
+   * 신청 버튼이 갈 곳.
+   *
+   * 닫혀 있으면 랜딩으로 보낸다. 랜딩은 닫힌 상태를 설명할 줄 알고
+   * ("2차 오픈 시 신청할 수 있어요") 설문으로 가는 길도 함께 열어 둔다.
+   * 주문 화면에는 그 말을 할 자리가 없다.
+   */
+  const buyHref = (href: string) =>
+    href === DIRECT_PURCHASE && !goodsOpen ? GOODS_LANDING : href;
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
@@ -308,7 +353,7 @@ export default function Home() {
                     </div>
 
                     <Link
-                      href={entry.href}
+                      href={buyHref(entry.href)}
                       className={[
                         BUTTON,
                         "w-[195px] justify-self-start md:justify-self-end",
@@ -392,13 +437,17 @@ export default function Home() {
 
       <SiteFooter />
 
-      {/* 전환 바 — 화면을 가리지 않도록 본문 아래 여백을 함께 둔다 */}
-      <div className="h-20" aria-hidden="true" />
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-4 py-3 shadow-lg backdrop-blur">
+      {/* 전환 바 — 흐름 안에 두고 sticky 로 띄운다.
+          fixed 로 띄우고 아래에 h-20 여백을 대신 두고 있었는데, 모바일에서는
+          버튼 두 개가 두 줄로 접히면서 바가 151px 이 된다. 여백 80px 로는 71px
+          이 모자라 푸터의 이용약관·개인정보처리방침 링크가 덮여 눌리지 않았다.
+          sticky 는 자기 높이만큼 자리를 직접 차지하므로 글자가 바뀌어도 어긋나지
+          않는다. */}
+      <div className="sticky bottom-0 z-40 border-t border-border bg-background/95 px-4 py-3 shadow-lg backdrop-blur">
         <div className="mx-auto flex w-full max-w-[1024px] flex-wrap items-center justify-center gap-3">
           {/* 위 굿즈 줄의 신청 버튼과 글자가 같다. 같은 곳으로 보낸다. */}
           <Link
-            href="/goods-survey/survey?direct=1"
+            href={buyHref(DIRECT_PURCHASE)}
             className="rounded-[10px] bg-primary px-6 py-2.5 font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
           >
             굿즈 얼리버드 신청하기
