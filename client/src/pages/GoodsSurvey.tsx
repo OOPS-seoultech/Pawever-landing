@@ -70,23 +70,36 @@ type FigureSlot = {
   ready: boolean;
 };
 
+/**
+ * 사진은 WebP 다.
+ *
+ * 피그마에서 2배로 내려받은 것이 무손실 PNG(RGBA, 11~14 bpp)였다. 사진을
+ * 무손실로 담으면 이렇게 된다 — 랜딩 한 장이 3.85MB 였고, 그 95%가 이미지였다.
+ * 같은 크기·같은 그림을 WebP 로 다시 담아 0.24MB 가 됐다(-94%). 연속 톤 사진은
+ * q82~q88(PSNR 38~41dB, 육안 구분 불가), 경계가 날카로운 도장·화살표·아바타는
+ * 무손실이라 픽셀이 그대로다. 도장을 q82 로 담으면 17dB 로 뭉개진다.
+ *
+ * 아직 사진이 없는 세 칸은 .png 이름이 남아 있다. 파일이 없으니
+ * 받아 올 것도 없고, 화면에는 준비 중 무늬가 대신 들어간다. 사진이 오면 그때
+ * WebP 로 만들어 넣는다.
+ */
 const FIGURES: Record<string, FigureSlot> = {
   hero: {
-    src: "sales-hero-figure.png",
+    src: "sales-hero-figure.webp",
     alt: "크림색 포메라니안과 같은 모습을 본뜬 작은 전신 피규어",
     w: 376,
     h: 286,
     ready: true,
   },
   whyNow: {
-    src: "sales-why-now.png",
+    src: "sales-why-now.webp",
     alt: "햇살이 드는 창가에서 편안하게 쉬는 크림색 포메라니안",
     w: 376,
     h: 286,
     ready: true,
   },
   figureCompare: {
-    src: "sales-figure-compare.png",
+    src: "sales-figure-compare.webp",
     alt: "반려견 사진과 같은 특징을 살려 제작한 맞춤 피규어 비교",
     w: 376,
     h: 286,
@@ -100,28 +113,28 @@ const FIGURES: Record<string, FigureSlot> = {
     ready: false,
   },
   stepFace: {
-    src: "sales-step-face.png",
+    src: "sales-step-face.webp",
     alt: "반려견 얼굴 사진",
     w: 105,
     h: 158,
     ready: true,
   },
   stepBody: {
-    src: "sales-step-body.png",
+    src: "sales-step-body.webp",
     alt: "반려견 전신 사진",
     w: 105,
     h: 158,
     ready: true,
   },
   stepCoat: {
-    src: "sales-step-coat.png",
+    src: "sales-step-coat.webp",
     alt: "반려견 털색과 무늬 사진",
     w: 105,
     h: 158,
     ready: true,
   },
   stepTrait: {
-    src: "sales-step-trait.png",
+    src: "sales-step-trait.webp",
     alt: "반려견 사진과 피규어의 특징을 대조하는 과정",
     w: 330,
     h: 244,
@@ -142,14 +155,14 @@ const FIGURES: Record<string, FigureSlot> = {
     ready: false,
   },
   limited: {
-    src: "sales-limited-shelf.png",
+    src: "sales-limited-shelf.webp",
     alt: "여러 종류의 완성 반려견 피규어가 진열된 모습",
     w: 376,
     h: 252,
     ready: true,
   },
   final: {
-    src: "sales-final-desk.png",
+    src: "sales-final-desk.webp",
     alt: "반려견 사진과 함께 책상 위에 놓인 작은 맞춤 피규어",
     w: 376,
     h: 270,
@@ -608,7 +621,7 @@ export default function GoodsSurvey() {
           {/* 구매 버튼에서 아래 '더 싼 길' 카드로 눈을 내려 준다(5423:1457). */}
           <img
             className="gs-hero-arrow"
-            src={`${ASSET_BASE}/down-arrow.png`}
+            src={`${ASSET_BASE}/down-arrow.webp`}
             alt=""
             width="197"
             height="84"
@@ -646,13 +659,13 @@ export default function GoodsSurvey() {
           <div className="gs-quotes">
             {[
               {
-                avatar: "voice-avatar-1.png",
+                avatar: "voice-avatar-1.webp",
                 who: "12135 님",
                 stars: 5,
                 text: "그때 사진을 더 찍어둘걸, 조금 더 많이 남겨둘걸 생각하게 되더라고요",
               },
               {
-                avatar: "voice-avatar-2.png",
+                avatar: "voice-avatar-2.webp",
                 // 디자인은 두 장 모두 같은 이름, 별점은 4점이다. 받은 그대로 둔다.
                 who: "12135 님",
                 stars: 4,
@@ -741,7 +754,7 @@ export default function GoodsSurvey() {
                 통째로 사라졌다. 작은 장식이라 바로 받는다. */}
             <img
               className="gs-closed-stamp"
-              src={`${ASSET_BASE}/closed-stamp.png`}
+              src={`${ASSET_BASE}/closed-stamp.webp`}
               alt=""
               width="318"
               height="199"
