@@ -56,6 +56,11 @@ export default defineConfig({
     env: {
       // 외부 분석 태그를 실제로 받아오면 테스트가 네트워크에 묶인다.
       VITE_ANALYTICS_ENABLED: "false",
+      // 디버그를 켜면 보내려던 이벤트가 window.__PAWEVER_ANALYTICS__ 에 쌓인다.
+      // 태그를 붙이지 않고도 "무엇이 나갔을 뻔했는지"를 그대로 볼 수 있다.
+      // 이 배열은 GA4·GTM 에 실릴 값과 같은 것이다 — 개인정보를 걸러 내는
+      // sanitizeAnalyticsProperties 를 지난 뒤에 쌓인다.
+      VITE_ANALYTICS_DEBUG: "true",
       VITE_API_BASE_URL: "",
     },
   },
