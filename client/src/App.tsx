@@ -13,6 +13,7 @@ import Service from "./pages/Service";
 import AppService from "./pages/AppService";
 import Roadmap from "./pages/Roadmap";
 import GoodsSurvey from "./pages/GoodsSurvey";
+import FleaLanding from "./pages/FleaLanding";
 import GoodsSurveyForm from "./pages/GoodsSurveyForm";
 import Unsubscribe from "./pages/Unsubscribe";
 import AdminLogin from "./pages/AdminLogin";
@@ -44,6 +45,8 @@ function Router() {
       <Route path="/contact" component={Contact} />
       <Route path="/goods-survey/survey" component={GoodsSurveyForm} />
       <Route path="/goods-survey" component={GoodsSurvey} />
+      {/* 과기대 대동제 플리마켓 전용. 현장 QR 로만 들어온다. */}
+      <Route path="/flea" component={FleaLanding} />
       {/* 안내 메일의 수신거부 링크가 닿는 자리. */}
       <Route path="/unsubscribe" component={Unsubscribe} />
       {/* 관리자 화면. 더 긴 주소를 먼저 둔다 — /admin 이 앞에 오면 뒤가 안 잡힌다. */}

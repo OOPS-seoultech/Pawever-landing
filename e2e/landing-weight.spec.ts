@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { mockCampaign } from "./fixtures/api";
+import { mockCampaign, mockFleaCampaign } from "./fixtures/api";
 
 /**
  * 판매 랜딩이 얼마나 무거운지 본다.
@@ -23,28 +23,37 @@ import { mockCampaign } from "./fixtures/api";
 const MB = 1024 * 1024;
 
 test.describe("판매 랜딩 무게", () => {
-  test("첫 화면부터 끝까지 받아도 상한 안에 있다", async ({ page }) => {
-    await mockCampaign(page, { goodsOpen: true });
-    await page.goto("/goods-survey");
-    // 아래쪽 사진은 지연 로딩이라 끝까지 내려야 다 받는다.
-    await page.evaluate(() => scrollTo(0, document.body.scrollHeight));
-    await page.waitForTimeout(1500);
+  // 파는 화면이 둘이다. 플리마켓 랜딩은 12,000px 짜리라 상한을 넘기기 더
+  // 쉽고, 넘기면 현장에서 QR 을 찍은 사람이 그림을 기다리게 된다.
+  for (const [name, path] of [
+    ["상시", "/goods-survey"],
+    ["플리마켓", "/flea"],
+  ]) {
+    test(`${name} — 첫 화면부터 끝까지 받아도 상한 안에 있다`, async ({
+      page,
+    }) => {
+      await mockCampaign(page, { goodsOpen: true });
+      await mockFleaCampaign(page);
+      await page.goto(path);
+      await page.evaluate(() => scrollTo(0, document.body.scrollHeight));
+      await page.waitForTimeout(1500);
 
-    const bytes = await page.evaluate(() =>
-      performance
-        .getEntriesByType("resource")
-        .reduce(
-          (sum, entry) =>
-            sum +
-            ((entry as PerformanceResourceTiming).transferSize ||
-              (entry as PerformanceResourceTiming).encodedBodySize ||
-              0),
-          0
-        )
-    );
+      const bytes = await page.evaluate(() =>
+        performance
+          .getEntriesByType("resource")
+          .reduce(
+            (sum, entry) =>
+              sum +
+              ((entry as PerformanceResourceTiming).transferSize ||
+                (entry as PerformanceResourceTiming).encodedBodySize ||
+                0),
+            0
+          )
+      );
 
-    expect(bytes / MB).toBeLessThan(1.0);
-  });
+      expect(bytes / MB, `${path} 가 상한을 넘었다`).toBeLessThan(1.0);
+    });
+  }
 
   test("이미지를 무손실 PNG 로 되돌리지 않았다", async ({ page }) => {
     // 무게만 재면 원인을 못 찾는다. 사진이 다시 PNG 로 들어오는 순간을 잡는다.

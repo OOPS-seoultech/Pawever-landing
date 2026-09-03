@@ -15,6 +15,8 @@ import type { Page } from "@playwright/test";
  */
 export type Campaign = {
   campaignId: string;
+  /** ONLINE 또는 FLEA. 서버가 그 모집에 적힌 값을 그대로 준다. */
+  channel: string;
   capacity: number;
   allocated: number;
   remaining: number;
@@ -34,8 +36,24 @@ export type Campaign = {
  *
  * 여기서 값을 바꿔 각 상황을 만든다.
  */
+/** 플리마켓 모집. 정원도 값도 상시 판매와 따로 센다. */
+export const FLEA_CAMPAIGN: Campaign = {
+  campaignId: "goods-2026-09-flea",
+  channel: "FLEA",
+  capacity: 70,
+  allocated: 0,
+  remaining: 70,
+  startsAt: "2026-09-01T00:00:00Z",
+  endsAt: "2026-12-31T14:59:59Z",
+  open: true,
+  // 플리마켓은 QR 을 찍고 바로 주문한다. 설문을 거치지 않는다.
+  surveyOpen: false,
+  goodsOpen: true,
+};
+
 export const LIVE_CAMPAIGN: Campaign = {
   campaignId: "goods-2026-09",
+  channel: "ONLINE",
   capacity: 100,
   allocated: 1,
   remaining: 99,
@@ -47,6 +65,7 @@ export const LIVE_CAMPAIGN: Campaign = {
 };
 
 const CAMPAIGN_URL = "**/api/public/goods-survey/campaign";
+const FLEA_CAMPAIGN_URL = "**/api/public/goods-survey/campaign?channel=flea";
 
 /** 캠페인 조회에 원하는 값을 물린다. 랜딩이 주기적으로 다시 부르므로 계속 산다. */
 export const mockCampaign = (page: Page, overrides: Partial<Campaign> = {}) =>
@@ -57,6 +76,27 @@ export const mockCampaign = (page: Page, overrides: Partial<Campaign> = {}) =>
       body: JSON.stringify({
         success: true,
         data: { ...LIVE_CAMPAIGN, ...overrides },
+      }),
+    })
+  );
+
+/**
+ * 플리마켓 모집 조회에 값을 물린다.
+ *
+ * 상시 모집과 주소가 갈리므로 따로 물려야 한다. 하나만 물리면 나머지 하나가
+ * blockUnmockedGoodsApi 에 걸려 500 을 받는다.
+ */
+export const mockFleaCampaign = (
+  page: Page,
+  overrides: Partial<Campaign> = {}
+) =>
+  page.route(FLEA_CAMPAIGN_URL, route =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: { ...FLEA_CAMPAIGN, ...overrides },
       }),
     })
   );
