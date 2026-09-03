@@ -96,6 +96,43 @@ test.describe("설문을 건너뛴 주문", () => {
     ).toBeDisabled();
   });
 
+  test("사진이 한 장뿐이면 신청이 잠긴 채로 있다", async ({ page }) => {
+    // 근거: [카톡 나혜님] "랜딩페이지에서 사진 1개 등록해도 제출 버튼이
+    //       활성화되잖아요. 사진 3개 이상 등록해야 제출 버튼 활성화되도록
+    //       변경해주세요. 즉, 사진 3개 이상만 제출 가능하도록 (3-5개)"
+    // 근거: [피그마 0uW99BqaTJKUVlowzQswli / 8-2 Rending Page]
+    //       06 PROCESS 5472:1607 "사진 3장", FAQ 5472:1830 "얼굴, 전신,
+    //       털색과 무늬가 잘 보이는 사진 3장을 준비해 주세요",
+    //       사진 등록 카드 5492:2347 의 세는 칸이 "0/3".
+    //
+    // 랜딩의 등록 카드는 이미 세 칸을 다 채워야 열린다. 잠기지 않은 것은
+    // 주문 화면이다. 한 장으로 접수되면 만들 수 없는 주문이 결제까지 간다.
+    await page.goto(DIRECT);
+    await fillShipping(page);
+    await consent(page, "개인정보 수집·이용에 동의합니다").check();
+    await consent(page, "결제하는 데 동의합니다").check();
+
+    const submit = page.getByRole("button", { name: /신청 완료하기/ });
+    const upload = page.locator('.gsf-upload input[type="file"]');
+
+    await upload.setInputFiles([photoFile("1.jpg")]);
+    await expect(page.locator(".gsf-file-name")).toHaveCount(1);
+    await expect(submit).toBeDisabled();
+
+    // 두 장도 아직이다. 얼굴·전신·털무늬 세 종이 제작의 최소 구성이다.
+    await upload.setInputFiles([photoFile("1.jpg"), photoFile("2.jpg")]);
+    await expect(page.locator(".gsf-file-name")).toHaveCount(2);
+    await expect(submit).toBeDisabled();
+
+    await upload.setInputFiles([
+      photoFile("1.jpg"),
+      photoFile("2.jpg"),
+      photoFile("3.jpg"),
+    ]);
+    await expect(page.locator(".gsf-file-name")).toHaveCount(3);
+    await expect(submit).toBeEnabled();
+  });
+
   test("랜딩에서 올린 사진 세 장이 주문 화면까지 따라온다", async ({
     page,
   }) => {

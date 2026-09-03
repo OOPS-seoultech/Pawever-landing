@@ -25,6 +25,8 @@ import {
   surveyStepOf,
 } from "@/lib/analytics/surveyStep";
 import {
+  GOODS_PHOTO_MAX_COUNT,
+  GOODS_PHOTO_MIN_COUNT,
   GOODS_SURVEY_CAPACITY,
   GOODS_SURVEY_VERSION,
   GOODS_UNSELECTED,
@@ -1356,8 +1358,12 @@ export default function GoodsSurveyForm() {
     production.phone.trim().length > 0 &&
     !PHONE_PATTERN.test(production.phone.trim());
 
+  const photoCountReady =
+    photos.length >= GOODS_PHOTO_MIN_COUNT &&
+    photos.length <= GOODS_PHOTO_MAX_COUNT;
+
   const productionReady =
-    photos.length > 0 &&
+    photoCountReady &&
     Boolean(
       production.goods &&
         production.petName.trim() &&
@@ -2041,7 +2047,10 @@ export default function GoodsSurveyForm() {
                 <label className="gsf-upload">
                   <Upload aria-hidden="true" />
                   <strong>사진 선택하기</strong>
-                  <span>JPG·PNG·WEBP, 장당 10MB 이하·최대 5장</span>
+                  <span>
+                    JPG·PNG·WEBP, 장당 10MB 이하·{GOODS_PHOTO_MIN_COUNT}~
+                    {GOODS_PHOTO_MAX_COUNT}장
+                  </span>
                   <input
                     ref={photoInputRef}
                     type="file"
@@ -2050,7 +2059,7 @@ export default function GoodsSurveyForm() {
                     onChange={event => {
                       const nextFiles = Array.from(
                         event.target.files ?? []
-                      ).slice(0, 5);
+                      ).slice(0, GOODS_PHOTO_MAX_COUNT);
                       const invalidFile = nextFiles.find(
                         file =>
                           !["image/jpeg", "image/png", "image/webp"].includes(
@@ -2094,6 +2103,12 @@ export default function GoodsSurveyForm() {
                       </li>
                     ))}
                   </ul>
+                )}
+                {photos.length > 0 && !photoCountReady && (
+                  <p className="gsf-field-error" role="alert">
+                    사진 {GOODS_PHOTO_MIN_COUNT}장부터 신청할 수 있어요.{" "}
+                    {GOODS_PHOTO_MIN_COUNT - photos.length}장 더 골라주세요.
+                  </p>
                 )}
                 <p className="gsf-field-help">
                   밝은 곳에서 얼굴 정면과 귀가 가리지 않은 사진이 좋아요. 전신
