@@ -47,6 +47,42 @@ test.describe("플리마켓 랜딩", () => {
     await expect(page.locator(".gs-limit-card")).toContainText("70개");
   });
 
+  test("디자인이 적어 둔 치수대로 그린다", async ({ page }) => {
+    // 눈으로 대조하면 놓친다. 취소선 글꼴은 font-family 목록에 inherit 을
+    // 넣는 바람에 선언 전체가 버려져 한 번도 바뀌지 않았는데, 화면만 봐서는
+    // Pretendard ExtraBold 와 구분되지 않았다.
+    //
+    // 근거: [피그마 5472:1465] 좌우 여백 25, [5472:1473] 사진 모서리 22,
+    //       [5472:1486] Cafe24 Ohsquare 32px, [5472:1485] 상자 높이 75
+    await page.goto("/flea");
+
+    const measured = await page.evaluate(() => {
+      const box = (sel: string) => {
+        const el = document.querySelector(sel) as HTMLElement;
+        const cs = getComputedStyle(el);
+        return {
+          padX: cs.paddingLeft,
+          radius: cs.borderRadius,
+          family: cs.fontFamily,
+          size: cs.fontSize,
+          height: Math.round(el.getBoundingClientRect().height),
+        };
+      };
+      return {
+        section: box(".flea-hero"),
+        figure: box(".flea-hero img.gs-figure"),
+        was: box(".flea-was"),
+      };
+    });
+
+    expect(measured.section.padX).toBe("25px");
+    expect(measured.figure.radius).toBe("22px");
+    // 목록에 못 쓰는 값이 섞이면 선언째로 버려진다. 이름이 남아 있는지 본다.
+    expect(measured.was.family).toContain("Cafe24 Ohsquare");
+    expect(measured.was.size).toBe("32px");
+    expect(measured.was.height).toBe(75);
+  });
+
   test("구매 버튼 넷이 모두 등록 화면으로 간다", async ({ page }) => {
     // 근거: [카톡 나혜님] "CTA 버튼들 클릭 시 바로 사진 및 정보 등록하는
     //       페이지로 엔드포인트 설정해주세요!"
