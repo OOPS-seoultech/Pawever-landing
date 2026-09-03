@@ -36,6 +36,18 @@
   border-radius: 22px;
 }
 
+/*
+ * 글자 굵기.
+ *
+ * 상시 랜딩은 자기 클래스(.gs-hero h1 등)에 굵기를 걸어 두었는데, 이 화면은
+ * 클래스 이름이 달라 그 규칙에 걸리지 않는다. 그리고 Tailwind 의 기본값이
+ * 제목의 굵기를 상속으로 되돌려 놓아서, 아무것도 적지 않으면 400 으로 나간다.
+ *
+ * 눈으로는 잘 안 보인다 — 36px 짜리 제목이 400 으로 나가고 있었는데 화면만
+ * 봐서는 "조금 얇네" 정도로 지나쳤다. 그래서 디자인이 적어 둔 값을 여기에
+ * 그대로 옮기고, 재는 시험으로 묶어 둔다.
+ */
+
 /* 01 ─────────────────────────────────────────────────────────── */
 
 .flea-hero {
@@ -44,6 +56,8 @@
 }
 
 .flea-hero h1 {
+  /* 디자인 Pretendard ExtraBold (5472:1469) */
+  font-weight: 800;
   font-size: 36px;
   line-height: 43.2px;
   letter-spacing: -1.8px;
@@ -51,6 +65,8 @@
 
 .flea-hero .gs-lead {
   margin-top: 10px;
+  /* 디자인 Pretendard SemiBold (5472:1471) */
+  font-weight: 600;
   font-size: 16px;
   line-height: 20px;
   letter-spacing: -0.32px;
@@ -459,7 +475,34 @@
  * 아이콘을 지우지 않고 이 화면에서만 자리를 비운다.
  */
 .flea-page .gs-primary-cta {
+  /* 디자인 Pretendard ExtraBold (5478:2014) */
+  font-weight: 800;
   font-size: 20px;
+}
+
+/* 후기 본문 — 디자인 SemiBold 16px (5472:1519) */
+.flea-page .gs-voice p {
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+/* 2차 준비 수량 70개 — 디자인 Bold 20px (5472:1670) */
+.flea-page .gs-limit-card strong {
+  font-weight: 700;
+  font-size: 20px;
+}
+
+/* 1차 100명 모집 완료 — 디자인 Bold 20px (5472:1567) */
+.flea-page .gs-closed-card strong {
+  font-weight: 700;
+  font-size: 20px;
+}
+
+/* 자주 묻는 질문 — 디자인 Bold 14px (5472:1819) */
+.flea-page .gs-faq-list summary {
+  font-weight: 700;
+  font-size: 14px;
 }
 
 .flea-page .flea-buy-card .gs-primary-cta {
