@@ -755,7 +755,6 @@ export default function GoodsSurveyForm() {
   const [privacyConsent, setPrivacyConsent] = useState(false);
   const [shippingConsent, setShippingConsent] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
-  const [reviewId, setReviewId] = useState("");
   const [accountCopied, setAccountCopied] = useState(false);
   /**
    * 신청 직후 띄우는 입금 안내.
@@ -1624,10 +1623,6 @@ export default function GoodsSurveyForm() {
           marketingAgreed: marketingConsent,
         }
       );
-      const nextReviewId = `PAW-${application.responseId
-        .slice(0, 8)
-        .toUpperCase()}`;
-      setReviewId(nextReviewId);
       setRemaining(application.remaining);
       // 입금 안내에 쓸 값. 서버가 설문 참여 여부를 보고 정한 금액을 그대로 쓴다.
       setPaymentNotice({
@@ -1690,7 +1685,6 @@ export default function GoodsSurveyForm() {
     setPhotoPublishConsent(false);
     setPrivacyConsent(false);
     setShippingConsent(false);
-    setReviewId("");
     setPaymentNotice(null);
     setApiError("");
     setDraftSaveState("idle");
@@ -2635,29 +2629,29 @@ export default function GoodsSurveyForm() {
                   </dl>
                 </div>
               )}
-              <div className="gsf-review-id">
-                <span>접수 확인 번호</span>
-                <strong>{reviewId}</strong>
-              </div>
-              {remaining >= 0 && (
-                <p className="gsf-review-submit-note">
-                  현재 남은 자리 {remaining}명
-                </p>
-              )}
+              {/* 들어온 곳으로 돌려보낸다. 현장에서 QR 을 찍고 산 사람을
+                  상시 랜딩으로 보내면 자기가 보던 화면이 아니다. */}
               <button
                 type="button"
                 className="gsf-primary"
-                onClick={() => setLocation("/goods-survey")}
+                onClick={() =>
+                  setLocation(channel === "flea" ? "/flea" : "/goods-survey")
+                }
               >
                 랜딩페이지로 돌아가기
               </button>
-              <button
-                type="button"
-                className="gsf-text-button"
-                onClick={resetSurvey}
-              >
-                새 응답 작성하기
-              </button>
+              {/* 설문으로 가는 길은 설문을 거쳐 온 사람에게만 연다. 플리마켓은
+                  QR 을 찍고 바로 사는 자리라, 여기서 10~15분짜리 설문이 갑자기
+                  열리면 당황한다. */}
+              {channel !== "flea" && (
+                <button
+                  type="button"
+                  className="gsf-text-button"
+                  onClick={resetSurvey}
+                >
+                  새 응답 작성하기
+                </button>
+              )}
             </section>
           )}
         </div>

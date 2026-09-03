@@ -241,7 +241,10 @@ describe("굿즈 제작 정보 화면", () => {
     // 예전에는 이 카드가 없을 때 가격 카드를 대신 그려서 삼항이었다. 지금은
     // 가격 카드가 08 PURCHASE로 따로 서 있어, 셀 수 없으면 그냥 그리지 않는다.
     expect(landingSource).toContain("{goodsAvailable && hasSlotLimit && (");
-    expect(formSource).toContain("{remaining >= 0 && (");
+    // 접수 화면은 남은 자리를 아예 보여 주지 않는다. 이미 산 사람에게 쓸모가
+    // 없고, 오히려 다른 사람에게 알리는 압박 문구가 된다. 그리지 않으면 -1 이
+    // 새어 나갈 자리도 없다.
+    expect(formSource).not.toContain("현재 남은 자리");
   });
 
   it("사진 공개 동의를 사연 공개 동의와 따로 받는다", () => {

@@ -24,6 +24,25 @@ const ONLINE = "/goods-survey/survey?direct=1";
 const consent = (page: import("@playwright/test").Page) =>
   page.locator('label:has-text("결제하는 데 동의합니다")');
 
+/** 사진까지 채우고 신청을 끝낸다. 완료 화면을 보려면 매번 필요하다. */
+const fillAndSubmit = async (page: import("@playwright/test").Page) => {
+  await page.getByPlaceholder("반려견 이름").fill("보리");
+  await page.getByPlaceholder("받는 분 이름").fill("황성욱");
+  await page.getByPlaceholder("010-0000-0000").fill("01012345678");
+  await page
+    .locator('.gsf-upload input[type="file"]')
+    .setInputFiles([
+      photoFile("1.jpg"),
+      photoFile("2.jpg"),
+      photoFile("3.jpg"),
+    ]);
+  await page
+    .locator('label:has-text("개인정보 수집·이용에 동의합니다") input')
+    .check();
+  await consent(page).locator("input").check();
+  await page.getByRole("button", { name: /신청 완료하기/ }).click();
+};
+
 test.describe("플리마켓 주문", () => {
   test.beforeEach(async ({ page }) => {
     await mockFleaCampaign(page);
@@ -143,6 +162,26 @@ test.describe("플리마켓 주문", () => {
     await expect(page.locator(".gsf-payment-notice")).toContainText("11,900원");
 
     await expect(bank.getByRole("button")).toContainText("계좌번호 복사");
+  });
+
+  test("접수 뒤에는 들어온 곳으로 돌려보낸다", async ({ page }) => {
+    // 완료 화면이 어느 통로로 들어왔는지 모르고 있었다. 현장에서 QR 을 찍고
+    // 산 사람을 상시 랜딩으로 보내면 자기가 보던 화면이 아니고, "새 응답
+    // 작성하기"를 누르면 10~15분짜리 설문이 갑자기 열린다.
+    await mockSubmit(page);
+    await page.goto(FLEA);
+    await fillAndSubmit(page);
+
+    // 주문번호 하나면 된다. 서버가 모르는 번호를 하나 더 보여 주면 고객은
+    // 문의할 때 어느 것을 말해야 할지 모른다.
+    await expect(page.locator("body")).not.toContainText("접수 확인 번호");
+    // 이미 산 사람에게 남은 자리는 쓸모가 없다.
+    await expect(page.locator("body")).not.toContainText("현재 남은 자리");
+    // 설문으로 가는 길은 이 사람에게 열지 않는다.
+    await expect(page.getByText("새 응답 작성하기")).toHaveCount(0);
+
+    await page.getByRole("button", { name: "랜딩페이지로 돌아가기" }).click();
+    await expect(page).toHaveURL(/\/flea$/);
   });
 
   test("계좌를 정하지 않았으면 그 자리를 비워 둔다", async ({ page }) => {
