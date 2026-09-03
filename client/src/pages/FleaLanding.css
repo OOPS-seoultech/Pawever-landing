@@ -1,0 +1,438 @@
+/*
+ * 플리마켓 랜딩에만 있는 조각.
+ *
+ * 색·간격·글자는 GoodsSurvey.css 의 토큰을 그대로 쓴다. 디자인이 같은 언어라
+ * 새로 정의하면 두 화면이 조금씩 어긋난다. 여기 있는 것은 상시 랜딩에 없는
+ * 모양뿐이다 — 취소선 가격, 현장가 카드, "잠깐!" 카드, 원가 비교.
+ */
+
+/*
+ * 취소선 가격의 글꼴(피그마 5472:1486).
+ *
+ * Cafe24 Ohsquare 원본은 415KB 다. 한 줄 때문에 그것을 통째로 받게 할 수는
+ * 없어서, 이 화면이 쓰는 18자만 남겨 1.6KB 로 잘랐다. 글자를 바꾸려면 잘라
+ * 둔 글자 안에서 골라야 한다 — 없는 글자는 대체 글꼴로 나온다.
+ *
+ * 담긴 글자:  ,0123456789가기매원존판
+ */
+@font-face {
+  font-family: "Cafe24 Ohsquare";
+  src: url("/goods-survey/cafe24-ohsquare-subset.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+
+/* 01 ─────────────────────────────────────────────────────────── */
+
+.flea-hero {
+  padding-top: 48px;
+  padding-bottom: 72px;
+}
+
+.flea-hero h1 {
+  font-size: 36px;
+  line-height: 43.2px;
+  letter-spacing: -1.8px;
+}
+
+.flea-hero .gs-lead {
+  margin-top: 10px;
+  font-size: 16px;
+  line-height: 20px;
+  letter-spacing: -0.32px;
+}
+
+.flea-hero .gs-lead strong {
+  font-weight: 700;
+}
+
+.flea-was {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 75px;
+  margin-top: 20px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: #ffc98f;
+  box-shadow: 0 10px 11px rgba(242, 125, 26, 0.22);
+  /* 잘라 둔 글꼴이 늦게 오면 Pretendard 로 먼저 그려진다. 취소선과 색이
+     이미 뜻을 전하므로 자리만 흔들리지 않으면 된다. */
+  font-family: "Cafe24 Ohsquare", inherit;
+  font-size: 32px;
+  line-height: 22px;
+  color: #c21111;
+  text-decoration: line-through;
+}
+
+.flea-price-card {
+  margin-top: 25px;
+  padding: 24px;
+  border: 1px solid var(--gs-line);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 10px 15px rgba(76, 48, 22, 0.07);
+  text-align: left;
+}
+
+.flea-price-card > span {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 18px;
+  color: var(--gs-orange);
+}
+
+.flea-price-card > strong {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 43px;
+  letter-spacing: -1.44px;
+  color: var(--gs-ink);
+}
+
+.flea-price-card > strong em {
+  padding-bottom: 3px;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 18px;
+  color: var(--gs-muted);
+}
+
+.flea-price-card > strong em b {
+  font-weight: 800;
+}
+
+.flea-price-card > small {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  color: var(--gs-muted);
+}
+
+.flea-price-card > small b {
+  font-weight: 600;
+}
+
+/* 02 ─────────────────────────────────────────────────────────── */
+
+.flea-why-now,
+.flea-proof,
+.flea-limited,
+.flea-purchase,
+.flea-final {
+  background: var(--gs-cream);
+}
+
+.flea-caption {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 24px;
+  letter-spacing: -0.225px;
+  color: var(--gs-body);
+  text-align: right;
+}
+
+.flea-caption--left {
+  text-align: left;
+}
+
+.flea-voices {
+  margin-top: 20px;
+}
+
+.flea-ticket {
+  display: block;
+  width: 274px;
+  max-width: 100%;
+  height: auto;
+  margin: 60px auto 0;
+  transform: rotate(-7.49deg);
+  box-shadow: 0 7px 8.4px rgba(0, 0, 0, 0.25);
+}
+
+.flea-punch {
+  margin-top: 25px;
+  font-size: 25px;
+  font-weight: 800;
+  line-height: 38.1px;
+  letter-spacing: -1.2px;
+  color: var(--gs-ink);
+  text-align: center;
+}
+
+.flea-punch--sm {
+  margin-top: 18px;
+  font-size: 20px;
+  line-height: 30px;
+  letter-spacing: -0.6px;
+  color: #393430;
+}
+
+.flea-punch em {
+  font-style: normal;
+  color: var(--gs-orange);
+}
+
+.flea-punch u {
+  text-decoration-thickness: from-font;
+}
+
+/* 03 ─────────────────────────────────────────────────────────── */
+
+.flea-real-price h2 em,
+.flea-limited h2 em {
+  font-style: normal;
+  color: var(--gs-orange);
+}
+
+.flea-plain-figure {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 20px;
+}
+
+.flea-plain-figure--round {
+  border-radius: 20px;
+}
+
+.flea-hand {
+  margin: 70px 0 30px;
+  font-size: 96px;
+  line-height: 1;
+  text-align: center;
+}
+
+.flea-wait-card {
+  padding: 25px 18px;
+  border: 2px solid var(--gs-orange-btn);
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 12px 15px rgba(242, 125, 26, 0.1);
+  text-align: center;
+}
+
+.flea-wait-card > span {
+  display: block;
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 24px;
+  color: var(--gs-orange);
+}
+
+.flea-wait-card > h3 {
+  margin-top: 6px;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 37.8px;
+  letter-spacing: -1.12px;
+  color: var(--gs-ink);
+}
+
+.flea-wait-card > p {
+  margin-top: 20px;
+  font-size: 15px;
+  line-height: 24px;
+  color: var(--gs-body);
+}
+
+.flea-wait-card > p b {
+  font-weight: 700;
+}
+
+.flea-wait-detail {
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.flea-cost {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  margin-top: 60px;
+  padding: 20px 0;
+  border-radius: 22px;
+  background: var(--gs-cream);
+}
+
+.flea-cost figure {
+  width: 100%;
+  margin: 0;
+}
+
+.flea-cost figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+}
+
+.flea-cost figcaption {
+  margin-top: 5px;
+  font-size: 19px;
+  font-weight: 500;
+  line-height: 24px;
+  letter-spacing: -0.225px;
+  color: #000;
+  text-align: center;
+}
+
+.flea-plus {
+  width: 22px;
+  height: 22px;
+}
+
+.flea-dots {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 25px 0 20px;
+  font-size: 40px;
+  line-height: 24px;
+}
+
+.flea-dots span:nth-child(1) {
+  color: #e0dbd6;
+}
+.flea-dots span:nth-child(2) {
+  color: #ada59d;
+}
+.flea-dots span:nth-child(3) {
+  color: #000;
+}
+
+/* 04 ─────────────────────────────────────────────────────────── */
+
+.flea-compare {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 190px;
+  margin-top: 30px;
+  padding: 0 4px;
+  border-radius: 22px;
+  background: #f3eee8;
+  overflow: hidden;
+}
+
+.flea-compare img {
+  height: 193px;
+  width: auto;
+  object-fit: cover;
+}
+
+.flea-compare-arrow {
+  width: 29px;
+  height: 29px;
+  flex: none;
+}
+
+.flea-arrow--sm {
+  width: 141px;
+  height: auto;
+}
+
+/* 04·08 의 구매 카드 ──────────────────────────────────────────── */
+
+.flea-buy-card {
+  margin-top: 24px;
+  padding: 24px;
+  border: 1px solid var(--gs-line);
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 10px 15px rgba(76, 48, 22, 0.07);
+  text-align: left;
+}
+
+.flea-buy-card > span {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 18px;
+  color: var(--gs-orange);
+}
+
+.flea-buy-card > h3 {
+  margin-top: 7px;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 28px;
+  color: var(--gs-ink);
+}
+
+.flea-buy-card > strong {
+  display: block;
+  margin-top: 7px;
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 43px;
+  letter-spacing: -1.44px;
+  color: var(--gs-ink);
+}
+
+.flea-buy-card > small {
+  display: block;
+  margin-top: 7px;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--gs-muted);
+}
+
+.flea-buy-card .gs-primary-cta,
+.flea-buy-card .gs-note {
+  margin-top: 17px;
+}
+
+/* 04 의 카드는 테두리가 주황이다(5491:2270). */
+.flea-figure-section .flea-buy-card {
+  border-color: var(--gs-orange);
+}
+
+/* 08 의 두 번째 카드 — 정가로 가는 길(5472:1759). */
+.flea-buy-card--list {
+  border-color: #ffc98f;
+  background: #fff7ee;
+}
+
+.flea-buy-card--list > strong {
+  color: var(--gs-orange);
+}
+
+.flea-buy-card--list .gs-primary-cta {
+  background: #ff9a3e;
+  box-shadow: none;
+}
+
+/* 08 ─────────────────────────────────────────────────────────── */
+
+.flea-purchase {
+  padding-top: 40px;
+}
+
+.flea-purchase .gs-copy {
+  margin-top: 20px;
+}
+
+/* CTA ────────────────────────────────────────────────────────── */
+
+/*
+ * 디자인의 버튼에는 화살표가 없다(5478:2013 등). 상시 랜딩은 있으므로
+ * 아이콘을 지우지 않고 이 화면에서만 자리를 비운다.
+ */
+.flea-page .gs-primary-cta {
+  font-size: 20px;
+}
+
+.flea-page .flea-buy-card .gs-primary-cta {
+  font-size: 15px;
+}

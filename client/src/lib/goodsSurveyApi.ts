@@ -44,8 +44,18 @@ export type SurveyCompletion = {
   reservationExpiresAt: string | null;
 };
 
+/**
+ * 굿즈를 파는 통로.
+ *
+ * 통로마다 값과 정원이 다르다. 온라인은 정가 29,900원에 100자리, 플리마켓은
+ * 현장 한정가 11,900원에 70자리다. 화면이 어느 쪽을 보는지는 주소로 갈린다.
+ */
+export type GoodsSalesChannel = "online" | "flea";
+
 export type SurveyCampaign = {
   campaignId: string;
+  /** ONLINE 또는 FLEA. 서버가 그 모집에 적힌 값을 그대로 준다. */
+  channel: string;
   capacity: number;
   allocated: number;
   remaining: number;
@@ -167,13 +177,22 @@ const editHeaders = (session: SurveyDraftSession) => ({
   "X-Survey-Edit-Token": session.editToken,
 });
 
-export const getSurveyCampaign = () =>
-  apiRequest<SurveyCampaign>("/api/public/goods-survey/campaign");
+export const getSurveyCampaign = (channel: GoodsSalesChannel = "online") =>
+  apiRequest<SurveyCampaign>(
+    channel === "online"
+      ? "/api/public/goods-survey/campaign"
+      : `/api/public/goods-survey/campaign?channel=${channel}`
+  );
 
 export const createSurveyDraft = (payload: {
   questionnaireVersion: string;
   selectedGoods: string;
   tracking: SurveyTrackingPayload;
+  /**
+   * 어느 통로로 들어왔는지. 값과 정원이 여기서 갈리고, 한 번 정해지면
+   * 주문이 끝날 때까지 그 모집을 따라간다.
+   */
+  channel?: GoodsSalesChannel;
 }) =>
   apiRequest<SurveyDraftSession>("/api/public/goods-survey/responses", {
     method: "POST",

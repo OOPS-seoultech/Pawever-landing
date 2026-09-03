@@ -1,0 +1,137 @@
+import { expect, test } from "@playwright/test";
+import { mockCampaign, mockFleaCampaign, photoFile } from "./fixtures/api";
+
+/**
+ * 과기대 대동제 플리마켓 전용 랜딩(/flea).
+ *
+ * 현장에 QR 을 두고 그 자리에서 주문을 받는 화면이다. 상시 랜딩(/goods-survey)
+ * 과 값도 정원도 다르고, 그 둘이 동시에 열려 있는 동안 섞이면 안 된다.
+ *
+ * 근거: [피그마 0uW99BqaTJKUVlowzQswli / 8-2. Rending Page, 5472:1444]
+ * 근거: [카톡 나혜님] "CTA 버튼들 클릭 시 바로 사진 및 정보 등록하는 페이지로
+ *       엔드포인트 설정해주세요!"
+ * 근거: [카톡 8/28 대표] "다다음주 과기대 플리마켓이 진행됩니다. 이때 QR배치해서
+ *       주문 제작 받고, 바로 제작 후 판매해볼까 합니다."
+ */
+
+/** 디자인이 화면에 적어 둔 값. 서버가 계산하는 값과 같아야 한다. */
+const FLEA_PRICE = "11,900원";
+const LIST_PRICE = "29,900원";
+
+test.describe("플리마켓 랜딩", () => {
+  test.beforeEach(async ({ page }) => {
+    await mockFleaCampaign(page);
+    // 정가 버튼은 상시 판매로 간다. 그쪽 모집도 함께 물려 둔다.
+    await mockCampaign(page);
+  });
+
+  test("현장 한정가와 수량을 디자인대로 적는다", async ({ page }) => {
+    // 근거: [5472:1478] "서울과학기술대학교 플리마켓 전용가"
+    //       [5472:1480] "11,900원"  [5498:2395] "60.2% 할인"
+    //       [5472:1662] "이번에도 선착순 70개만 제작합니다."
+    //
+    // 값이 화면과 서버에서 갈리면 사람은 동의하지 않은 금액을 청구받는다.
+    await page.goto("/flea");
+
+    await expect(page.locator(".flea-price-card")).toContainText(
+      "서울과학기술대학교 플리마켓 전용가"
+    );
+    await expect(page.locator(".flea-price-card")).toContainText(FLEA_PRICE);
+    await expect(page.locator(".flea-price-card")).toContainText("60.2%");
+    // 정가는 취소선으로만 나온다.
+    await expect(page.locator(".flea-was")).toHaveText(
+      `기존 판매가 ${LIST_PRICE}`
+    );
+
+    await expect(page.locator(".gs-limit-card")).toContainText("2차 준비 수량");
+    await expect(page.locator(".gs-limit-card")).toContainText("70개");
+  });
+
+  test("구매 버튼 넷이 모두 등록 화면으로 간다", async ({ page }) => {
+    // 근거: [카톡 나혜님] "CTA 버튼들 클릭 시 바로 사진 및 정보 등록하는
+    //       페이지로 엔드포인트 설정해주세요!"
+    //
+    // 설문을 거치지 않는다. 현장에서 QR 을 찍은 사람에게 10~15분짜리 설문을
+    // 세우면 줄이 멈춘다.
+    await page.goto("/flea");
+
+    for (const ctaId of ["btn_F1", "btn_F2", "btn_F3"]) {
+      await page.goto("/flea");
+      await page.locator(`[data-cta-id="${ctaId}"]`).click();
+      await expect(page).toHaveURL(
+        /\/goods-survey\/survey\?direct=1&channel=flea$/
+      );
+    }
+  });
+
+  test("정가 버튼만 상시 판매로 간다", async ({ page }) => {
+    // 근거: [5472:1767] "온라인 배송비 별도, 과기대 외 다른 지인에게 소개용"
+    //
+    // 현장 밖 사람에게 11,900원을 주면 안 된다. 이 버튼에는 channel 이 붙지
+    // 않아야 하고, 그러면 서버가 상시 모집으로 받아 정가를 매긴다.
+    await page.goto("/flea");
+    await page.locator('[data-cta-id="btn_F4"]').click();
+
+    await expect(page).toHaveURL(/\/goods-survey\/survey\?direct=1$/);
+  });
+
+  test("사진 등록 카드는 세 장을 다 채워야 열린다", async ({ page }) => {
+    // 근거: [5492:2347] 카드의 세는 칸이 "0/3", 버튼이 "사진 3장 등록하기"
+    // 디자인은 이 카드를 03 과 09 두 곳에 둔다.
+    await page.goto("/flea");
+
+    const cards = page.locator(".gs-intake");
+    await expect(cards).toHaveCount(2);
+
+    const first = cards.first();
+    await expect(first.locator(".gs-intake-count")).toHaveText("0/3");
+    await expect(first.locator(".gs-intake-submit")).toBeDisabled();
+
+    for (const label of [
+      "정면 또는 옆모습 사진 추가하기",
+      "몸 전체가 보이게 사진 추가하기",
+      "특징이 잘 보이게 사진 추가하기",
+    ]) {
+      await first.getByLabel(label).setInputFiles(photoFile(`${label}.jpg`));
+    }
+
+    await expect(first.locator(".gs-intake-count")).toHaveText("3/3");
+    await expect(first.locator(".gs-intake-submit")).toBeEnabled();
+  });
+
+  test("모집이 닫히면 살 수 있는 자리가 하나도 남지 않는다", async ({
+    page,
+  }) => {
+    // 행사가 끝나면 서버에서 이 경로를 닫는다. 화면은 그대로 두지만 값이
+    // 그대로 보이면서 버튼만 살아 있으면, 못 줄 것을 판다고 적는 셈이다.
+    await mockFleaCampaign(page, { goodsOpen: false });
+    await page.goto("/flea");
+
+    await expect(page.locator("[data-cta-id]")).toHaveCount(0);
+    await expect(
+      page.getByText("지금은 신청을 받지 않아요").first()
+    ).toBeVisible();
+  });
+
+  test("검색에 걸리지 않는다", async ({ page }) => {
+    // 현장 QR 로만 여는 화면이다. 검색으로 들어온 사람이 한정가를 보고
+    // 주문하면 현장에서 받아갈 수 없다.
+    await page.goto("/flea");
+
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+      "content",
+      "noindex, nofollow"
+    );
+  });
+
+  test("상시 랜딩은 그대로다", async ({ page }) => {
+    // 플리마켓 화면을 새로 만들면서 기존 랜딩을 건드리지 않았다는 확인이다.
+    // 같은 자리에서 두 값이 보이면 어느 쪽이 참인지 알 수 없다.
+    await page.goto("/goods-survey");
+
+    await expect(page.locator(".gs-topbar span")).toHaveText(
+      "2차 참여자 모집중"
+    );
+    await expect(page.locator("body")).not.toContainText(FLEA_PRICE);
+  });
+});

@@ -135,6 +135,7 @@ export function PrimaryCta({
   compact = false,
   disabled = false,
   disabledLabel = "지금은 신청할 수 없어요",
+  showArrow = true,
 }: {
   onClick: () => void;
   ctaId?: string;
@@ -142,6 +143,8 @@ export function PrimaryCta({
   compact?: boolean;
   disabled?: boolean;
   disabledLabel?: string;
+  /** 플리마켓 랜딩의 버튼에는 화살표가 없다(피그마 5478:2013). */
+  showArrow?: boolean;
 }) {
   return (
     <button
@@ -152,7 +155,7 @@ export function PrimaryCta({
       disabled={disabled}
     >
       <span>{disabled ? disabledLabel : label}</span>
-      <ArrowRight aria-hidden="true" />
+      {showArrow && <ArrowRight aria-hidden="true" />}
     </button>
   );
 }
