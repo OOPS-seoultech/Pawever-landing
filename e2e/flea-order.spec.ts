@@ -1,5 +1,11 @@
 import { expect, test } from "@playwright/test";
-import { mockCampaign, mockDraft, mockFleaCampaign } from "./fixtures/api";
+import {
+  mockCampaign,
+  mockDraft,
+  mockFleaCampaign,
+  mockSubmit,
+  photoFile,
+} from "./fixtures/api";
 
 /**
  * 플리마켓 랜딩에서 넘어온 주문(/goods-survey/survey?direct=1&channel=flea).
@@ -94,6 +100,78 @@ test.describe("플리마켓 주문", () => {
     // 제작비 11,900 + 배송비 3,000 = 14,900
     await expect(consent(page)).toContainText("배송비 3,000원");
     await expect(consent(page)).toContainText("14,900원을 결제하는 데");
+  });
+
+  test("접수되면 어디로 넣을지가 화면에 뜬다", async ({ page }) => {
+    // 계좌를 문자로만 보내던 때가 있었다. 문자가 오기 전까지 사람은 아무것도
+    // 할 수 없고, 현장에서 QR 을 찍고 그 자리에서 넣는 자리라면 줄이 선다.
+    await mockSubmit(page);
+    await page.goto(FLEA);
+
+    await page.getByPlaceholder("반려견 이름").fill("보리");
+    await page.getByPlaceholder("받는 분 이름").fill("황성욱");
+    await page.getByPlaceholder("010-0000-0000").fill("010-1234-5678");
+    await page
+      .locator('.gsf-upload input[type="file"]')
+      .setInputFiles([
+        photoFile("1.jpg"),
+        photoFile("2.jpg"),
+        photoFile("3.jpg"),
+      ]);
+    await page
+      .locator('label:has-text("개인정보 수집·이용에 동의합니다") input')
+      .check();
+    await consent(page).locator("input").check();
+    await page.getByRole("button", { name: /신청 완료하기/ }).click();
+
+    // 계좌를 눈앞에 두고 "문자로 보내드릴게요"라고 하면 기다려야 하는지
+    // 헷갈린다. 지금 넣을 수 있다는 것이 먼저다.
+    await expect(page.locator(".gsf-payment-notice strong").first()).toHaveText(
+      "아래 계좌로 입금해 주세요"
+    );
+
+    const bank = page.locator(".gsf-bank");
+    await expect(bank).toBeVisible();
+    await expect(bank).toContainText("기업은행");
+    await expect(bank).toContainText("000-000000-00-000");
+    await expect(bank).toContainText("예금주 포에버");
+    // 입금자명이 아니라 주문번호로 대조한다.
+    await expect(page.locator(".gsf-payment-notice")).toContainText(
+      "PE-2026-000123"
+    );
+    // 현장 수령이라 배송비가 붙지 않은 값 그대로다.
+    await expect(page.locator(".gsf-payment-notice")).toContainText("11,900원");
+
+    await expect(bank.getByRole("button")).toContainText("계좌번호 복사");
+  });
+
+  test("계좌를 정하지 않았으면 그 자리를 비워 둔다", async ({ page }) => {
+    // 없는 계좌를 빈칸으로 그려 두면 사람이 빈칸으로 송금할 곳을 찾는다.
+    await mockSubmit(page, { bank: null });
+    await page.goto(FLEA);
+
+    await page.getByPlaceholder("반려견 이름").fill("보리");
+    await page.getByPlaceholder("받는 분 이름").fill("황성욱");
+    await page.getByPlaceholder("010-0000-0000").fill("010-1234-5678");
+    await page
+      .locator('.gsf-upload input[type="file"]')
+      .setInputFiles([
+        photoFile("1.jpg"),
+        photoFile("2.jpg"),
+        photoFile("3.jpg"),
+      ]);
+    await page
+      .locator('label:has-text("개인정보 수집·이용에 동의합니다") input')
+      .check();
+    await consent(page).locator("input").check();
+    await page.getByRole("button", { name: /신청 완료하기/ }).click();
+
+    await expect(page.locator(".gsf-payment-notice")).toBeVisible();
+    await expect(page.locator(".gsf-bank")).toHaveCount(0);
+    // 계좌가 없으면 예전처럼 문자로 안내한다.
+    await expect(page.locator(".gsf-payment-notice strong").first()).toHaveText(
+      "입금 안내를 문자로 보내드릴게요"
+    );
   });
 
   test("상시 주문은 그대로 정가에 택배다", async ({ page }) => {

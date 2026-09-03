@@ -101,6 +101,71 @@ export const mockFleaCampaign = (
     })
   );
 
+/**
+ * 신청 제출까지 가는 길을 물린다.
+ *
+ * 사진 등록은 프리사인이 CONFIRMED 를 바로 주면 저장소로 올리는 단계를
+ * 건너뛴다. 시험이 S3 에 실제로 쓰지 않게 이 길을 쓴다.
+ *
+ * 접수 응답에는 입금처가 실려 온다. 화면이 그 값을 그대로 그리는지 보려면
+ * 여기서 아는 값을 넣어 줘야 한다.
+ */
+export const mockSubmit = (
+  page: Page,
+  overrides: Record<string, unknown> = {}
+) => {
+  let issued = 0;
+  return Promise.all([
+    page.route(
+      "**/api/public/goods-survey/responses/*/photos/presign",
+      route => {
+        issued += 1;
+        return route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            success: true,
+            data: {
+              photoId: `e2e-photo-${issued}`,
+              status: "CONFIRMED",
+              uploadUrl: null,
+              headers: {},
+            },
+          }),
+        });
+      }
+    ),
+    page.route("**/api/public/goods-survey/responses/*/application", route =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          data: {
+            responseId: "e2e-response-0001",
+            applicationId: 1,
+            status: "SUBMITTED",
+            remaining: 69,
+            surveyParticipant: false,
+            orderNumber: "PE-2026-000123",
+            listPriceKrw: 29_900,
+            discountAmountKrw: 18_000,
+            shippingFeeKrw: 0,
+            paymentAmountKrw: 11_900,
+            bank: {
+              name: "기업은행",
+              account: "000-000000-00-000",
+              holder: "포에버",
+            },
+            paymentExpiresAt: "2026-09-07T14:00:00Z",
+            ...overrides,
+          },
+        }),
+      })
+    ),
+  ]);
+};
+
 /** 캠페인 조회가 실패하는 상황. 서버가 죽었거나 배포 중일 때 화면이 어떻게 되는지 본다. */
 export const failCampaign = (page: Page) =>
   page.route(CAMPAIGN_URL, route => route.abort("failed"));
