@@ -42,6 +42,31 @@ export const applicablePriceKrw = (
 export const shippingFeeKrw = (deliveryMethod: "shipping" | "pickup") =>
   deliveryMethod === "pickup" ? 0 : GOODS_PRICE.shipping;
 
+/**
+ * 연락처를 사람이 읽는 모양으로 맞춘다.
+ *
+ * "형식에 맞춰 작성해주세요"만 띄우면 하이픈을 넣으라는 건지 빼라는 건지
+ * 알 수 없다. 숫자만 받아 하이픈은 화면이 넣는다 — 사람에게 규칙을 지키게
+ * 하는 대신 규칙을 없앤다.
+ *
+ * 010 은 열한 자리(3-4-4), 011·016~019 는 열 자리(3-3-4)다. 다 치기 전에는
+ * 앞에서부터 채운 만큼만 보여 준다.
+ */
+export const formatPhoneNumber = (value: string) => {
+  // 연락처 앱에서 붙여넣으면 +82 10-... 로 온다. 그대로 두면 821-0123-4567
+  // 이라는 없는 번호가 만들어진다.
+  const digits = value
+    .replace(/\D/g, "")
+    .replace(/^82(?=1)/, "0")
+    .slice(0, 11);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  if (digits.length <= 10) {
+    return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+  }
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+};
+
 export const wonText = (value: number) => `${value.toLocaleString("ko-KR")}원`;
 
 export const goodsSurveyIntroContent = {
@@ -171,7 +196,7 @@ export const goodsSurveyStoryContent = {
 export const goodsSurveyProductionContent = {
   title: "굿즈 제작 정보를 알려주세요.",
   lead: "수작업 3D 굿즈 특성상 5일에서 최대 3주까지 시간이 소요될 수 있어요. 제공하신 정보는 굿즈 발송일로부터 3주 뒤 모두 삭제됩니다.",
-  phoneFormatError: "형식에 맞춰 작성해주세요",
+  phoneFormatError: "휴대폰 번호를 끝까지 입력해 주세요 (예: 010-1234-5678)",
   safety:
     "본 굿즈는 보호자용 키링 또는 전시용입니다. 제품 소재 특성상 반려견이 물거나 삼키지 않도록 각별히 주의해 주세요.",
   // 사진 공개는 사연과 따로 묻는다. 올린 사진을 보면서 답하도록 사진 단계에 둔다.

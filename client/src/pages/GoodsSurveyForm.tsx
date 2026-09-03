@@ -78,6 +78,7 @@ import {
 import {
   GOODS_PRICE,
   applicablePriceKrw,
+  formatPhoneNumber,
   shippingFeeKrw,
   wonText,
   goodsSurveyClosingContent,
@@ -2270,7 +2271,11 @@ export default function GoodsSurveyForm() {
                       />
                       <span>
                         <strong>과기대에서 받아가기</strong>
-                        <small>배송비 없음 · 행사장에서 직접 전달</small>
+                        {/* 언제 어디서 건네는지는 아직 정해지지 않았다.
+                            "행사장에서 직접 전달"이라고 적어 두었는데, 제작에
+                            시간이 걸리면 지킬 수 없는 말이 된다. 정해진 것만
+                            적는다. */}
+                        <small>배송비 없음</small>
                       </span>
                     </label>
                     <label>
@@ -2318,7 +2323,11 @@ export default function GoodsSurveyForm() {
                       onChange={event =>
                         setProduction(previous => ({
                           ...previous,
-                          [field]: event.target.value,
+                          // 하이픈은 화면이 넣는다. 사람은 숫자만 치면 된다.
+                          [field]:
+                            field === "phone"
+                              ? formatPhoneNumber(event.target.value)
+                              : event.target.value,
                         }))
                       }
                       placeholder={placeholder}
