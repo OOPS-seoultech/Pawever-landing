@@ -376,7 +376,12 @@
   object-fit: cover;
 }
 
-.flea-compare-arrow {
+/*
+ * 화살표는 29px 이다. `.flea-compare img` 가 높이 193px 을 걸어 두는데 그
+ * 선택자가 더 세서, 화살표까지 193px 로 커져 그림을 밀어냈다. 같은 무게로
+ * 맞춰 이 규칙이 뒤에 오게 한다.
+ */
+.flea-compare img.flea-compare-arrow {
   width: 29px;
   height: 29px;
   flex: none;
@@ -443,6 +448,12 @@
   border-color: var(--gs-orange);
 }
 
+/* 04 의 버튼만 밑줄이 있다(5491:2279). */
+.flea-figure-section .flea-buy-card .gs-primary-cta span {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 /* 08 의 두 번째 카드 — 정가로 가는 길(5472:1759). */
 .flea-buy-card--list {
   border-color: #ffc98f;
@@ -507,4 +518,89 @@
 
 .flea-page .flea-buy-card .gs-primary-cta {
   font-size: 15px;
+}
+
+/* 강조 글자 ─────────────────────────────────────────────────────────── */
+
+/*
+ * 디자인은 강조를 주황으로 준다(5472:1499 "우리 아이다운 모습",
+ * 5472:1540 "43만 원", 5472:1662 "70개만 제작"). 기울임이 아니다 —
+ * em 을 그대로 두면 브라우저가 기울여 버린다.
+ */
+.flea-page h1 em,
+.flea-page h2 em {
+  color: var(--gs-orange);
+  font-style: normal;
+}
+
+/* 03 의 사진 등록 카드는 테두리가 주황이다(5492:2347). 09 는 아니다. */
+.flea-real-price .gs-intake {
+  border-color: var(--gs-orange);
+}
+
+/* 07 의 라벨도 주황이다(5472:1668). 상시 랜딩은 회색이다. */
+.flea-page .gs-limit-card > span {
+  color: var(--gs-orange);
+  font-size: 12px;
+}
+
+/* 09 FINAL ──────────────────────────────────────────────────────────── */
+
+/*
+ * 이 구간만 배경이 주황이고 글자가 희다(5472:1792). 크림색 바탕에 검은
+ * 글씨로 그리고 있었다 — 페이지에서 가장 눈에 띄어야 할 자리가 앞 구간과
+ * 구분되지 않았다.
+ */
+.flea-final {
+  background: linear-gradient(119.71deg, #ffa64f 6.17%, #ff8c2c 93.83%);
+}
+
+.flea-final .gs-kicker,
+.flea-final h2 {
+  color: #ffffff;
+}
+
+.flea-final h2 {
+  /* 다른 구간은 30px 인데 여기만 34px 이다(5472:1796). */
+  font-size: 34px;
+  line-height: 42.5px;
+  letter-spacing: -1.53px;
+}
+
+.flea-final .gs-copy,
+.flea-final .gs-note {
+  color: rgba(255, 255, 255, 0.84);
+}
+
+/* 사진 바탕은 흰색이 아니라 이 색이다(5472:1799). */
+.flea-final .gs-figure {
+  background: #f1ede9;
+}
+
+/* 06 PROCESS ────────────────────────────────────────────────────────── */
+
+/*
+ * 상자 높이는 화면에서 정하고, 넘치는 부분은 잘라 낸다. 원본 비율에 맡기면
+ * 3D 제작이 347px, 검수가 426px 로 늘어나 카드가 화면을 삼킨다.
+ */
+.flea-process .gs-step-figures .gs-figure {
+  object-fit: cover;
+}
+
+/* 10 FAQ ────────────────────────────────────────────────────────────── */
+
+/*
+ * 상시 랜딩보다 한 칸이 크고 글자도 크다(5472:1817 h=60, 5472:1818 h=58,
+ * 5472:1823 13px). 작게 나가면 손가락으로 누르기도 어렵다.
+ */
+.flea-page .gs-faq-list summary {
+  min-height: 58px;
+  color: #3e3935;
+}
+
+.flea-page .gs-faq-list details p {
+  padding: 0 18px 18px;
+  color: var(--gs-body);
+  font-size: 13px;
+  line-height: 20.8px;
 }
