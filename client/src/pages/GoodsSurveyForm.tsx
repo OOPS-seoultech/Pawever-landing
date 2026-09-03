@@ -796,7 +796,6 @@ export default function GoodsSurveyForm() {
   const [draftSaveState, setDraftSaveState] = useState<
     "idle" | "saving" | "saved" | "offline"
   >("idle");
-  const [submissionProgress, setSubmissionProgress] = useState("");
   const [surveyRun, setSurveyRun] = useState(0);
   const surveyCompletionTracked = useRef(false);
   // 노션 6·8·9번: 단계별 진입/재방문/이탈을 세려면 어디까지 갔는지 들고 있어야 한다.
@@ -1584,7 +1583,6 @@ export default function GoodsSurveyForm() {
     setApiBusy(true);
     setApiError("");
     try {
-      setSubmissionProgress("사진을 안전하게 업로드하고 있어요.");
       const photoIds = await Promise.all(
         photos.map(file => {
           const key = getFileKey(file);
@@ -1600,9 +1598,6 @@ export default function GoodsSurveyForm() {
       // 여기에 끌어다 쓰면, 글에 동의한 사람의 사진까지 묻지도 않고 공개된다.
       const publicPhotoIds = photoPublishConsent ? photoIds : [];
 
-      setSubmissionProgress(
-        "신청 정보를 저장하고 선착순 자리를 확정하고 있어요."
-      );
       const tracking = createSubmissionTrackingContext();
       const application = await submitSurveyApplication(
         draftSession,
@@ -1675,7 +1670,6 @@ export default function GoodsSurveyForm() {
     } catch (error) {
       setApiError(apiMessage(error));
     } finally {
-      setSubmissionProgress("");
       setApiBusy(false);
     }
   };
@@ -2423,11 +2417,6 @@ export default function GoodsSurveyForm() {
                   : "신청 완료하기"}
                 <ArrowRight aria-hidden="true" />
               </button>
-              {submissionProgress && (
-                <p className="gsf-review-submit-note" role="status">
-                  {submissionProgress}
-                </p>
-              )}
               {/* 화면 맨 위 안내는 긴 양식 끝에 있는 사람에게 보이지 않는다.
                   제출이 실패하면 진행 문구만 사라져서 아무 일도 안 일어난 것처럼 보인다. */}
               {apiError && !apiBusy && (
