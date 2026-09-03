@@ -87,6 +87,58 @@ test.describe("플리마켓 랜딩", () => {
     expect(measured.was.height).toBeLessThanOrEqual(77);
   });
 
+  test("글자 굵기와 크기를 디자인이 적어 둔 대로 쓴다", async ({ page }) => {
+    // 36px 짜리 제목이 굵기 400 으로 나가고 있었는데 화면만 봐서는 "조금
+    // 얇네" 정도로 지나쳤다. 상시 랜딩은 자기 클래스에 굵기를 걸어 두었고,
+    // 이 화면은 클래스 이름이 달라 그 규칙에 걸리지 않는다.
+    //
+    // 굵기는 눈대중이 가장 안 통하는 값이다. 디자인이 적어 둔 수를 그대로
+    // 옮겨 두고 재서 확인한다.
+    const WANT: [string, string, number, number][] = [
+      [".gs-topbar > span", "헤더 뱃지", 800, 11],
+      [".flea-hero h1", "01 제목", 800, 36],
+      [".flea-hero .gs-lead", "01 부제", 600, 16],
+      [".flea-hero .gs-primary-cta", "01 버튼", 800, 20],
+      [".flea-price-card > strong", "현장가", 800, 36],
+      [".flea-why-now h2", "02 제목", 800, 30],
+      [".gs-voice p", "후기 본문", 600, 16],
+      [".flea-wait-card > span", "잠깐!", 900, 17],
+      [".flea-wait-card > h3", "왜 가격이", 800, 28],
+      [".flea-buy-card > strong", "카드 금액", 700, 36],
+      [".gs-limit-card strong", "2차 준비 수량", 700, 20],
+      [".gs-closed-card strong", "1차 모집 완료", 700, 20],
+      [".gs-step h3", "단계 제목", 800, 20],
+      [".gs-faq-list summary", "자주 묻는 질문", 700, 14],
+    ];
+
+    await page.goto("/flea");
+    // 구매 버튼은 모집 상태를 받은 뒤에 그려진다. 그 전에 재면 없는 것으로
+    // 나온다.
+    await expect(page.locator('[data-cta-id="btn_F1"]')).toBeVisible();
+
+    const wrong = await page.evaluate(want => {
+      const bad: string[] = [];
+      for (const [sel, label, weight, size] of want) {
+        const el = document.querySelector(sel) as HTMLElement | null;
+        if (!el) {
+          bad.push(`${label}: 찾지 못함`);
+          continue;
+        }
+        const cs = getComputedStyle(el);
+        const gotWeight = parseInt(cs.fontWeight, 10);
+        const gotSize = parseFloat(cs.fontSize);
+        if (gotWeight !== weight || Math.abs(gotSize - size) > 0.5) {
+          bad.push(
+            `${label}: 기대 ${weight}/${size}px, 실제 ${gotWeight}/${gotSize}px`
+          );
+        }
+      }
+      return bad;
+    }, WANT);
+
+    expect(wrong, `디자인과 다른 곳 — ${wrong.join(" / ")}`).toEqual([]);
+  });
+
   test("구매 버튼 넷이 모두 등록 화면으로 간다", async ({ page }) => {
     // 근거: [카톡 나혜님] "CTA 버튼들 클릭 시 바로 사진 및 정보 등록하는
     //       페이지로 엔드포인트 설정해주세요!"
