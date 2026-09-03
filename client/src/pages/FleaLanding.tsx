@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
+import SellerNotice from "@/components/SellerNotice";
 import { setSurveyPhaseContext, trackEvent } from "@/lib/analytics/analytics";
 import { usePageEngagement, useScrollDepth } from "@/lib/analytics/react";
 import { getSurveyCampaign, type SurveyCampaign } from "@/lib/goodsSurveyApi";
@@ -804,6 +805,14 @@ export default function FleaLanding() {
             ))}
           </div>
         </section>
+
+        {/*
+         * 판매자 정보와 취소·반품 안내. 값이 다 차기 전에는 아무것도 그리지
+         * 않으므로 지금 이 화면은 피그마(5472:1444) 그대로다. 값이 들어오면
+         * 여기 나타나는데, 그때는 나혜님께 자리를 받아야 한다 — 디자인에는
+         * 아직 이 구간이 없다.
+         */}
+        <SellerNotice />
       </div>
     </main>
   );

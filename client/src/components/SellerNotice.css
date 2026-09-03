@@ -1,0 +1,67 @@
+/*
+ * 판매자 정보 표시.
+ *
+ * 마케팅 화면(Tailwind)과 굿즈 랜딩(gs-*) 두 곳에 같이 들어간다. 어느 쪽
+ * 토큰도 쓰지 않고 자기 값만 들고 있는 이유다 — 한쪽 색을 물려받으면 다른
+ * 쪽에서 읽히지 않는 색이 된다.
+ *
+ * 읽으라고 두는 글이지 보라고 두는 글이 아니다. 작고 조용하게 둔다.
+ */
+.seller-notice {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 20px 32px;
+  color: #8b837d;
+  font-size: 12px;
+  line-height: 1.7;
+  word-break: keep-all;
+}
+
+.seller-notice-block h2 {
+  margin: 0 0 8px;
+  color: #6f6862;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.seller-notice dl {
+  margin: 0;
+}
+
+/*
+ * 항목 이름과 값을 한 줄에 둔다. 이름 칸을 고정하면 값이 세로로 정렬돼
+ * 사업자등록번호 같은 숫자를 눈으로 훑기 쉽다.
+ */
+.seller-notice dl > div {
+  display: flex;
+  gap: 10px;
+  padding: 2px 0;
+}
+
+.seller-notice dt {
+  flex: none;
+  width: 108px;
+  color: #a49c95;
+}
+
+.seller-notice dd {
+  margin: 0;
+  /* 주소나 환불 조건은 길다. 좁은 화면에서 넘치지 않고 접혀야 한다. */
+  min-width: 0;
+}
+
+/* 이름 칸을 고정할 자리가 안 나오면 두 줄로 접는다. */
+@media (max-width: 360px) {
+  .seller-notice dl > div {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .seller-notice dt {
+    width: auto;
+  }
+}
