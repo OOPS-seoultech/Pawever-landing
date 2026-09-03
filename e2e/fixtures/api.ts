@@ -15,6 +15,8 @@ import type { Page } from "@playwright/test";
  */
 export type Campaign = {
   campaignId: string;
+  /** ONLINE 또는 FLEA. 서버가 그 모집에 적힌 값을 그대로 준다. */
+  channel: string;
   capacity: number;
   allocated: number;
   remaining: number;
@@ -34,8 +36,24 @@ export type Campaign = {
  *
  * 여기서 값을 바꿔 각 상황을 만든다.
  */
+/** 플리마켓 모집. 정원도 값도 상시 판매와 따로 센다. */
+export const FLEA_CAMPAIGN: Campaign = {
+  campaignId: "goods-2026-09-flea",
+  channel: "FLEA",
+  capacity: 70,
+  allocated: 0,
+  remaining: 70,
+  startsAt: "2026-09-01T00:00:00Z",
+  endsAt: "2026-12-31T14:59:59Z",
+  open: true,
+  // 플리마켓은 QR 을 찍고 바로 주문한다. 설문을 거치지 않는다.
+  surveyOpen: false,
+  goodsOpen: true,
+};
+
 export const LIVE_CAMPAIGN: Campaign = {
   campaignId: "goods-2026-09",
+  channel: "ONLINE",
   capacity: 100,
   allocated: 1,
   remaining: 99,
@@ -47,6 +65,7 @@ export const LIVE_CAMPAIGN: Campaign = {
 };
 
 const CAMPAIGN_URL = "**/api/public/goods-survey/campaign";
+const FLEA_CAMPAIGN_URL = "**/api/public/goods-survey/campaign?channel=flea";
 
 /** 캠페인 조회에 원하는 값을 물린다. 랜딩이 주기적으로 다시 부르므로 계속 산다. */
 export const mockCampaign = (page: Page, overrides: Partial<Campaign> = {}) =>
@@ -60,6 +79,92 @@ export const mockCampaign = (page: Page, overrides: Partial<Campaign> = {}) =>
       }),
     })
   );
+
+/**
+ * 플리마켓 모집 조회에 값을 물린다.
+ *
+ * 상시 모집과 주소가 갈리므로 따로 물려야 한다. 하나만 물리면 나머지 하나가
+ * blockUnmockedGoodsApi 에 걸려 500 을 받는다.
+ */
+export const mockFleaCampaign = (
+  page: Page,
+  overrides: Partial<Campaign> = {}
+) =>
+  page.route(FLEA_CAMPAIGN_URL, route =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: { ...FLEA_CAMPAIGN, ...overrides },
+      }),
+    })
+  );
+
+/**
+ * 신청 제출까지 가는 길을 물린다.
+ *
+ * 사진 등록은 프리사인이 CONFIRMED 를 바로 주면 저장소로 올리는 단계를
+ * 건너뛴다. 시험이 S3 에 실제로 쓰지 않게 이 길을 쓴다.
+ *
+ * 접수 응답에는 입금처가 실려 온다. 화면이 그 값을 그대로 그리는지 보려면
+ * 여기서 아는 값을 넣어 줘야 한다.
+ */
+export const mockSubmit = (
+  page: Page,
+  overrides: Record<string, unknown> = {}
+) => {
+  let issued = 0;
+  return Promise.all([
+    page.route(
+      "**/api/public/goods-survey/responses/*/photos/presign",
+      route => {
+        issued += 1;
+        return route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            success: true,
+            data: {
+              photoId: `e2e-photo-${issued}`,
+              status: "CONFIRMED",
+              uploadUrl: null,
+              headers: {},
+            },
+          }),
+        });
+      }
+    ),
+    page.route("**/api/public/goods-survey/responses/*/application", route =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          data: {
+            responseId: "e2e-response-0001",
+            applicationId: 1,
+            status: "SUBMITTED",
+            remaining: 69,
+            surveyParticipant: false,
+            orderNumber: "PE-2026-000123",
+            listPriceKrw: 29_900,
+            discountAmountKrw: 18_000,
+            shippingFeeKrw: 0,
+            paymentAmountKrw: 11_900,
+            bank: {
+              name: "기업은행",
+              account: "000-000000-00-000",
+              holder: "포에버",
+            },
+            paymentExpiresAt: "2026-09-07T14:00:00Z",
+            ...overrides,
+          },
+        }),
+      })
+    ),
+  ]);
+};
 
 /** 캠페인 조회가 실패하는 상황. 서버가 죽었거나 배포 중일 때 화면이 어떻게 되는지 본다. */
 export const failCampaign = (page: Page) =>

@@ -257,6 +257,9 @@ export default function AdminOrders() {
               <th className="px-3 py-2 font-medium">보호자</th>
               <th className="px-3 py-2 font-medium">연락처</th>
               <th className="px-3 py-2 font-medium">사진</th>
+              {/* 부칠 건과 넘겨줄 건이 갈린다. 상세를 하나씩 열어 확인하면
+                  스무 건을 포장하는 동안 한 건은 반드시 섞인다. */}
+              <th className="px-3 py-2 font-medium">수령</th>
               <th className="px-3 py-2 font-medium">금액</th>
               <th className="px-3 py-2 font-medium">상태</th>
             </tr>
@@ -264,7 +267,7 @@ export default function AdminOrders() {
           <tbody>
             {loading && !data ? (
               <tr>
-                <td colSpan={9} className="px-3 py-8 text-center text-muted-foreground">
+                <td colSpan={10} className="px-3 py-8 text-center text-muted-foreground">
                   불러오는 중...
                 </td>
               </tr>
@@ -272,7 +275,7 @@ export default function AdminOrders() {
 
             {data?.orders.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-3 py-8 text-center text-muted-foreground">
+                <td colSpan={10} className="px-3 py-8 text-center text-muted-foreground">
                   조건에 맞는 주문이 없습니다.
                 </td>
               </tr>
@@ -296,6 +299,15 @@ export default function AdminOrders() {
                 <td className="px-3 py-2 font-mono text-xs">{order.phoneMasked}</td>
                 <td className="px-3 py-2 text-muted-foreground">
                   {order.photoCount}/5
+                </td>
+                <td className="px-3 py-2">
+                  {order.deliveryMethod === "PICKUP" ? (
+                    <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-900">
+                      현장 수령
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">택배</span>
+                  )}
                 </td>
                 <td className="px-3 py-2">{formatKrw(order.paymentAmountKrw)}</td>
                 <td className="px-3 py-2">
