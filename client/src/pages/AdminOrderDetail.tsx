@@ -169,17 +169,33 @@ export default function AdminOrderDetail() {
               value={order.shipping.phone}
               copyAs="연락처"
             />
+            {/* 방법을 주소보다 먼저 둔다. 주소가 빈 이유를 알고 나서 봐야
+                빠뜨린 것과 구분된다. */}
             <Row
-              label="주소"
-              value={[
-                order.shipping.postalCode ? `(${order.shipping.postalCode})` : "",
-                order.shipping.address ?? "",
-                order.shipping.addressDetail ?? "",
-              ]
-                .filter(Boolean)
-                .join(" ") || "-"}
-              copyAs="주소"
+              label="수령 방법"
+              value={
+                order.shipping.deliveryMethod === "PICKUP"
+                  ? "현장 수령 (배송비 없음)"
+                  : "택배"
+              }
             />
+            {order.shipping.deliveryMethod === "PICKUP" ? (
+              <Row label="주소" value="현장에서 직접 전달 — 주소를 받지 않음" />
+            ) : (
+              <Row
+                label="주소"
+                value={[
+                  order.shipping.postalCode
+                    ? `(${order.shipping.postalCode})`
+                    : "",
+                  order.shipping.address ?? "",
+                  order.shipping.addressDetail ?? "",
+                ]
+                  .filter(Boolean)
+                  .join(" ") || "-"}
+                copyAs="주소"
+              />
+            )}
             <Row
               label="송장"
               value={
