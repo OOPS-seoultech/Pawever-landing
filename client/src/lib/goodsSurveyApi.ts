@@ -3,6 +3,21 @@ export const GOODS_SURVEY_VERSION = "2026-07-25-v2";
 // 실제 정원은 서버 캠페인이 정한다. 이 값은 응답이 오기 전에만 쓰는 자리값이다.
 export const GOODS_SURVEY_CAPACITY = 100;
 
+/**
+ * 제작에 필요한 사진 장수.
+ *
+ * 얼굴·전신·털무늬 세 종이 최소 구성이다. 아무 사진 세 장이 아니라 칸마다
+ * 무엇을 찍어야 하는지가 정해져 있고, 그래서 랜딩의 등록 칸도 세 개다.
+ *
+ * 랜딩과 주문 화면이 서로 다른 수를 들고 있었다 — 랜딩은 세 칸을 다 채워야
+ * 열리는데 주문 화면은 한 장이면 열렸다. 두 화면이 같은 값을 보게 여기 둔다.
+ *
+ * 근거: [카톡 나혜님] "사진 3개 이상 등록해야 제출 버튼 활성화되도록
+ *       변경해주세요. 즉, 사진 3개 이상만 제출 가능하도록 (3-5개)"
+ */
+export const GOODS_PHOTO_MIN_COUNT = 3;
+export const GOODS_PHOTO_MAX_COUNT = 5;
+
 // 굿즈를 고르지 않고 설문에 들어온 경우. 아무것도 고르지 않아도 특정 굿즈가
 // 자동으로 붙으면 실제 선호가 아닌 값이 선호도 집계에 섞인다.
 export const GOODS_UNSELECTED = "unselected";
@@ -230,10 +245,13 @@ export const subscribeSurveyNotice = (
  * 그것으로 하나씩 넣어 볼 수 있게 된다.
  */
 export const unsubscribeSurveyNotice = (token: string) =>
-  apiRequest<void>("/api/public/goods-survey/notice-subscriptions/unsubscribe", {
-    method: "POST",
-    body: JSON.stringify({ token }),
-  });
+  apiRequest<void>(
+    "/api/public/goods-survey/notice-subscriptions/unsubscribe",
+    {
+      method: "POST",
+      body: JSON.stringify({ token }),
+    }
+  );
 
 export const saveSurveyStory = (
   session: SurveyDraftSession,

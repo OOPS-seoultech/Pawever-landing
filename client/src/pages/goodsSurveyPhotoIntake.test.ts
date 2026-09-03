@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { beforeEach, describe, expect, it } from "vitest";
+import { GOODS_PHOTO_MIN_COUNT } from "../lib/goodsSurveyApi";
 import {
   clearGoodsSurveyPhotoHandoff,
   loadGoodsSurveyPhotoHandoff,
@@ -37,7 +38,11 @@ describe("09 FINAL은 사진 등록 카드로 끝난다", () => {
     // 디자인 문구는 "사진 3장 등록하기"다. 3은 칸 수에서 나오게 둔다 —
     // 칸을 늘리고 문구를 못 고치면 버튼이 없는 장수를 말하게 된다.
     expect(landing).toContain("사진 {INTAKE_SLOTS.length}장 등록하기");
-    expect(landing.match(/key: "(face|body|coat)"/g) ?? []).toHaveLength(3);
+    // 칸 수와 주문 화면의 최소 장수는 같은 값이어야 한다. 랜딩은 세 칸을
+    // 다 채워야 열리는데 주문 화면은 한 장이면 열려 있었다.
+    expect(landing.match(/key: "(face|body|coat)"/g) ?? []).toHaveLength(
+      GOODS_PHOTO_MIN_COUNT
+    );
   });
 
   it("이 자리에 내가 넣었던 구매 버튼은 없다", () => {
