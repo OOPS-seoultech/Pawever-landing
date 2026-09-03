@@ -188,6 +188,21 @@ test.describe("플리마켓 랜딩", () => {
     expect(seen.단계사진).toContain("x153");
   });
 
+  test("FAQ 가 이 화면의 값과 같은 말을 한다", async ({ page }) => {
+    // 디자인의 답변은 상시 판매 기준이라, 11,900원을 보고 들어온 사람에게
+    // 23,900원을 말하고 배송비 3,000원을 기본인 것처럼 적었다. 한 페이지가
+    // 두 말을 하면 어느 쪽이 참인지 알 수 없다.
+    await page.goto("/flea");
+    const faq = page.locator(".gs-faq-list");
+
+    await expect(faq).toContainText("현장가 11,900원은 설문과 상관없이");
+    // 07 이 이미 70개라고 말한다. 아래에서 "아직 공개 안 함"이면 안 된다.
+    await expect(faq).toContainText("선착순 70개만 제작합니다");
+    await expect(faq).not.toContainText("오픈 시 공개합니다");
+    // 이 화면의 기본은 방문수령이라 배송비가 없다.
+    await expect(faq).toContainText("과기대에서 받아가시면 배송비가 없고");
+  });
+
   test("구매 버튼 넷이 모두 등록 화면으로 간다", async ({ page }) => {
     // 근거: [카톡 나혜님] "CTA 버튼들 클릭 시 바로 사진 및 정보 등록하는
     //       페이지로 엔드포인트 설정해주세요!"
@@ -223,6 +238,8 @@ test.describe("플리마켓 랜딩", () => {
 
     const cards = page.locator(".gs-intake");
     await expect(cards).toHaveCount(2);
+    // 이 화면의 디자인은 "등록"이다. 상시 랜딩은 "추가"라 두 화면이 갈린다.
+    await expect(cards.first()).toContainText("등록해주세요.");
 
     const first = cards.first();
     await expect(first.locator(".gs-intake-count")).toHaveText("0/3");
