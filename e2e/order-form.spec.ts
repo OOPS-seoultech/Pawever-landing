@@ -146,20 +146,18 @@ test.describe("설문을 건너뛴 주문", () => {
     const submit = page.getByRole("button", { name: /신청 완료하기/ });
     const upload = page.locator('.gsf-upload input[type="file"]');
 
-    await upload.setInputFiles([photoFile("1.jpg")]);
+    // 한 장씩 더해 간다. 고른 것은 뒤에 쌓이므로 같은 목록을 다시 보내지
+    // 않는다 — 그렇게 쓰면 어느 장이 몇 번째로 들어갔는지가 시험마다 달라진다.
+    await upload.setInputFiles(photoFile("1.jpg"));
     await expect(page.locator(".gsf-file-name")).toHaveCount(1);
     await expect(submit).toBeDisabled();
 
     // 두 장도 아직이다. 얼굴·전신·털무늬 세 종이 제작의 최소 구성이다.
-    await upload.setInputFiles([photoFile("1.jpg"), photoFile("2.jpg")]);
+    await upload.setInputFiles(photoFile("2.jpg"));
     await expect(page.locator(".gsf-file-name")).toHaveCount(2);
     await expect(submit).toBeDisabled();
 
-    await upload.setInputFiles([
-      photoFile("1.jpg"),
-      photoFile("2.jpg"),
-      photoFile("3.jpg"),
-    ]);
+    await upload.setInputFiles(photoFile("3.jpg"));
     await expect(page.locator(".gsf-file-name")).toHaveCount(3);
     await expect(submit).toBeEnabled();
   });
