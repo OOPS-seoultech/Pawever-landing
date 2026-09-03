@@ -21,10 +21,18 @@ const PHOTO_MAX_BYTES = 10 * 1024 * 1024;
 export function PhotoIntakeCard({
   onSubmit,
   ctaId,
+  heading,
 }: {
   onSubmit: (files: File[]) => void;
   /** 어느 랜딩의 어느 자리에서 눌린 버튼인지. 분석 도구가 DOM 만 본다. */
   ctaId?: string;
+  /**
+   * 카드 제목의 두 번째 줄.
+   *
+   * 두 랜딩의 디자인이 여기서 갈린다 — 상시는 "추가해주세요.", 플리마켓은
+   * "등록해주세요."다. 한쪽으로 통일하면 다른 쪽이 자기 디자인과 어긋난다.
+   */
+  heading: string;
 }) {
   const [picked, setPicked] = useState<(File | null)[]>(() =>
     INTAKE_SLOTS.map(() => null)
@@ -65,7 +73,7 @@ export function PhotoIntakeCard({
           <strong>
             우리 아이 사진을
             <br />
-            추가해주세요.
+            {heading}
           </strong>
         </div>
         <em className="gs-intake-count">

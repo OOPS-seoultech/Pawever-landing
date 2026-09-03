@@ -37,6 +37,7 @@ describe("09 FINAL은 사진 등록 카드로 끝난다", () => {
   it("디자인이 적어 둔 문장을 그대로 쓴다", () => {
     expect(landing).toContain("사진 등록");
     expect(landing).toContain("우리 아이 사진을");
+    // 두 랜딩의 디자인이 여기서 갈린다. 상시는 "추가", 플리마켓은 "등록"이다.
     expect(landing).toContain("추가해주세요.");
     expect(landing).toContain("사진을 누르면 앨범에서 바로 추가할 수 있어요.");
     expect(landing).toContain("사진은 주문 단계에서 최종 제출됩니다.");

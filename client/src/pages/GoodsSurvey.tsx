@@ -32,6 +32,15 @@ const won = wonText;
 const ASSET_BASE = "/goods-survey";
 
 /**
+ * 09 FINAL 사진 등록 카드의 제목 두 번째 줄.
+ *
+ * 플리마켓 랜딩은 여기가 "등록해주세요." 다. 두 디자인이 갈리는 자리라
+ * 화면마다 자기 문장을 들고 있는다. 태그 안 속성으로 두면 문구 검사가
+ * 태그째로 걷어 내 빠진 줄 모른다 — 그래서 밖에 상수로 둔다.
+ */
+const INTAKE_HEADING = "추가해주세요.";
+
+/**
  * 버튼 식별자. 이동 목적지가 같아도 어느 자리의 버튼이 눌리는지 따로 봐야 한다.
  *
  * 이벤트 파라미터로만 쓰지 않고 data-cta-id로 DOM에도 내보낸다. Meta 이벤트 설정
@@ -851,6 +860,7 @@ export default function GoodsSurvey() {
           {goodsAvailable ? (
             <PhotoIntakeCard
               ctaId={CTA_IDS.final}
+              heading={INTAKE_HEADING}
               onSubmit={files => {
                 // 서버로 보내지 않고 다음 화면까지만 들고 간다.
                 saveGoodsSurveyPhotoHandoff(files);
