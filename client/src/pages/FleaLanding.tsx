@@ -51,12 +51,19 @@ const CTA_IDS = {
 
 type Placement = keyof typeof CTA_IDS;
 
-/** 06 PROCESS 의 네 단계(5472:1600). */
+/**
+ * 06 PROCESS 의 네 단계(5472:1600).
+ *
+ * boxHeight 는 디자인이 정한 그림 상자의 높이다. 원본 비율에 맡기면 3D 제작이
+ * 347px, 검수가 426px 로 늘어나 카드가 화면을 삼킨다. 상자를 정해 두고 넘치는
+ * 부분은 잘라 낸다 — 디자인도 그렇게 잘라 두었다.
+ */
 const processSteps = [
   {
     number: "01",
     title: "사진 3장",
     caption: "얼굴·전신·무늬, 꼬리가 잘 보이는 사진",
+    boxHeight: 153,
     figures: [
       {
         src: "flea-step-photo-1.webp",
@@ -82,6 +89,7 @@ const processSteps = [
     number: "02",
     title: "특징 정리 (2D 4면도 제작)",
     caption: "귀·얼굴형·털색·체형 확인",
+    boxHeight: 160,
     figures: [
       {
         src: "flea-step-4view.webp",
@@ -95,6 +103,7 @@ const processSteps = [
     number: "03",
     title: "3D 제작",
     caption: "모델링부터 출력까지 여러 작업 장면",
+    boxHeight: 269,
     figures: [
       {
         src: "flea-step-3d.webp",
@@ -108,6 +117,7 @@ const processSteps = [
     number: "04",
     title: "출력 및 수작업 검수",
     caption: "세척·표면 마감·상태 확인 후 포장",
+    boxHeight: 244,
     figures: [
       {
         src: "flea-step-finish.webp",
@@ -636,30 +646,33 @@ export default function FleaLanding() {
           </p>
 
           <div className="gs-steps">
-            {processSteps.map(({ number, title, caption, figures }) => (
-              <article className="gs-step" key={number}>
-                <span className="gs-step-number">{number}</span>
-                <h3>{title}</h3>
-                <p>{caption}</p>
-                <div
-                  className={`gs-step-figures${
-                    figures.length > 1 ? " is-triple" : ""
-                  }`}
-                >
-                  {figures.map(({ src, alt, w, h }) => (
-                    <img
-                      key={src}
-                      className="gs-figure"
-                      src={`${ASSET_BASE}/${src}`}
-                      alt={alt}
-                      width={w}
-                      height={h}
-                      decoding="async"
-                    />
-                  ))}
-                </div>
-              </article>
-            ))}
+            {processSteps.map(
+              ({ number, title, caption, figures, boxHeight }) => (
+                <article className="gs-step" key={number}>
+                  <span className="gs-step-number">{number}</span>
+                  <h3>{title}</h3>
+                  <p>{caption}</p>
+                  <div
+                    className={`gs-step-figures${
+                      figures.length > 1 ? " is-triple" : ""
+                    }`}
+                  >
+                    {figures.map(({ src, alt, w, h }) => (
+                      <img
+                        key={src}
+                        className="gs-figure"
+                        src={`${ASSET_BASE}/${src}`}
+                        alt={alt}
+                        width={w}
+                        height={h}
+                        style={{ height: boxHeight }}
+                        decoding="async"
+                      />
+                    ))}
+                  </div>
+                </article>
+              )
+            )}
           </div>
         </section>
 

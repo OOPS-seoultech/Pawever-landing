@@ -139,6 +139,55 @@ test.describe("플리마켓 랜딩", () => {
     expect(wrong, `디자인과 다른 곳 — ${wrong.join(" / ")}`).toEqual([]);
   });
 
+  test("강조·테두리·배경을 디자인 색으로 쓴다", async ({ page }) => {
+    // 굵기 다음으로 눈이 잘 속는 값이다. em 을 그대로 두면 브라우저가
+    // 기울여 버리는데, 디자인은 기울임이 아니라 주황이다.
+    const ORANGE = "rgb(237, 125, 26)";
+    await page.goto("/flea");
+    await expect(page.locator('[data-cta-id="btn_F1"]')).toBeVisible();
+
+    const seen = await page.evaluate(() => {
+      const cs = (sel: string, prop: string) => {
+        const el = document.querySelector(sel) as HTMLElement | null;
+        return el ? getComputedStyle(el).getPropertyValue(prop) : "없음";
+      };
+      const box = (sel: string) => {
+        const el = document.querySelector(sel) as HTMLElement | null;
+        if (!el) return "없음";
+        const r = el.getBoundingClientRect();
+        return `${Math.round(r.width)}x${Math.round(r.height)}`;
+      };
+      return {
+        강조: cs(".flea-why-now h2 em", "color"),
+        기울임: cs(".flea-why-now h2 em", "font-style"),
+        사진카드테두리: cs(".flea-real-price .gs-intake", "border-top-color"),
+        화살표: box(".flea-compare-arrow"),
+        밑줄: cs(
+          ".flea-figure-section .gs-primary-cta span",
+          "text-decoration-line"
+        ),
+        준비수량라벨: cs(".gs-limit-card > span", "color"),
+        마지막배경: cs(".flea-final", "background-image"),
+        마지막제목: cs(".flea-final h2", "color"),
+        단계사진: box(".gs-step-figures.is-triple .gs-figure"),
+      };
+    });
+
+    expect(seen.강조).toBe(ORANGE);
+    expect(seen.기울임).toBe("normal");
+    // 03 의 카드만 주황 테두리다(5492:2347). 09 는 아니다.
+    expect(seen.사진카드테두리).toBe(ORANGE);
+    // 사진 높이 193px 을 물려받아 화살표가 커진 적이 있다.
+    expect(seen.화살표).toBe("29x29");
+    expect(seen.밑줄).toBe("underline");
+    expect(seen.준비수량라벨).toBe(ORANGE);
+    // 09 만 배경이 주황이고 글자가 희다(5472:1792).
+    expect(seen.마지막배경).toContain("linear-gradient");
+    expect(seen.마지막제목).toBe("rgb(255, 255, 255)");
+    // 상자를 정해 두지 않으면 원본 비율대로 늘어나 카드가 화면을 삼킨다.
+    expect(seen.단계사진).toContain("x153");
+  });
+
   test("구매 버튼 넷이 모두 등록 화면으로 간다", async ({ page }) => {
     // 근거: [카톡 나혜님] "CTA 버튼들 클릭 시 바로 사진 및 정보 등록하는
     //       페이지로 엔드포인트 설정해주세요!"
