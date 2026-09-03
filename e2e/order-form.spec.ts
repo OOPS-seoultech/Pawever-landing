@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
-import { mockCampaign, mockDraft, photoFile } from "./fixtures/api";
+import { mockCampaign, mockDraft, mockSubmit, photoFile } from "./fixtures/api";
 
 /**
  * 주문 화면(/goods-survey/survey)에서 결제 직전까지.
@@ -291,6 +291,30 @@ test.describe("설문을 건너뛴 주문", () => {
     });
 
     expect(sizes.link).toBeLessThan(sizes.consent);
+  });
+
+  test("상시 주문은 상시 랜딩으로 돌아가고 설문 길도 남는다", async ({
+    page,
+  }) => {
+    // 플리마켓 맥락을 붙이면서 기존 길을 좁히지 않았다는 확인이다. 설문을
+    // 거쳐 온 사람에게는 다시 답할 길이 있어야 한다.
+    await mockSubmit(page, { shippingFeeKrw: 3000, paymentAmountKrw: 32900 });
+    await page.goto(DIRECT);
+    await fillShipping(page);
+    await page
+      .locator('.gsf-upload input[type="file"]')
+      .setInputFiles([
+        photoFile("1.jpg"),
+        photoFile("2.jpg"),
+        photoFile("3.jpg"),
+      ]);
+    await consent(page, "개인정보 수집·이용에 동의합니다").check();
+    await consent(page, "결제하는 데 동의합니다").check();
+    await page.getByRole("button", { name: /신청 완료하기/ }).click();
+
+    await expect(page.getByText("새 응답 작성하기")).toBeVisible();
+    await page.getByRole("button", { name: "랜딩페이지로 돌아가기" }).click();
+    await expect(page).toHaveURL(/\/goods-survey$/);
   });
 
   test("연락처 형식이 틀리면 이유를 그 자리에서 말한다", async ({ page }) => {

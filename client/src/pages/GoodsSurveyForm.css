@@ -1390,27 +1390,6 @@
   font-weight: 500;
 }
 
-.gsf-review-id {
-  margin: 22px 0;
-  padding: 15px;
-  border: 1px solid var(--gsf-line);
-  border-radius: 15px;
-  background: var(--gsf-card);
-}
-
-.gsf-review-id span {
-  display: block;
-  margin-bottom: 3px;
-  color: var(--gsf-ink-soft);
-  font-size: 10px;
-}
-
-.gsf-review-id strong {
-  color: var(--gsf-accent-dark);
-  font-size: 17px;
-  letter-spacing: 0.03em;
-}
-
 .gsf-modal-backdrop {
   position: fixed;
   z-index: 100;
