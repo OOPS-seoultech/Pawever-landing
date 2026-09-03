@@ -2,6 +2,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  Copy,
   Heart,
   Info,
   LockKeyhole,
@@ -40,6 +41,7 @@ import {
   submitSurveyApplication,
   subscribeSurveyNotice,
   uploadSurveyPhoto,
+  type GoodsDeliveryMethod,
   type SurveyCampaign,
   type SurveyDraftSession,
 } from "@/lib/goodsSurveyApi";
@@ -76,6 +78,7 @@ import {
 import {
   GOODS_PRICE,
   applicablePriceKrw,
+  shippingFeeKrw,
   wonText,
   goodsSurveyClosingContent,
   goodsSurveyIntroContent,
@@ -113,6 +116,15 @@ type StoryFields = {
 };
 
 // 굿즈 발송 안내를 문자로 보내므로 휴대폰 번호만 받는다.
+/** 입금 기한을 사람이 읽는 말로. ISO 문자열은 자기 시간대로 옮겨 세야 한다. */
+const deadlineText = (iso: string) =>
+  new Date(iso).toLocaleString("ko-KR", {
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
 const PHONE_PATTERN = /^01[016789][-\s]?\d{3,4}[-\s]?\d{4}$/;
 
 // 접힌 카드의 요약 칩과 트랙 양끝 라벨. 저장값은 1~5 그대로이며
@@ -649,6 +661,32 @@ export default function GoodsSurveyForm() {
     () => new URLSearchParams(window.location.search).get("direct") === "1",
     []
   );
+
+  /**
+   * 어느 통로로 들어왔는지.
+   *
+   * 플리마켓 랜딩(/flea)의 버튼만 이 값을 붙여 보낸다. 값도 정원도 여기서
+   * 갈리므로 서버에도 알려야 하고, 알리지 않으면 서버는 상시 판매로 본다 —
+   * 화면은 11,900원이라고 적어 두고 29,900원이 청구된다.
+   */
+  const channel = useMemo<"online" | "flea">(
+    () =>
+      new URLSearchParams(window.location.search).get("channel") === "flea"
+        ? "flea"
+        : "online",
+    []
+  );
+
+  /**
+   * 만든 물건을 어떻게 건넬지.
+   *
+   * 현장 수령은 행사장이 있는 플리마켓에서만 고를 수 있다. 상시 판매에는
+   * 건네줄 자리가 없어서, 여기서 열어 두면 부칠 곳 없는 주문이 들어온다.
+   */
+  const [deliveryMethod, setDeliveryMethod] = useState<GoodsDeliveryMethod>(
+    () => (channel === "flea" ? "pickup" : "shipping")
+  );
+  const pickup = channel === "flea" && deliveryMethod === "pickup";
   const restoredDraft = useMemo(() => {
     const draft = loadGoodsSurveyDraft();
     if (
@@ -705,6 +743,7 @@ export default function GoodsSurveyForm() {
   const [shippingConsent, setShippingConsent] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [reviewId, setReviewId] = useState("");
+  const [accountCopied, setAccountCopied] = useState(false);
   /**
    * 신청 직후 띄우는 입금 안내.
    *
@@ -718,6 +757,8 @@ export default function GoodsSurveyForm() {
     paymentAmountKrw: number;
     surveyParticipant: boolean;
     orderNumber: string;
+    bank: { name: string; account: string; holder: string } | null;
+    paymentExpiresAt: string | null;
   } | null>(null);
   // 서버가 알려주기 전까지 쓰는 값이다. 임의의 숫자를 두면 사실과 다른 수가
   // 잠깐 보일 수 있으므로 아직 아무도 신청하지 않은 상태로 둔다.
@@ -852,6 +893,7 @@ export default function GoodsSurveyForm() {
           questionnaireVersion: GOODS_SURVEY_VERSION,
           selectedGoods: initialGoods,
           tracking: createSubmissionTrackingContext(),
+          channel,
         });
         if (cancelled) return;
         await startDirectPurchase(session);
@@ -1034,6 +1076,24 @@ export default function GoodsSurveyForm() {
     };
     setQuestionActiveMs(nextTimings);
     return nextTimings;
+  };
+
+  /**
+   * 계좌번호를 복사한다.
+   *
+   * 은행 앱에 옮겨 적다 한 자리를 틀리면 돈이 남에게 간다. 클립보드를 막아
+   * 둔 브라우저도 있으므로, 실패해도 화면의 계좌는 그대로 읽을 수 있게 둔다.
+   */
+  const copyAccount = (account: string) => {
+    void navigator.clipboard
+      ?.writeText(account)
+      .then(() => {
+        setAccountCopied(true);
+        window.setTimeout(() => setAccountCopied(false), 2000);
+      })
+      .catch(() => {
+        // 복사가 막혀도 계좌는 화면에 남아 있다.
+      });
   };
 
   const startSurvey = async () => {
@@ -1369,8 +1429,8 @@ export default function GoodsSurveyForm() {
         production.petName.trim() &&
         production.guardianName.trim() &&
         PHONE_PATTERN.test(production.phone.trim()) &&
-        production.postalCode.trim() &&
-        production.address.trim()
+        // 현장에서 받아가면 주소를 묻지 않는다. 받는 사람이 그 자리에 온다.
+        (pickup || (production.postalCode.trim() && production.address.trim()))
     ) &&
     privacyConsent &&
     shippingConsent;
@@ -1501,9 +1561,12 @@ export default function GoodsSurveyForm() {
           petName: production.petName,
           guardianName: production.guardianName,
           phone: production.phone,
-          postalCode: production.postalCode,
-          address: production.address,
-          addressDetail: production.addressDetail,
+          deliveryMethod: pickup ? "pickup" : "shipping",
+          // 현장 수령이면 적어 두었던 주소도 보내지 않는다. 쓰지 않을 주소를
+          // 남기면 지킬 것만 늘어난다.
+          postalCode: pickup ? "" : production.postalCode,
+          address: pickup ? "" : production.address,
+          addressDetail: pickup ? "" : production.addressDetail,
           photoIds,
           publicPhotoIds,
           conversionEventId: tracking.conversionEventId,
@@ -1526,6 +1589,8 @@ export default function GoodsSurveyForm() {
         paymentAmountKrw: application.paymentAmountKrw,
         surveyParticipant: application.surveyParticipant,
         orderNumber: application.orderNumber,
+        bank: application.bank,
+        paymentExpiresAt: application.paymentExpiresAt,
       });
       // 노션 10번: 제출 버튼을 누른 시점이 아니라 서버 저장이 끝난 지금이 완료다.
       // 여기까지 온 사람은 이탈이 아니므로 pagehide 이탈 기록도 막는다.
@@ -2134,14 +2199,62 @@ export default function GoodsSurveyForm() {
 
               <section className="gsf-form-section">
                 <h2>3. 제작·배송 정보</h2>
-                {[
-                  ["petName", "아이 이름", "반려견 이름"],
-                  ["guardianName", "보호자 이름", "받는 분 이름"],
-                  ["phone", "연락처", "010-0000-0000"],
-                  ["postalCode", "우편번호", "우편번호"],
-                  ["address", "배송지", "도로명 주소"],
-                  ["addressDetail", "상세 주소", "동·호수 등 상세 주소"],
-                ].map(([field, label, placeholder]) => (
+
+                {/* 현장 수령은 행사장이 있는 플리마켓에서만 고를 수 있다.
+                    근거: [피그마 5472:1755] "선착순 70명 예약하고, 과기대에서
+                    수령하기", [5472:1482] "방문수령 외 택배 시 배송비 3,000원
+                    별도" */}
+                {channel === "flea" && (
+                  <fieldset className="gsf-delivery">
+                    <legend>수령 방법</legend>
+                    <label>
+                      <input
+                        type="radio"
+                        name="deliveryMethod"
+                        checked={deliveryMethod === "pickup"}
+                        onChange={() => setDeliveryMethod("pickup")}
+                      />
+                      <span>
+                        <strong>과기대에서 받아가기</strong>
+                        <small>배송비 없음 · 행사장에서 직접 전달</small>
+                      </span>
+                    </label>
+                    <label>
+                      <input
+                        type="radio"
+                        name="deliveryMethod"
+                        checked={deliveryMethod === "shipping"}
+                        onChange={() => setDeliveryMethod("shipping")}
+                      />
+                      <span>
+                        <strong>택배로 받기</strong>
+                        <small>
+                          배송비 {wonText(GOODS_PRICE.shipping)} 별도
+                        </small>
+                      </span>
+                    </label>
+                  </fieldset>
+                )}
+
+                {(
+                  [
+                    ["petName", "아이 이름", "반려견 이름"],
+                    ["guardianName", "보호자 이름", "받는 분 이름"],
+                    ["phone", "연락처", "010-0000-0000"],
+                    // 받는 사람이 그 자리에 오면 주소를 묻지 않는다.
+                    ...(pickup
+                      ? []
+                      : [
+                          ["postalCode", "우편번호", "우편번호"],
+                          ["address", "배송지", "도로명 주소"],
+                          [
+                            "addressDetail",
+                            "상세 주소",
+                            "동·호수 등 상세 주소",
+                          ],
+                        ]),
+                  ] as string[][]
+                ).map(([field, label, placeholder]) => (
                   <label key={field}>
                     <FieldLabel optional={field === "addressDetail"}>
                       {label}
@@ -2203,11 +2316,18 @@ export default function GoodsSurveyForm() {
                   <span>
                     {/* 설문을 거치지 않고 온 사람은 정가다. 고정 금액을 적으면
                         동의한 금액과 청구되는 금액이 어긋난다. */}
-                    제작비 {wonText(applicablePriceKrw(directPurchase))} + 배송비{" "}
-                    {wonText(GOODS_PRICE.shipping)} ={" "}
+                    제작비{" "}
+                    {wonText(applicablePriceKrw(directPurchase, channel))}
+                    {pickup ? (
+                      <> · 방문수령(배송비 없음)</>
+                    ) : (
+                      <> + 배송비 {wonText(GOODS_PRICE.shipping)}</>
+                    )}{" "}
+                    ={" "}
                     <strong>
                       {wonText(
-                        applicablePriceKrw(directPurchase) + GOODS_PRICE.shipping
+                        applicablePriceKrw(directPurchase, channel) +
+                          shippingFeeKrw(pickup ? "pickup" : "shipping")
                       )}
                     </strong>
                     을 결제하는 데 동의합니다. <em>필수</em>
@@ -2376,11 +2496,50 @@ export default function GoodsSurveyForm() {
               <p>설문 응답과 제작·배송 정보는 분리해 안전하게 저장했습니다.</p>
               {paymentNotice && (
                 <div className="gsf-payment-notice">
-                  <strong>입금 안내를 문자로 보내드릴게요</strong>
+                  {/* 계좌를 눈앞에 두고 "문자로 보내드릴게요"라고 하면
+                      기다려야 하는지 헷갈린다. 지금 넣을 수 있다는 것이 먼저다. */}
+                  <strong>
+                    {paymentNotice.bank
+                      ? "아래 계좌로 입금해 주세요"
+                      : "입금 안내를 문자로 보내드릴게요"}
+                  </strong>
                   <p>
-                    입력하신 연락처로 입금 계좌를 문자로 보내드립니다. 입금이
-                    확인되면 제작이 시작돼요.
+                    {paymentNotice.bank
+                      ? "같은 안내를 입력하신 연락처로 문자로도 보내드립니다. 입금이 확인되면 제작이 시작돼요."
+                      : "입력하신 연락처로 입금 계좌를 문자로 보내드립니다. 입금이 확인되면 제작이 시작돼요."}
                   </p>
+                  {/* 계좌는 서버 설정에서 온다. 문자가 쓰는 것과 같은 값이라
+                      화면과 문자가 다른 곳을 말할 일이 없다. 설정이 비어 있으면
+                      아예 그리지 않는다 — 빈칸을 보여 주면 사람이 빈칸으로
+                      송금할 곳을 찾는다. */}
+                  {paymentNotice.bank !== null && (
+                    <div className="gsf-bank">
+                      <span>입금 계좌</span>
+                      <strong>
+                        {paymentNotice.bank.name} {paymentNotice.bank.account}
+                      </strong>
+                      <small>예금주 {paymentNotice.bank.holder}</small>
+                      <button
+                        type="button"
+                        onClick={() => copyAccount(paymentNotice.bank!.account)}
+                      >
+                        {accountCopied ? (
+                          <>
+                            <Check aria-hidden="true" />
+                            복사됨
+                          </>
+                        ) : (
+                          <>
+                            <Copy aria-hidden="true" />
+                            계좌번호 복사
+                          </>
+                        )}
+                      </button>
+                      {/* 입금자명이 아니라 주문번호로 대조한다. 같은 이름이
+                          둘이면 이름만으로는 어느 주문의 돈인지 모른다. */}
+                      <em>입금자명이 달라도 주문번호로 확인해 드려요</em>
+                    </div>
+                  )}
                   {/* 금액은 서버가 주문에 적은 값을 그대로 쓴다. 화면에서 다시
                       계산하면 청구된 금액과 보이는 금액이 어긋날 수 있다. */}
                   <dl>
@@ -2415,6 +2574,12 @@ export default function GoodsSurveyForm() {
                         <strong>{wonText(paymentNotice.paymentAmountKrw)}</strong>
                       </dd>
                     </div>
+                    {paymentNotice.paymentExpiresAt && (
+                      <div>
+                        <dt>입금 기한</dt>
+                        <dd>{deadlineText(paymentNotice.paymentExpiresAt)}</dd>
+                      </div>
+                    )}
                   </dl>
                 </div>
               )}

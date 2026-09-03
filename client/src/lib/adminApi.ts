@@ -34,6 +34,13 @@ export type AdminOrderSummary = {
   photoCount: number;
   paymentAmountKrw: number;
   paidAt: string | null;
+  /**
+   * 부칠 건인지 넘겨줄 건인지. SHIPPING 또는 PICKUP.
+   *
+   * 현장 수령 건은 주소가 비어 있다. 방법을 함께 보지 않으면 빠뜨린 주소와
+   * 구분되지 않는다.
+   */
+  deliveryMethod: string;
   trackingNumber: string | null;
 };
 
@@ -74,6 +81,8 @@ export type AdminOrderDetail = {
   shipping: {
     guardianName: string;
     phone: string;
+    /** SHIPPING 또는 PICKUP. PICKUP 이면 주소가 비어 있다. */
+    deliveryMethod: string;
     postalCode: string | null;
     address: string | null;
     addressDetail: string | null;

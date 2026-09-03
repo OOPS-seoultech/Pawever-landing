@@ -16,10 +16,15 @@ import {
  * 열어보지 않고 구매 버튼으로 채웠다. 그게 대표 코멘트 #27 "이 랜딩에서
  * 바로 사진, 정보 기입할 수 있는 폼도 넣어주세요"가 가리키던 자리다.
  */
-const landing = readFileSync(
-  new URL("./GoodsSurvey.tsx", import.meta.url),
-  "utf8"
-).replace(/\s+/g, " ");
+const landing = // 랜딩은 화면 파일 하나가 아니다. 사진 등록 카드는 플리마켓 랜딩과 함께
+  // 쓰려고 goodsSurveyIntake.tsx 로 나가 있다. 화면에 실제로 나가는 것을
+  // 보려면 둘을 같이 읽어야 한다.
+  [
+    readFileSync(new URL("./GoodsSurvey.tsx", import.meta.url), "utf8"),
+    readFileSync(new URL("./goodsSurveyIntake.tsx", import.meta.url), "utf8"),
+  ]
+    .join(" ")
+    .replace(/\s+/g, " ");
 
 const form = readFileSync(
   new URL("./GoodsSurveyForm.tsx", import.meta.url),

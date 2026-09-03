@@ -12,10 +12,13 @@ import figmaCopy from "./goodsSurveyFigmaCopy.json";
  * goodsSurveyFigmaCopy.json 은 피그마에서 뽑은 문구 그대로다. 디자인이 바뀌면
  * 그 파일을 다시 뽑아 갈아 끼우고, 화면을 거기에 맞춘다. 반대로 하지 않는다.
  */
-const rawSource = readFileSync(
-  new URL("./GoodsSurvey.tsx", import.meta.url),
-  "utf8"
-);
+const rawSource = // 랜딩은 화면 파일 하나가 아니다. 사진 등록 카드는 플리마켓 랜딩과 함께
+  // 쓰려고 goodsSurveyIntake.tsx 로 나가 있다. 화면에 실제로 나가는 것을
+  // 보려면 둘을 같이 읽어야 한다.
+  [
+    readFileSync(new URL("./GoodsSurvey.tsx", import.meta.url), "utf8"),
+    readFileSync(new URL("./goodsSurveyIntake.tsx", import.meta.url), "utf8"),
+  ].join(" ");
 
 /**
  * 주석을 먼저 걷는다.

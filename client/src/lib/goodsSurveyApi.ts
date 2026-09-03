@@ -44,8 +44,18 @@ export type SurveyCompletion = {
   reservationExpiresAt: string | null;
 };
 
+/**
+ * 굿즈를 파는 통로.
+ *
+ * 통로마다 값과 정원이 다르다. 온라인은 정가 29,900원에 100자리, 플리마켓은
+ * 현장 한정가 11,900원에 70자리다. 화면이 어느 쪽을 보는지는 주소로 갈린다.
+ */
+export type GoodsSalesChannel = "online" | "flea";
+
 export type SurveyCampaign = {
   campaignId: string;
+  /** ONLINE 또는 FLEA. 서버가 그 모집에 적힌 값을 그대로 준다. */
+  channel: string;
   capacity: number;
   allocated: number;
   remaining: number;
@@ -89,12 +99,22 @@ export type StoryPayload = {
   publishAgreed: boolean;
 };
 
+/** 만든 물건을 건네는 방법. 서버의 GoodsDeliveryMethod 와 같은 값이다. */
+export type GoodsDeliveryMethod = "shipping" | "pickup";
+
 export type ApplicationPayload = {
   goodsType: string;
   customGoods: string;
   petName: string;
   guardianName: string;
   phone: string;
+  /**
+   * 건네는 방법. 현장 수령이면 주소를 보내지 않는다.
+   *
+   * 플리마켓 경로에서만 pickup 을 고를 수 있다. 상시 판매에서 보내면 서버가
+   * 거절한다 — 부칠 곳 없는 주문을 받지 않기 위해서다.
+   */
+  deliveryMethod: GoodsDeliveryMethod;
   postalCode: string;
   address: string;
   addressDetail: string;
@@ -167,13 +187,22 @@ const editHeaders = (session: SurveyDraftSession) => ({
   "X-Survey-Edit-Token": session.editToken,
 });
 
-export const getSurveyCampaign = () =>
-  apiRequest<SurveyCampaign>("/api/public/goods-survey/campaign");
+export const getSurveyCampaign = (channel: GoodsSalesChannel = "online") =>
+  apiRequest<SurveyCampaign>(
+    channel === "online"
+      ? "/api/public/goods-survey/campaign"
+      : `/api/public/goods-survey/campaign?channel=${channel}`
+  );
 
 export const createSurveyDraft = (payload: {
   questionnaireVersion: string;
   selectedGoods: string;
   tracking: SurveyTrackingPayload;
+  /**
+   * 어느 통로로 들어왔는지. 값과 정원이 여기서 갈리고, 한 번 정해지면
+   * 주문이 끝날 때까지 그 모집을 따라간다.
+   */
+  channel?: GoodsSalesChannel;
 }) =>
   apiRequest<SurveyDraftSession>("/api/public/goods-survey/responses", {
     method: "POST",
@@ -353,6 +382,16 @@ export const submitSurveyApplication = (
      * 완료 화면만 깨진다.
      */
     paymentAmountKrw: number;
+    /**
+     * 어디로 넣어야 하는지.
+     *
+     * 서버 설정이 비어 있으면 null 이다. 그때 화면은 계좌를 그리지 않고
+     * 문자 안내만 남긴다 — 없는 계좌를 빈칸으로 그려 두면 사람이 빈칸으로
+     * 송금할 곳을 찾는다.
+     */
+    bank: { name: string; account: string; holder: string } | null;
+    /** 이 시각까지 들어오지 않으면 자리가 돌아간다. */
+    paymentExpiresAt: string | null;
   }>(`/api/public/goods-survey/responses/${session.responseId}/application`, {
     method: "POST",
     headers: {

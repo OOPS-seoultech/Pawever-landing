@@ -1529,3 +1529,126 @@
     transform: none;
   }
 }
+
+/*
+ * 수령 방법(플리마켓 전용).
+ *
+ * 값이 갈리는 선택이라 고른 쪽이 한눈에 보여야 한다. 잘못 고른 채 넘어가면
+ * 배송비 3,000원이 붙거나, 부칠 곳 없는 주문이 들어온다.
+ */
+.gsf-delivery {
+  margin: 0 0 18px;
+  padding: 0;
+  border: 0;
+}
+
+.gsf-delivery legend {
+  margin-bottom: 8px;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gsf-ink);
+}
+
+.gsf-delivery label {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--gsf-line);
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.gsf-delivery label:has(input:checked) {
+  border-color: var(--gsf-accent);
+  background: var(--gsf-accent-soft);
+}
+
+.gsf-delivery input {
+  margin-top: 3px;
+  accent-color: var(--gsf-accent);
+}
+
+.gsf-delivery strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.gsf-delivery small {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--gsf-ink-soft);
+}
+
+/*
+ * 입금 계좌.
+ *
+ * 접수 화면에서 가장 먼저 눈에 들어와야 한다. 이 화면을 보는 사람이 다음에
+ * 할 일은 은행 앱을 여는 것뿐이다. 옮겨 적다 한 자리를 틀리면 돈이 남에게
+ * 가므로 복사 버튼을 함께 둔다.
+ */
+.gsf-bank {
+  margin: 14px 0 16px;
+  padding: 16px;
+  border: 1px solid var(--gsf-accent);
+  border-radius: 14px;
+  background: var(--gsf-accent-soft);
+  text-align: left;
+}
+
+.gsf-bank > span {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gsf-accent);
+}
+
+.gsf-bank > strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+  /* 계좌번호는 자릿수를 세어 읽는다. 폭이 흔들리면 눈이 자리를 잃는다. */
+  font-variant-numeric: tabular-nums;
+}
+
+.gsf-bank > small {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--gsf-ink-soft);
+}
+
+.gsf-bank > button {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 12px;
+  padding: 9px 14px;
+  border: 1px solid var(--gsf-accent);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--gsf-accent);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.gsf-bank > button svg {
+  width: 15px;
+  height: 15px;
+}
+
+.gsf-bank > em {
+  display: block;
+  margin-top: 10px;
+  font-size: 12px;
+  font-style: normal;
+  color: var(--gsf-ink-soft);
+}
