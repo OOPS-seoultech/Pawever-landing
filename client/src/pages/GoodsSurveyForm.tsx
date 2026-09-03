@@ -2,6 +2,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  Copy,
   Heart,
   Info,
   LockKeyhole,
@@ -115,6 +116,15 @@ type StoryFields = {
 };
 
 // 굿즈 발송 안내를 문자로 보내므로 휴대폰 번호만 받는다.
+/** 입금 기한을 사람이 읽는 말로. ISO 문자열은 자기 시간대로 옮겨 세야 한다. */
+const deadlineText = (iso: string) =>
+  new Date(iso).toLocaleString("ko-KR", {
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
 const PHONE_PATTERN = /^01[016789][-\s]?\d{3,4}[-\s]?\d{4}$/;
 
 // 접힌 카드의 요약 칩과 트랙 양끝 라벨. 저장값은 1~5 그대로이며
@@ -733,6 +743,7 @@ export default function GoodsSurveyForm() {
   const [shippingConsent, setShippingConsent] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [reviewId, setReviewId] = useState("");
+  const [accountCopied, setAccountCopied] = useState(false);
   /**
    * 신청 직후 띄우는 입금 안내.
    *
@@ -746,6 +757,8 @@ export default function GoodsSurveyForm() {
     paymentAmountKrw: number;
     surveyParticipant: boolean;
     orderNumber: string;
+    bank: { name: string; account: string; holder: string } | null;
+    paymentExpiresAt: string | null;
   } | null>(null);
   // 서버가 알려주기 전까지 쓰는 값이다. 임의의 숫자를 두면 사실과 다른 수가
   // 잠깐 보일 수 있으므로 아직 아무도 신청하지 않은 상태로 둔다.
@@ -1063,6 +1076,24 @@ export default function GoodsSurveyForm() {
     };
     setQuestionActiveMs(nextTimings);
     return nextTimings;
+  };
+
+  /**
+   * 계좌번호를 복사한다.
+   *
+   * 은행 앱에 옮겨 적다 한 자리를 틀리면 돈이 남에게 간다. 클립보드를 막아
+   * 둔 브라우저도 있으므로, 실패해도 화면의 계좌는 그대로 읽을 수 있게 둔다.
+   */
+  const copyAccount = (account: string) => {
+    void navigator.clipboard
+      ?.writeText(account)
+      .then(() => {
+        setAccountCopied(true);
+        window.setTimeout(() => setAccountCopied(false), 2000);
+      })
+      .catch(() => {
+        // 복사가 막혀도 계좌는 화면에 남아 있다.
+      });
   };
 
   const startSurvey = async () => {
@@ -1558,6 +1589,8 @@ export default function GoodsSurveyForm() {
         paymentAmountKrw: application.paymentAmountKrw,
         surveyParticipant: application.surveyParticipant,
         orderNumber: application.orderNumber,
+        bank: application.bank,
+        paymentExpiresAt: application.paymentExpiresAt,
       });
       // 노션 10번: 제출 버튼을 누른 시점이 아니라 서버 저장이 끝난 지금이 완료다.
       // 여기까지 온 사람은 이탈이 아니므로 pagehide 이탈 기록도 막는다.
@@ -2463,11 +2496,50 @@ export default function GoodsSurveyForm() {
               <p>설문 응답과 제작·배송 정보는 분리해 안전하게 저장했습니다.</p>
               {paymentNotice && (
                 <div className="gsf-payment-notice">
-                  <strong>입금 안내를 문자로 보내드릴게요</strong>
+                  {/* 계좌를 눈앞에 두고 "문자로 보내드릴게요"라고 하면
+                      기다려야 하는지 헷갈린다. 지금 넣을 수 있다는 것이 먼저다. */}
+                  <strong>
+                    {paymentNotice.bank
+                      ? "아래 계좌로 입금해 주세요"
+                      : "입금 안내를 문자로 보내드릴게요"}
+                  </strong>
                   <p>
-                    입력하신 연락처로 입금 계좌를 문자로 보내드립니다. 입금이
-                    확인되면 제작이 시작돼요.
+                    {paymentNotice.bank
+                      ? "같은 안내를 입력하신 연락처로 문자로도 보내드립니다. 입금이 확인되면 제작이 시작돼요."
+                      : "입력하신 연락처로 입금 계좌를 문자로 보내드립니다. 입금이 확인되면 제작이 시작돼요."}
                   </p>
+                  {/* 계좌는 서버 설정에서 온다. 문자가 쓰는 것과 같은 값이라
+                      화면과 문자가 다른 곳을 말할 일이 없다. 설정이 비어 있으면
+                      아예 그리지 않는다 — 빈칸을 보여 주면 사람이 빈칸으로
+                      송금할 곳을 찾는다. */}
+                  {paymentNotice.bank !== null && (
+                    <div className="gsf-bank">
+                      <span>입금 계좌</span>
+                      <strong>
+                        {paymentNotice.bank.name} {paymentNotice.bank.account}
+                      </strong>
+                      <small>예금주 {paymentNotice.bank.holder}</small>
+                      <button
+                        type="button"
+                        onClick={() => copyAccount(paymentNotice.bank!.account)}
+                      >
+                        {accountCopied ? (
+                          <>
+                            <Check aria-hidden="true" />
+                            복사됨
+                          </>
+                        ) : (
+                          <>
+                            <Copy aria-hidden="true" />
+                            계좌번호 복사
+                          </>
+                        )}
+                      </button>
+                      {/* 입금자명이 아니라 주문번호로 대조한다. 같은 이름이
+                          둘이면 이름만으로는 어느 주문의 돈인지 모른다. */}
+                      <em>입금자명이 달라도 주문번호로 확인해 드려요</em>
+                    </div>
+                  )}
                   {/* 금액은 서버가 주문에 적은 값을 그대로 쓴다. 화면에서 다시
                       계산하면 청구된 금액과 보이는 금액이 어긋날 수 있다. */}
                   <dl>
@@ -2502,6 +2574,12 @@ export default function GoodsSurveyForm() {
                         <strong>{wonText(paymentNotice.paymentAmountKrw)}</strong>
                       </dd>
                     </div>
+                    {paymentNotice.paymentExpiresAt && (
+                      <div>
+                        <dt>입금 기한</dt>
+                        <dd>{deadlineText(paymentNotice.paymentExpiresAt)}</dd>
+                      </div>
+                    )}
                   </dl>
                 </div>
               )}

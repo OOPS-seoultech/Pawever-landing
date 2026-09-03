@@ -382,6 +382,16 @@ export const submitSurveyApplication = (
      * 완료 화면만 깨진다.
      */
     paymentAmountKrw: number;
+    /**
+     * 어디로 넣어야 하는지.
+     *
+     * 서버 설정이 비어 있으면 null 이다. 그때 화면은 계좌를 그리지 않고
+     * 문자 안내만 남긴다 — 없는 계좌를 빈칸으로 그려 두면 사람이 빈칸으로
+     * 송금할 곳을 찾는다.
+     */
+    bank: { name: string; account: string; holder: string } | null;
+    /** 이 시각까지 들어오지 않으면 자리가 돌아간다. */
+    paymentExpiresAt: string | null;
   }>(`/api/public/goods-survey/responses/${session.responseId}/application`, {
     method: "POST",
     headers: {
