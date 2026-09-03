@@ -13,10 +13,15 @@ import { describe, expect, it } from "vitest";
  * 여기 적힌 문장은 전부 그 프레임에서 그대로 가져온 것이고,
  * 임의로 고쳐 쓰지 않는다.
  */
-const landing = readFileSync(
-  new URL("./GoodsSurvey.tsx", import.meta.url),
-  "utf8"
-).replace(/\s+/g, " ");
+const landing = // 랜딩은 화면 파일 하나가 아니다. 사진 등록 카드는 플리마켓 랜딩과 함께
+  // 쓰려고 goodsSurveyIntake.tsx 로 나가 있다. 화면에 실제로 나가는 것을
+  // 보려면 둘을 같이 읽어야 한다.
+  [
+    readFileSync(new URL("./GoodsSurvey.tsx", import.meta.url), "utf8"),
+    readFileSync(new URL("./goodsSurveyIntake.tsx", import.meta.url), "utf8"),
+  ]
+    .join(" ")
+    .replace(/\s+/g, " ");
 
 const orderOf = (needle: string) => {
   const at = landing.indexOf(needle);
