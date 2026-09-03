@@ -8,6 +8,9 @@ export const GOODS_PRICE = {
   list: 34_900,
   presale: 29_900,
   member: 23_900,
+  /* 과기대 플리마켓 현장 한정가. 서버의 flea-discount-krw 를 뺀 값과 같다
+     (29,900 − 18,000 = 11,900, 디자인의 "60.2% 할인"). */
+  flea: 11_900,
   competitor: 350_000,
   shipping: 3_000,
 } as const;
@@ -21,8 +24,23 @@ export const GOODS_SURVEY_DISCOUNT = GOODS_PRICE.presale - GOODS_PRICE.member;
  * 설문을 거치지 않고 바로 신청하면 정가다. 동의 문구에 이 값을 적으므로,
  * 서버가 매기는 금액과 어긋나면 동의한 금액과 청구되는 금액이 달라진다.
  */
-export const applicablePriceKrw = (directPurchase: boolean) =>
-  directPurchase ? GOODS_PRICE.presale : GOODS_PRICE.member;
+export const applicablePriceKrw = (
+  directPurchase: boolean,
+  channel: "online" | "flea" = "online"
+) => {
+  // 플리마켓은 설문을 거칠 길이 없는 자리라 누가 오든 같은 값이다.
+  if (channel === "flea") return GOODS_PRICE.flea;
+  return directPurchase ? GOODS_PRICE.presale : GOODS_PRICE.member;
+};
+
+/**
+ * 이 주문에 붙는 배송비.
+ *
+ * 현장에서 받아가면 부치지 않으니 받을 이유가 없다.
+ * 근거: [피그마 5472:1482] "방문수령 외 택배 시 배송비 3,000원 별도"
+ */
+export const shippingFeeKrw = (deliveryMethod: "shipping" | "pickup") =>
+  deliveryMethod === "pickup" ? 0 : GOODS_PRICE.shipping;
 
 export const wonText = (value: number) => `${value.toLocaleString("ko-KR")}원`;
 
