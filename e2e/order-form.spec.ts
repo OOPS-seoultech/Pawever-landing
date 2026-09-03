@@ -260,6 +260,39 @@ test.describe("설문을 건너뛴 주문", () => {
     ).toBeEnabled();
   });
 
+  test("연락처는 숫자만 쳐도 하이픈이 붙는다", async ({ page }) => {
+    // "형식에 맞춰 작성해주세요"만 띄우면 하이픈을 넣으라는 건지 빼라는
+    // 건지 알 수 없다. 사람에게 규칙을 지키게 하는 대신 규칙을 없앤다.
+    await page.goto(DIRECT);
+    const phone = page.getByPlaceholder("010-0000-0000");
+
+    await phone.fill("01012345678");
+    await expect(phone).toHaveValue("010-1234-5678");
+    await expect(page.locator(".gsf-field-error")).toHaveCount(0);
+  });
+
+  test("자세히 보기가 동의 문구보다 작다", async ({ page }) => {
+    // 10.5px 로 적어 두었는데 한 번도 먹지 않았다. 화면 안의 button 이
+    // font 를 통째로 상속받는 규칙(.goods-survey-form-page button)에 밀려
+    // 16px 로 나가고 있었다.
+    await page.goto(DIRECT);
+    // 초안이 만들어져야 제작 정보 화면이 뜬다.
+    await expect(page.locator(".gsf-inline-link")).toBeVisible();
+
+    const sizes = await page.evaluate(() => {
+      const size = (sel: string) =>
+        parseFloat(
+          getComputedStyle(document.querySelector(sel) as HTMLElement).fontSize
+        );
+      return {
+        link: size(".gsf-inline-link"),
+        consent: size(".gsf-consent-card label span"),
+      };
+    });
+
+    expect(sizes.link).toBeLessThan(sizes.consent);
+  });
+
   test("연락처 형식이 틀리면 이유를 그 자리에서 말한다", async ({ page }) => {
     // 입금 안내든 배송 안내든 이 번호로 간다. 틀린 채로 접수되면 연락이 끊긴다.
     await page.goto(DIRECT);

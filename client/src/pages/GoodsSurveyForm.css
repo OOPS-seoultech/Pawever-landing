@@ -905,7 +905,11 @@
   accent-color: var(--gsf-sage);
 }
 
-.gsf-inline-link {
+/* 화면 안의 button 은 위에서 font 를 통째로 상속받는다
+   (.goods-survey-form-page button { font: inherit }). 클래스 하나로는 그
+   규칙을 못 이겨서, 여기 적어 둔 10.5px 이 한 번도 먹지 않았다 — 동의 문구
+   (12px)보다 작으라고 적어 두고 16px 로 나가고 있었다. */
+.goods-survey-form-page .gsf-inline-link {
   width: fit-content;
   margin: -3px 0 1px 29px;
   padding: 0;
