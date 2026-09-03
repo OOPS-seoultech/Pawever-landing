@@ -99,12 +99,22 @@ export type StoryPayload = {
   publishAgreed: boolean;
 };
 
+/** 만든 물건을 건네는 방법. 서버의 GoodsDeliveryMethod 와 같은 값이다. */
+export type GoodsDeliveryMethod = "shipping" | "pickup";
+
 export type ApplicationPayload = {
   goodsType: string;
   customGoods: string;
   petName: string;
   guardianName: string;
   phone: string;
+  /**
+   * 건네는 방법. 현장 수령이면 주소를 보내지 않는다.
+   *
+   * 플리마켓 경로에서만 pickup 을 고를 수 있다. 상시 판매에서 보내면 서버가
+   * 거절한다 — 부칠 곳 없는 주문을 받지 않기 위해서다.
+   */
+  deliveryMethod: GoodsDeliveryMethod;
   postalCode: string;
   address: string;
   addressDetail: string;

@@ -40,6 +40,7 @@ import {
   submitSurveyApplication,
   subscribeSurveyNotice,
   uploadSurveyPhoto,
+  type GoodsDeliveryMethod,
   type SurveyCampaign,
   type SurveyDraftSession,
 } from "@/lib/goodsSurveyApi";
@@ -76,6 +77,7 @@ import {
 import {
   GOODS_PRICE,
   applicablePriceKrw,
+  shippingFeeKrw,
   wonText,
   goodsSurveyClosingContent,
   goodsSurveyIntroContent,
@@ -649,6 +651,32 @@ export default function GoodsSurveyForm() {
     () => new URLSearchParams(window.location.search).get("direct") === "1",
     []
   );
+
+  /**
+   * 어느 통로로 들어왔는지.
+   *
+   * 플리마켓 랜딩(/flea)의 버튼만 이 값을 붙여 보낸다. 값도 정원도 여기서
+   * 갈리므로 서버에도 알려야 하고, 알리지 않으면 서버는 상시 판매로 본다 —
+   * 화면은 11,900원이라고 적어 두고 29,900원이 청구된다.
+   */
+  const channel = useMemo<"online" | "flea">(
+    () =>
+      new URLSearchParams(window.location.search).get("channel") === "flea"
+        ? "flea"
+        : "online",
+    []
+  );
+
+  /**
+   * 만든 물건을 어떻게 건넬지.
+   *
+   * 현장 수령은 행사장이 있는 플리마켓에서만 고를 수 있다. 상시 판매에는
+   * 건네줄 자리가 없어서, 여기서 열어 두면 부칠 곳 없는 주문이 들어온다.
+   */
+  const [deliveryMethod, setDeliveryMethod] = useState<GoodsDeliveryMethod>(
+    () => (channel === "flea" ? "pickup" : "shipping")
+  );
+  const pickup = channel === "flea" && deliveryMethod === "pickup";
   const restoredDraft = useMemo(() => {
     const draft = loadGoodsSurveyDraft();
     if (
@@ -852,6 +880,7 @@ export default function GoodsSurveyForm() {
           questionnaireVersion: GOODS_SURVEY_VERSION,
           selectedGoods: initialGoods,
           tracking: createSubmissionTrackingContext(),
+          channel,
         });
         if (cancelled) return;
         await startDirectPurchase(session);
@@ -1369,8 +1398,8 @@ export default function GoodsSurveyForm() {
         production.petName.trim() &&
         production.guardianName.trim() &&
         PHONE_PATTERN.test(production.phone.trim()) &&
-        production.postalCode.trim() &&
-        production.address.trim()
+        // 현장에서 받아가면 주소를 묻지 않는다. 받는 사람이 그 자리에 온다.
+        (pickup || (production.postalCode.trim() && production.address.trim()))
     ) &&
     privacyConsent &&
     shippingConsent;
@@ -1501,9 +1530,12 @@ export default function GoodsSurveyForm() {
           petName: production.petName,
           guardianName: production.guardianName,
           phone: production.phone,
-          postalCode: production.postalCode,
-          address: production.address,
-          addressDetail: production.addressDetail,
+          deliveryMethod: pickup ? "pickup" : "shipping",
+          // 현장 수령이면 적어 두었던 주소도 보내지 않는다. 쓰지 않을 주소를
+          // 남기면 지킬 것만 늘어난다.
+          postalCode: pickup ? "" : production.postalCode,
+          address: pickup ? "" : production.address,
+          addressDetail: pickup ? "" : production.addressDetail,
           photoIds,
           publicPhotoIds,
           conversionEventId: tracking.conversionEventId,
@@ -2134,14 +2166,62 @@ export default function GoodsSurveyForm() {
 
               <section className="gsf-form-section">
                 <h2>3. 제작·배송 정보</h2>
-                {[
-                  ["petName", "아이 이름", "반려견 이름"],
-                  ["guardianName", "보호자 이름", "받는 분 이름"],
-                  ["phone", "연락처", "010-0000-0000"],
-                  ["postalCode", "우편번호", "우편번호"],
-                  ["address", "배송지", "도로명 주소"],
-                  ["addressDetail", "상세 주소", "동·호수 등 상세 주소"],
-                ].map(([field, label, placeholder]) => (
+
+                {/* 현장 수령은 행사장이 있는 플리마켓에서만 고를 수 있다.
+                    근거: [피그마 5472:1755] "선착순 70명 예약하고, 과기대에서
+                    수령하기", [5472:1482] "방문수령 외 택배 시 배송비 3,000원
+                    별도" */}
+                {channel === "flea" && (
+                  <fieldset className="gsf-delivery">
+                    <legend>수령 방법</legend>
+                    <label>
+                      <input
+                        type="radio"
+                        name="deliveryMethod"
+                        checked={deliveryMethod === "pickup"}
+                        onChange={() => setDeliveryMethod("pickup")}
+                      />
+                      <span>
+                        <strong>과기대에서 받아가기</strong>
+                        <small>배송비 없음 · 행사장에서 직접 전달</small>
+                      </span>
+                    </label>
+                    <label>
+                      <input
+                        type="radio"
+                        name="deliveryMethod"
+                        checked={deliveryMethod === "shipping"}
+                        onChange={() => setDeliveryMethod("shipping")}
+                      />
+                      <span>
+                        <strong>택배로 받기</strong>
+                        <small>
+                          배송비 {wonText(GOODS_PRICE.shipping)} 별도
+                        </small>
+                      </span>
+                    </label>
+                  </fieldset>
+                )}
+
+                {(
+                  [
+                    ["petName", "아이 이름", "반려견 이름"],
+                    ["guardianName", "보호자 이름", "받는 분 이름"],
+                    ["phone", "연락처", "010-0000-0000"],
+                    // 받는 사람이 그 자리에 오면 주소를 묻지 않는다.
+                    ...(pickup
+                      ? []
+                      : [
+                          ["postalCode", "우편번호", "우편번호"],
+                          ["address", "배송지", "도로명 주소"],
+                          [
+                            "addressDetail",
+                            "상세 주소",
+                            "동·호수 등 상세 주소",
+                          ],
+                        ]),
+                  ] as string[][]
+                ).map(([field, label, placeholder]) => (
                   <label key={field}>
                     <FieldLabel optional={field === "addressDetail"}>
                       {label}
@@ -2203,11 +2283,18 @@ export default function GoodsSurveyForm() {
                   <span>
                     {/* 설문을 거치지 않고 온 사람은 정가다. 고정 금액을 적으면
                         동의한 금액과 청구되는 금액이 어긋난다. */}
-                    제작비 {wonText(applicablePriceKrw(directPurchase))} + 배송비{" "}
-                    {wonText(GOODS_PRICE.shipping)} ={" "}
+                    제작비{" "}
+                    {wonText(applicablePriceKrw(directPurchase, channel))}
+                    {pickup ? (
+                      <> · 방문수령(배송비 없음)</>
+                    ) : (
+                      <> + 배송비 {wonText(GOODS_PRICE.shipping)}</>
+                    )}{" "}
+                    ={" "}
                     <strong>
                       {wonText(
-                        applicablePriceKrw(directPurchase) + GOODS_PRICE.shipping
+                        applicablePriceKrw(directPurchase, channel) +
+                          shippingFeeKrw(pickup ? "pickup" : "shipping")
                       )}
                     </strong>
                     을 결제하는 데 동의합니다. <em>필수</em>

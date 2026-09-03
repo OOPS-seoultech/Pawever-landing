@@ -1529,3 +1529,58 @@
     transform: none;
   }
 }
+
+/*
+ * 수령 방법(플리마켓 전용).
+ *
+ * 값이 갈리는 선택이라 고른 쪽이 한눈에 보여야 한다. 잘못 고른 채 넘어가면
+ * 배송비 3,000원이 붙거나, 부칠 곳 없는 주문이 들어온다.
+ */
+.gsf-delivery {
+  margin: 0 0 18px;
+  padding: 0;
+  border: 0;
+}
+
+.gsf-delivery legend {
+  margin-bottom: 8px;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gsf-ink, #292725);
+}
+
+.gsf-delivery label {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--gsf-line, #eee7df);
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.gsf-delivery label:has(input:checked) {
+  border-color: var(--gsf-orange, #ed7d1a);
+  background: #fff9f2;
+}
+
+.gsf-delivery input {
+  margin-top: 3px;
+  accent-color: var(--gsf-orange, #ed7d1a);
+}
+
+.gsf-delivery strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.gsf-delivery small {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--gsf-muted, #89827b);
+}
