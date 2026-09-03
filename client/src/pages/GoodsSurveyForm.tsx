@@ -1400,6 +1400,46 @@ export default function GoodsSurveyForm() {
   const updateStory = (field: keyof StoryFields, value: string) =>
     setStory(previous => ({ ...previous, [field]: value }));
 
+  /**
+   * 고른 사진을 이미 고른 것 뒤에 붙인다.
+   *
+   * 갤러리 앱에 따라 한 번에 여러 장을 고르기 어렵다. 한 장씩 고르는 사람이
+   * 있는데 새로 고른 것으로 갈아치우면, 그 사람은 세 장을 영영 못 채운다.
+   */
+  const addPhotos = (picked: File[]) => {
+    const invalid = picked.find(
+      file =>
+        !["image/jpeg", "image/png", "image/webp"].includes(file.type) ||
+        file.size > 10 * 1024 * 1024
+    );
+    if (invalid) {
+      // 이미 고른 것은 건드리지 않는다. 실수 한 번에 처음부터 고르게 만들면
+      // 고칠 기회가 아니라 벌이 된다.
+      setApiError("사진은 JPG·PNG·WEBP 형식, 장당 10MB 이하만 올릴 수 있어요.");
+      return;
+    }
+
+    const merged = [...photos];
+    let dropped = 0;
+    for (const file of picked) {
+      // 같은 파일을 두 번 골라도 한 장으로 센다. 두 장으로 세면 다섯 칸이
+      // 같은 사진으로 찬다.
+      if (merged.some(kept => getFileKey(kept) === getFileKey(file))) continue;
+      if (merged.length >= GOODS_PHOTO_MAX_COUNT) {
+        dropped += 1;
+        continue;
+      }
+      merged.push(file);
+    }
+    setPhotos(merged);
+    // 조용히 버리면 사람은 올린 줄 안다.
+    setApiError(
+      dropped > 0
+        ? `사진은 ${GOODS_PHOTO_MAX_COUNT}장까지 올릴 수 있어요. ${dropped}장은 담지 않았어요.`
+        : ""
+    );
+  };
+
   const removePhoto = (index: number) => {
     setPhotos(previous => previous.filter((_, position) => position !== index));
     setApiError("");
@@ -2143,7 +2183,7 @@ export default function GoodsSurveyForm() {
                   <strong>사진 선택하기</strong>
                   <span>
                     JPG·PNG·WEBP, 장당 10MB 이하·{GOODS_PHOTO_MIN_COUNT}~
-                    {GOODS_PHOTO_MAX_COUNT}장
+                    {GOODS_PHOTO_MAX_COUNT}장 · 나눠서 골라도 됩니다
                   </span>
                   <input
                     ref={photoInputRef}
@@ -2151,25 +2191,10 @@ export default function GoodsSurveyForm() {
                     accept="image/jpeg,image/png,image/webp"
                     multiple
                     onChange={event => {
-                      const nextFiles = Array.from(
-                        event.target.files ?? []
-                      ).slice(0, GOODS_PHOTO_MAX_COUNT);
-                      const invalidFile = nextFiles.find(
-                        file =>
-                          !["image/jpeg", "image/png", "image/webp"].includes(
-                            file.type
-                          ) || file.size > 10 * 1024 * 1024
-                      );
-                      if (invalidFile) {
-                        setPhotos([]);
-                        setApiError(
-                          "사진은 JPG·PNG·WEBP 형식, 장당 10MB 이하만 올릴 수 있어요."
-                        );
-                        event.target.value = "";
-                        return;
-                      }
-                      setApiError("");
-                      setPhotos(nextFiles);
+                      addPhotos(Array.from(event.target.files ?? []));
+                      // 같은 파일을 다시 고를 수 있어야 한다. 지우고 다시
+                      // 넣는 사람이 있다.
+                      event.target.value = "";
                     }}
                   />
                 </label>

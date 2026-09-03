@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import { mockCampaign, mockDraft, photoFile } from "./fixtures/api";
 
@@ -145,22 +146,95 @@ test.describe("설문을 건너뛴 주문", () => {
     const submit = page.getByRole("button", { name: /신청 완료하기/ });
     const upload = page.locator('.gsf-upload input[type="file"]');
 
-    await upload.setInputFiles([photoFile("1.jpg")]);
+    // 한 장씩 더해 간다. 고른 것은 뒤에 쌓이므로 같은 목록을 다시 보내지
+    // 않는다 — 그렇게 쓰면 어느 장이 몇 번째로 들어갔는지가 시험마다 달라진다.
+    await upload.setInputFiles(photoFile("1.jpg"));
     await expect(page.locator(".gsf-file-name")).toHaveCount(1);
     await expect(submit).toBeDisabled();
 
     // 두 장도 아직이다. 얼굴·전신·털무늬 세 종이 제작의 최소 구성이다.
-    await upload.setInputFiles([photoFile("1.jpg"), photoFile("2.jpg")]);
+    await upload.setInputFiles(photoFile("2.jpg"));
     await expect(page.locator(".gsf-file-name")).toHaveCount(2);
     await expect(submit).toBeDisabled();
 
-    await upload.setInputFiles([
-      photoFile("1.jpg"),
-      photoFile("2.jpg"),
-      photoFile("3.jpg"),
-    ]);
+    await upload.setInputFiles(photoFile("3.jpg"));
     await expect(page.locator(".gsf-file-name")).toHaveCount(3);
     await expect(submit).toBeEnabled();
+  });
+
+  test("사진을 나눠 골라도 앞서 고른 것이 남는다", async ({ page }) => {
+    // 갤러리 앱에 따라 한 번에 여러 장을 고르기 어렵다. 한 장씩 고르면
+    // 앞서 고른 것이 사라져, 세 장을 채우려면 반드시 한 번에 성공해야 했다.
+    await page.goto(DIRECT);
+    const upload = page.locator('.gsf-upload input[type="file"]');
+    const names = page.locator(".gsf-file-name");
+
+    await upload.setInputFiles(photoFile("A.jpg"));
+    await expect(names).toHaveCount(1);
+
+    await upload.setInputFiles(photoFile("B.jpg"));
+    await expect(names).toHaveCount(2);
+    await expect(names).toContainText(["A.jpg", "B.jpg"]);
+
+    await upload.setInputFiles(photoFile("C.jpg"));
+    await expect(names).toHaveCount(3);
+    await expect(
+      page.getByRole("button", { name: /신청 완료하기/ })
+    ).toBeDisabled();
+  });
+
+  test("같은 사진을 두 번 골라도 한 장으로 센다", async ({ page }) => {
+    // 두 번 고른 것을 두 장으로 세면 다섯 칸이 같은 사진으로 찬다.
+    //
+    // 같은 파일인지는 이름·크기·수정시각으로 본다. 그래서 여기서는 버퍼가
+    // 아니라 디스크의 실제 파일을 고른다 — 버퍼로 만든 파일은 고를 때마다
+    // 수정시각이 지금으로 잡혀, 같은 사진을 다시 골라도 다른 것이 된다.
+    const samePhoto = fileURLToPath(
+      new URL("../client/public/goods-survey/flea-plus.webp", import.meta.url)
+    );
+    await page.goto(DIRECT);
+    const upload = page.locator('.gsf-upload input[type="file"]');
+
+    await upload.setInputFiles(samePhoto);
+    await expect(page.locator(".gsf-file-name")).toHaveCount(1);
+
+    await upload.setInputFiles(samePhoto);
+    await expect(page.locator(".gsf-file-name")).toHaveCount(1);
+  });
+
+  test("다섯 장을 넘기면 담지 않은 장수를 말해 준다", async ({ page }) => {
+    // 조용히 버리면 사람은 올린 줄 안다. 제작에 쓸 사진이 빠진 채로 접수된다.
+    await page.goto(DIRECT);
+    const upload = page.locator('.gsf-upload input[type="file"]');
+    const names = page.locator(".gsf-file-name");
+
+    await upload.setInputFiles(
+      ["1", "2", "3", "4", "5"].map(n => photoFile(`${n}.jpg`))
+    );
+    await expect(names).toHaveCount(5);
+
+    await upload.setInputFiles(photoFile("6.jpg"));
+
+    await expect(names).toHaveCount(5);
+    await expect(page.locator(".gsf-api-error")).toContainText(
+      "1장은 담지 않았어요"
+    );
+  });
+
+  test("형식이 틀린 사진을 골라도 앞서 고른 것은 남는다", async ({ page }) => {
+    // 실수 한 번에 다시 처음부터 고르게 만들면, 고칠 기회가 아니라 벌이 된다.
+    await page.goto(DIRECT);
+    const upload = page.locator('.gsf-upload input[type="file"]');
+
+    await upload.setInputFiles(photoFile("A.jpg"));
+    await upload.setInputFiles({
+      name: "notes.txt",
+      mimeType: "text/plain",
+      buffer: Buffer.from("사진이 아니다"),
+    });
+
+    await expect(page.locator(".gsf-file-name")).toHaveCount(1);
+    await expect(page.locator(".gsf-api-error")).toBeVisible();
   });
 
   test("랜딩에서 올린 사진 세 장이 주문 화면까지 따라온다", async ({
