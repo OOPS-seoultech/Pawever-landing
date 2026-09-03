@@ -1652,3 +1652,32 @@
   font-style: normal;
   color: var(--gsf-ink-soft);
 }
+
+/*
+ * 직행으로 온 사람이 기다리는 화면.
+ *
+ * 아무것도 없으면 멈춘 것처럼 보이고, 설문 안내를 두면 거치지 않을 단계를
+ * 읽게 된다. 무슨 일이 일어나는 중인지만 적는다.
+ */
+.gsf-preparing .gsf-message-icon svg {
+  animation: gsf-preparing-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes gsf-preparing-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.94);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+/* 움직임을 줄여 달라고 한 사람에게는 깜빡이지 않는다. */
+@media (prefers-reduced-motion: reduce) {
+  .gsf-preparing .gsf-message-icon svg {
+    animation: none;
+  }
+}

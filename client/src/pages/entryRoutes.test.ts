@@ -40,8 +40,11 @@ describe("굿즈 랜딩·설문에서 웹사이트로 나가는 길", () => {
     // 로고와 뒤로가기는 다른 물건이다. 첫 화면에서 뒤로 가면 방금 떠나온
     // 랜딩으로 돌아가는 게 맞다. 이것까지 홈으로 보내면 신청하던 사람이
     // 길을 잃는다.
+    //
+    // 첫 화면은 둘이다 — 설문으로 온 사람은 intro, 바로 신청하러 온 사람은
+    // 자리를 잡는 동안 preparing 을 본다. 어느 쪽에서 뒤로 가든 랜딩이다.
     expect(form).toContain(
-      'stage === "intro" ? () => setLocation("/goods-survey") : goBack'
+      'stage === "intro" || stage === "preparing" ? () => setLocation("/goods-survey") : goBack'
     );
   });
 });
