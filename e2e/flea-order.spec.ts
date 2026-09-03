@@ -154,7 +154,10 @@ test.describe("플리마켓 주문", () => {
     await expect(bank).toContainText("기업은행");
     await expect(bank).toContainText("000-000000-00-000");
     await expect(bank).toContainText("예금주 포에버");
-    // 입금자명이 아니라 주문번호로 대조한다.
+    // 화면과 문자가 같은 말을 해야 한다. 확정받은 문자는 "다른 이름으로
+    // 입금하실 경우 확인이 늦어질 수 있습니다"라고 한다.
+    await expect(bank).toContainText("신청하신 이름으로 입금해 주세요.");
+    await expect(bank).not.toContainText("입금자명이 달라도");
     await expect(page.locator(".gsf-payment-notice")).toContainText(
       "PE-2026-000123"
     );
