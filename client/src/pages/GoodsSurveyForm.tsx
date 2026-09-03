@@ -89,6 +89,14 @@ import {
 import "./GoodsSurveyForm.css";
 
 type SurveyStage =
+  /**
+   * 설문을 건너뛰고 바로 신청하러 온 사람이 서버 응답을 기다리는 동안.
+   *
+   * 이 자리에 설문 안내를 두었더니, 랜딩에서 "바로 예약 주문 걸기"를 누른
+   * 사람에게 "돌봄 경험 조사 · 10~15분"이 잠깐 떴다. 현장에서 QR 을 찍고
+   * 줄을 선 사람에게는 그 한 화면이 곧 이탈이다.
+   */
+  | "preparing"
   | "intro"
   | "questions"
   | "closing"
@@ -697,7 +705,11 @@ export default function GoodsSurveyForm() {
     }
     return draft;
   }, [initialGoods]);
-  const [stage, setStage] = useState<SurveyStage>("intro");
+  // 직행으로 온 사람에게는 설문 안내를 보여 주지 않는다. 서버가 자리를
+  // 잡아 주는 동안 기다리는 화면만 두고, 끝나면 바로 제작 정보로 간다.
+  const [stage, setStage] = useState<SurveyStage>(
+    directPurchase ? "preparing" : "intro"
+  );
   const [answers, setAnswers] = useState<SurveyAnswers>(() =>
     pruneHiddenAnswers(restoredDraft?.answers ?? {})
   );
@@ -1667,9 +1679,15 @@ export default function GoodsSurveyForm() {
             type="button"
             className="gsf-icon-button"
             onClick={
-              stage === "intro" ? () => setLocation("/goods-survey") : goBack
+              stage === "intro" || stage === "preparing"
+                ? () => setLocation("/goods-survey")
+                : goBack
             }
-            aria-label={stage === "intro" ? "랜딩페이지로 돌아가기" : "이전"}
+            aria-label={
+              stage === "intro" || stage === "preparing"
+                ? "랜딩페이지로 돌아가기"
+                : "이전"
+            }
           >
             <ArrowLeft aria-hidden="true" />
           </button>
@@ -1686,7 +1704,8 @@ export default function GoodsSurveyForm() {
             <PawPrint aria-hidden="true" />
             <span>Pawever</span>
           </a>
-          <span className="gsf-header-time">약 15분</span>
+          {/* 설문을 거치지 않는 사람에게 설문 소요 시간을 적을 이유가 없다. */}
+          {!directPurchase && <span className="gsf-header-time">약 15분</span>}
         </header>
 
         {stage === "questions" && (
@@ -1727,6 +1746,16 @@ export default function GoodsSurveyForm() {
         )}
 
         <div className="gsf-content">
+          {stage === "preparing" && (
+            <section className="gsf-message gsf-preparing">
+              <span className="gsf-message-icon" aria-hidden="true">
+                <PawPrint />
+              </span>
+              <h1>신청서를 준비하고 있어요.</h1>
+              <p>잠시만 기다려 주세요. 곧 사진과 정보를 받는 화면이 열려요.</p>
+            </section>
+          )}
+
           {stage === "intro" && (
             <section className="gsf-intro">
               <h1>{goodsSurveyIntroContent.title}</h1>

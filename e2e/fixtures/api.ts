@@ -198,7 +198,11 @@ export const blockUnmockedGoodsApi = (page: Page) =>
  */
 export const mockDraft = (
   page: Page,
-  opts: { remaining?: number; status?: string } = {}
+  /**
+   * @param delayMs 초안 생성을 늦춘다. 응답을 기다리는 동안 화면이 무엇을
+   *                보여주는지 보려면 그 사이가 있어야 한다.
+   */
+  opts: { remaining?: number; status?: string; delayMs?: number } = {}
 ) => {
   const responseId = "e2e-response-0001";
   const session = {
@@ -210,13 +214,16 @@ export const mockDraft = (
   };
 
   return Promise.all([
-    page.route("**/api/public/goods-survey/responses", route =>
-      route.fulfill({
+    page.route("**/api/public/goods-survey/responses", async route => {
+      if (opts.delayMs) {
+        await new Promise(resolve => setTimeout(resolve, opts.delayMs));
+      }
+      await route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({ success: true, data: session }),
-      })
-    ),
+      });
+    }),
     page.route(
       "**/api/public/goods-survey/responses/*/direct-purchase",
       route =>

@@ -84,6 +84,36 @@ test.describe("설문을 건너뛴 주문", () => {
     ).toBe(true);
   });
 
+  test("기다리는 동안 설문 안내를 보여 주지 않는다", async ({ page }) => {
+    // 랜딩에서 "바로 예약 주문 걸기"를 누른 사람에게 "돌봄 경험 조사 ·
+    // 10~15분"이 잠깐 떴다. 서버가 자리를 잡아 주는 사이 설문 안내가 그대로
+    // 있었기 때문이다.
+    //
+    // 현장에서 QR 을 찍고 줄을 선 사람에게 그 한 화면은 곧 이탈이다. 이
+    // 랜딩이 없애려던 단계가 다른 얼굴로 돌아온 셈이었다.
+    await mockDraft(page, { delayMs: 1500 });
+    await page.goto(DIRECT);
+
+    await expect(page.locator(".gsf-preparing")).toBeVisible();
+    await expect(page.locator("body")).not.toContainText("돌봄 경험 조사");
+    await expect(page.locator("body")).not.toContainText("10~15분");
+    // 설문을 거치지 않는 사람에게 설문 소요 시간을 적을 이유가 없다.
+    await expect(page.locator(".gsf-header-time")).toHaveCount(0);
+
+    // 끝나면 제작 정보로 간다.
+    await expect(page.getByText("마지막 단계")).toBeVisible();
+    await expect(page.locator(".gsf-preparing")).toHaveCount(0);
+  });
+
+  test("설문으로 들어오면 안내는 그대로다", async ({ page }) => {
+    // 직행만 건너뛴다. 설문에 답하러 온 사람은 무엇을 받는지 알고 시작해야
+    // 한다.
+    await page.goto("/goods-survey/survey");
+
+    await expect(page.locator(".gsf-intro")).toBeVisible();
+    await expect(page.locator(".gsf-header-time")).toHaveText("약 15분");
+  });
+
   test("사진이 없으면 다 채워도 신청이 잠긴 채로 있다", async ({ page }) => {
     // 사진은 제작의 재료다. 없이 접수되면 만들 수 없는 주문이 결제까지 간다.
     await page.goto(DIRECT);
