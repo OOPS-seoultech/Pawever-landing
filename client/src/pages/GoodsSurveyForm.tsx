@@ -2388,7 +2388,9 @@ export default function GoodsSurveyForm() {
                   <input
                     type="checkbox"
                     checked={marketingConsent}
-                    onChange={event => setMarketingConsent(event.target.checked)}
+                    onChange={event =>
+                      setMarketingConsent(event.target.checked)
+                    }
                   />
                   <span>
                     할인·신제품 소식을 문자와 카카오톡으로 받는 데 동의합니다.{" "}
@@ -2581,9 +2583,14 @@ export default function GoodsSurveyForm() {
                           </>
                         )}
                       </button>
-                      {/* 입금자명이 아니라 주문번호로 대조한다. 같은 이름이
-                          둘이면 이름만으로는 어느 주문의 돈인지 모른다. */}
-                      <em>입금자명이 달라도 주문번호로 확인해 드려요</em>
+                      {/* 문자와 같은 말을 한다. 화면은 "달라도 괜찮다",
+                          문자는 "다르면 늦어진다"라고 하고 있었다. 한 주문에서
+                          두 말이 나오면 어느 쪽이 참인지 알 수 없다.
+                          문자 쪽이 검토를 받은 확정본이라 화면을 맞춘다. */}
+                      <em>
+                        신청하신 이름으로 입금해 주세요. 다른 이름이면 확인이
+                        늦어질 수 있어요.
+                      </em>
                     </div>
                   )}
                   {/* 금액은 서버가 주문에 적은 값을 그대로 쓴다. 화면에서 다시
@@ -2617,7 +2624,9 @@ export default function GoodsSurveyForm() {
                     <div>
                       <dt>결제 금액</dt>
                       <dd>
-                        <strong>{wonText(paymentNotice.paymentAmountKrw)}</strong>
+                        <strong>
+                          {wonText(paymentNotice.paymentAmountKrw)}
+                        </strong>
                       </dd>
                     </div>
                     {paymentNotice.paymentExpiresAt && (
