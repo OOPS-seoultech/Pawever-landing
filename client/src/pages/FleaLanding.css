@@ -22,6 +22,20 @@
   font-display: swap;
 }
 
+/*
+ * 디자인의 좌우 여백은 25px 이고 사진 모서리는 22px 이다. 상시 랜딩(20px,
+ * 16px)과 달라서, 두 화면이 같은 토큰을 쓰더라도 이 둘은 따로 적어야 한다.
+ * 상시 랜딩은 건드리지 않는다.
+ */
+.flea-page .gs-section {
+  padding-left: 25px;
+  padding-right: 25px;
+}
+
+.flea-page .gs-figure {
+  border-radius: 22px;
+}
+
 /* 01 ─────────────────────────────────────────────────────────── */
 
 .flea-hero {
@@ -56,9 +70,11 @@
   border-radius: 14px;
   background: #ffc98f;
   box-shadow: 0 10px 11px rgba(242, 125, 26, 0.22);
-  /* 잘라 둔 글꼴이 늦게 오면 Pretendard 로 먼저 그려진다. 취소선과 색이
+  /* inherit 은 이 목록 안에 쓸 수 없다. 넣으면 선언 전체가 버려져서 글꼴이
+     한 번도 바뀌지 않는다 — 실제로 그렇게 Pretendard 로 나가고 있었다.
+     대체 글꼴은 이름으로 적는다. 잘라 둔 글꼴이 늦게 와도 취소선과 색이
      이미 뜻을 전하므로 자리만 흔들리지 않으면 된다. */
-  font-family: "Cafe24 Ohsquare", inherit;
+  font-family: "Cafe24 Ohsquare", "Pretendard Variable", Pretendard, sans-serif;
   font-size: 32px;
   line-height: 22px;
   color: #c21111;
@@ -186,6 +202,19 @@
 }
 
 /* 03 ─────────────────────────────────────────────────────────── */
+
+/* 디자인의 세로 여백. 기본값(80/80)과 크게 갈리는 곳만 적는다. */
+.flea-real-price {
+  padding-top: 60px;
+}
+
+.flea-figure-section {
+  padding-top: 50px;
+}
+
+.flea-limited {
+  padding-bottom: 65px;
+}
 
 .flea-real-price h2 em,
 .flea-limited h2 em {
