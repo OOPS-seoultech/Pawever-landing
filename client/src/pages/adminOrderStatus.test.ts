@@ -3,6 +3,7 @@ import {
   canCancel,
   CANCEL_REASONS,
   cancelGuide,
+  canStartProduction,
   primaryRowAction,
   canCompletePickup,
   canRegisterTracking,
@@ -267,6 +268,29 @@ describe("목록에서 바로 하는 처리", () => {
     expect(primaryRowAction("ADMIN", "PAYMENT_COMPLETED", "PICKUP")?.confirm).toBe(false);
     // 수령 완료는 파기 시계를 켜고 되돌릴 수 없다.
     expect(primaryRowAction("ADMIN", "IN_PRODUCTION", "PICKUP")?.confirm).toBe(true);
+  });
+});
+
+describe("묶어서 제작 시작", () => {
+  // 제작은 낱개로 하는 일이 아니다. 1차 체험단 100건이면 100번 누른다.
+  it("결제 완료와 1차 체험단을 묶을 수 있다", () => {
+    expect(canStartProduction("ADMIN", "PAYMENT_COMPLETED")).toBe(true);
+    expect(canStartProduction("ADMIN", "LEGACY_FREE")).toBe(true);
+    expect(canStartProduction("PRODUCTION", "PAYMENT_COMPLETED")).toBe(true);
+  });
+
+  it("미입금이나 끝난 건은 묶을 수 없다", () => {
+    // 돈을 받지 않은 것이 제작 대기열에 섞이면 만들지 않아도 될 것을 만든다.
+    for (const no of [
+      "PAYMENT_PENDING",
+      "IN_PRODUCTION",
+      "SHIPPED",
+      "PICKED_UP",
+      "CANCELED",
+      "PAYMENT_EXPIRED",
+    ] as GoodsOrderStatus[]) {
+      expect(canStartProduction("ADMIN", no), no).toBe(false);
+    }
   });
 });
 

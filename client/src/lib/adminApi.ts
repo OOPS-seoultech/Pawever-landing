@@ -410,6 +410,18 @@ export const completeAdminPickup = (orderNumber: string) =>
     { method: "POST" }
   );
 
+/**
+ * 고른 주문을 한 번에 제작 중으로 옮긴다.
+ *
+ * 옮기지 못한 건은 오류가 아니라 결과로 돌아온다. 하나가 막혔다고 전부
+ * 되돌리면 방금 통과한 것까지 다시 눌러야 한다.
+ */
+export const startAdminProduction = (orderNumbers: string[]) =>
+  adminRequest<{ changed: number; skipped: string[] }>(
+    "/api/admin/orders/start-production",
+    { method: "POST", body: JSON.stringify({ orderNumbers }) }
+  );
+
 export const listAdminAccounts = () =>
   adminRequest<AdminAccount[]>("/api/admin/accounts");
 
