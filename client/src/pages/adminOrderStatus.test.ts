@@ -213,10 +213,18 @@ describe("목록에서 바로 하는 처리", () => {
     expect(action?.nextStatus).toBe("PAYMENT_COMPLETED");
   });
 
-  it("결제 완료에는 제작 시작이 붙는다", () => {
-    const action = primaryRowAction("ADMIN", "PAYMENT_COMPLETED", "SHIPPING");
-    expect(action?.kind).toBe("status");
-    expect(action?.nextStatus).toBe("IN_PRODUCTION");
+  it("묶어서 할 일은 줄에 붙이지 않는다", () => {
+    // 제작은 모아서 한다. 줄마다 버튼을 두면 화면은 그대로 보이고
+    // 100건이면 100번 누르는 길이 그대로 열려 있다. 체크 칸으로만 다룬다.
+    expect(primaryRowAction("ADMIN", "PAYMENT_COMPLETED", "SHIPPING")).toBeNull();
+    expect(primaryRowAction("ADMIN", "PAYMENT_COMPLETED", "PICKUP")).toBeNull();
+    expect(primaryRowAction("ADMIN", "LEGACY_FREE", "SHIPPING")).toBeNull();
+    expect(primaryRowAction("PRODUCTION", "PAYMENT_COMPLETED", "SHIPPING")).toBeNull();
+  });
+
+  it("결제 완료에는 송장 등록을 먼저 붙이지 않는다", () => {
+    // 만들기도 전에 송장을 받으면 순서가 뒤집힌다.
+    expect(primaryRowAction("ADMIN", "PAYMENT_COMPLETED", "SHIPPING")?.kind).toBeUndefined();
   });
 
   it("제작 중 현장 수령 건에는 수령 완료가 붙는다", () => {
@@ -232,12 +240,10 @@ describe("목록에서 바로 하는 처리", () => {
     expect(action?.label).toBe("송장 등록");
   });
 
-  it("제작팀에게는 제작 시작만 붙는다", () => {
-    // 입금 확인도 수령 완료도 관리자 일이다. 서버가 막는 것을 화면이
-    // 열어 두면 눌러도 오류만 돌아온다.
-    expect(primaryRowAction("PRODUCTION", "PAYMENT_COMPLETED", "PICKUP")?.nextStatus).toBe(
-      "IN_PRODUCTION"
-    );
+  it("제작팀에게는 줄 버튼이 붙지 않는다", () => {
+    // 입금 확인도 수령 완료도 송장도 관리자 일이다. 제작 시작은 체크 칸으로
+    // 하므로 제작팀 줄에는 남는 것이 없다.
+    expect(primaryRowAction("PRODUCTION", "PAYMENT_COMPLETED", "PICKUP")).toBeNull();
     expect(primaryRowAction("PRODUCTION", "PAYMENT_PENDING", "PICKUP")).toBeNull();
     expect(primaryRowAction("PRODUCTION", "IN_PRODUCTION", "PICKUP")).toBeNull();
   });
@@ -254,18 +260,16 @@ describe("목록에서 바로 하는 처리", () => {
     }
   });
 
-  it("1차 체험단에는 제작 시작이 붙는다", () => {
-    // 결제는 없었지만 만들어 보내야 하는 물건이다.
-    expect(primaryRowAction("ADMIN", "LEGACY_FREE", "SHIPPING")?.nextStatus).toBe(
-      "IN_PRODUCTION"
-    );
+  it("1차 체험단도 체크 칸으로 묶어서 시작한다", () => {
+    // 결제는 없었지만 만들어 보내야 하는 물건이다. 100건이라 더더욱 묶는다.
+    expect(primaryRowAction("ADMIN", "LEGACY_FREE", "SHIPPING")).toBeNull();
+    expect(canStartProduction("ADMIN", "LEGACY_FREE")).toBe(true);
   });
 
   it("한 번 더 묻는 것은 되돌릴 수 없는 것뿐이다", () => {
-    // 입금 확인과 제작 시작은 잘못 눌러도 되돌릴 수 있다. 매번 물으면
-    // 70건을 처리하는 동안 70번 더 누른다.
+    // 입금 확인은 잘못 눌러도 되돌릴 수 있다. 매번 물으면 70건을 처리하는
+    // 동안 70번 더 누른다.
     expect(primaryRowAction("ADMIN", "PAYMENT_PENDING", "PICKUP")?.confirm).toBe(false);
-    expect(primaryRowAction("ADMIN", "PAYMENT_COMPLETED", "PICKUP")?.confirm).toBe(false);
     // 수령 완료는 파기 시계를 켜고 되돌릴 수 없다.
     expect(primaryRowAction("ADMIN", "IN_PRODUCTION", "PICKUP")?.confirm).toBe(true);
   });

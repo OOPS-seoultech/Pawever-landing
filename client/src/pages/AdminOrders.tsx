@@ -360,6 +360,23 @@ export default function AdminOrders() {
         ) : null}
       </div>
 
+      {/* 고를 수 있는 것이 있는데 아직 안 골랐을 때. 체크 칸만 두면 화면이
+          그대로 보여서, 무엇을 할 수 있는지 한 줄로 알린다. */}
+      {picked.length === 0 && startable.length > 0 ? (
+        <div className="mb-3 flex flex-wrap items-center gap-3 rounded-lg border bg-muted/40 px-3 py-2">
+          <span className="text-sm text-muted-foreground">
+            제작 시작할 수 있는 주문이 이 페이지에 {startable.length}건 있습니다.
+          </span>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setPicked(startable.map((order) => order.orderNumber))}
+          >
+            모두 선택
+          </Button>
+        </div>
+      ) : null}
+
       {/* 고른 것이 있을 때만 나타난다. 늘 떠 있으면 목록이 그만큼 밀린다. */}
       {picked.length > 0 ? (
         <div className="mb-3 flex flex-wrap items-center gap-3 rounded-lg border border-primary/40 bg-primary/5 px-3 py-2">
