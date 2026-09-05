@@ -13,6 +13,7 @@ import {
   AdminApiError,
   cancelAdminOrder,
   changeAdminOrderStatus,
+  completeAdminPickup,
   downloadAdminPhotoArchive,
   getAdminOrder,
   registerAdminTracking,
@@ -25,9 +26,12 @@ import { formatDateTime, formatKrw } from "@/lib/adminFormat";
 import {
   canCancel,
   CANCEL_REASONS,
+  cancelGuide,
+  canCompletePickup,
   canRegisterTracking,
   photoSlotRows,
   settableStatusesFor,
+  statusChangeHint,
   STATUS_LABELS,
 } from "./adminOrderStatus";
 
@@ -104,6 +108,9 @@ export default function AdminOrderDetail() {
   }
 
   const options = settableStatusesFor(role ?? "PRODUCTION", order.status);
+  // 계좌이체 주문은 환불을 사람이 먼저 한다. 결제 대행사 주문과 같은 말을
+  // 하면 환불 안 된 취소가 생긴다.
+  const cancelWords = cancelGuide(order.payment?.pgLinked ?? false);
 
   return (
     <AdminShell
@@ -307,7 +314,8 @@ export default function AdminOrderDetail() {
         <Section title="상태 변경">
           {options.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              지금 상태에서 바꿀 수 있는 값이 없습니다.
+              {statusChangeHint(order.status) ??
+                "지금 상태에서 바꿀 수 있는 값이 없습니다."}
             </p>
           ) : (
             <div className="space-y-3">
@@ -355,10 +363,40 @@ export default function AdminOrderDetail() {
           )}
         </Section>
 
-        {canRegisterTracking(role ?? "PRODUCTION", order.status) ? (
+        {canCompletePickup(
+          role ?? "PRODUCTION",
+          order.status,
+          order.shipping?.deliveryMethod
+        ) ? (
+          <Section title="현장 수령">
+            <p className="mb-3 text-sm text-muted-foreground">
+              현장에서 직접 건넸으면 눌러 주세요. 송장 없이 수령 완료로
+              넘어가고, 이때부터 사진 보유 기간 90일을 셉니다.
+            </p>
+            <Button
+              size="sm"
+              disabled={pending}
+              onClick={() =>
+                run(
+                  () => completeAdminPickup(order.orderNumber),
+                  "수령 완료로 바꿨습니다."
+                )
+              }
+            >
+              수령 완료
+            </Button>
+          </Section>
+        ) : null}
+
+        {canRegisterTracking(
+          role ?? "PRODUCTION",
+          order.status,
+          order.shipping?.deliveryMethod
+        ) ? (
           <Section title="송장 등록">
             <p className="mb-3 text-sm text-muted-foreground">
-              등록하면 발송 완료로 넘어갑니다.
+              등록하면 발송 완료로 넘어가고, 이때부터 사진 보유 기간 90일을
+              셉니다. 송장을 고쳐 다시 등록해도 그 날짜는 밀리지 않습니다.
             </p>
             <div className="space-y-2">
               <Input
@@ -401,8 +439,7 @@ export default function AdminOrderDetail() {
         ) ? (
           <Section title="주문 취소">
             <p className="mb-3 text-sm text-muted-foreground">
-              결제 취소가 성공해야 취소로 넘어갑니다. 실패하면 취소 처리 실패로
-              남고 직접 확인해야 합니다. 되돌릴 수 없습니다.
+              {cancelWords.description}
             </p>
 
             <div className="mb-3 flex flex-wrap gap-2">
@@ -439,7 +476,7 @@ export default function AdminOrderDetail() {
             {cancelArmed ? (
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm text-destructive">
-                  {order.orderNumber}을(를) 취소합니다. 되돌릴 수 없습니다.
+                  {cancelWords.confirm(order.orderNumber)}
                 </span>
                 <Button
                   variant="destructive"
@@ -454,7 +491,7 @@ export default function AdminOrderDetail() {
                       setCancelReason("");
                       setCancelDetail("");
                       setCancelArmed(false);
-                    }, "주문을 취소했습니다. 결제도 함께 취소됐습니다.")
+                    }, cancelWords.done)
                   }
                 >
                   취소 진행

@@ -44,6 +44,22 @@ describe("관리자 화면의 수령 방법", () => {
     expect(methodAt).toBeLessThan(addressAt);
   });
 
+  it("현장 수령 주문은 송장 대신 수령 완료로 끝낸다", () => {
+    // 발송 완료는 송장을 넣어야 넘어간다. 현장 수령에는 넣을 송장이 없어서,
+    // 따로 끝낼 길이 없으면 제작 중에 영원히 남거나 가짜 송장을 넣게 된다.
+    expect(detail).toContain("canCompletePickup(");
+    expect(detail).toContain("completeAdminPickup(");
+    expect(detail).toContain("수령 완료");
+    // 송장 등록은 수령 방법을 보고 연다. 두 길이 함께 열리면 안 된다.
+    expect(detail).toMatch(/canRegisterTracking\([^)]*deliveryMethod/);
+  });
+
+  it("취소 안내는 결제 대행사에 묶인 주문인지에 따라 갈린다", () => {
+    // 계좌이체 주문에 "결제도 함께 취소됐다"고 말하면 환불 안 된 취소가 생긴다.
+    expect(detail).toContain("cancelGuide(");
+    expect(detail).toContain("pgLinked");
+  });
+
   it("현장 수령이면 주소 자리에 이유를 적는다", () => {
     // 빈칸이나 "-" 로 두면 빠뜨린 주소와 구분되지 않는다.
     expect(detail).toContain("현장에서 직접 전달 — 주소를 받지 않음");

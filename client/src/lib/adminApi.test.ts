@@ -5,6 +5,7 @@ import {
   cancelAdminOrder,
   changeAdminOrderStatus,
   clearAdminToken,
+  completeAdminPickup,
   downloadAdminPhotoArchive,
   listAdminOrders,
   readAdminRole,
@@ -257,6 +258,20 @@ describe("관리자 API", () => {
     expect(url).not.toContain("사진 품질 미달");
     expect(init.method).toBe("POST");
     expect(JSON.parse(init.body)).toEqual({ reason: "사진 품질 미달" });
+  });
+
+  it("수령 완료는 송장 없이 POST 한 번으로 보낸다", async () => {
+    // 현장 수령에는 택배사도 송장번호도 없다. 본문에 넣을 것이 없다.
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(jsonResponse({ success: true }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await completeAdminPickup("PE-2026-000201");
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/admin/orders/PE-2026-000201/pickup-complete");
+    expect(init.method).toBe("POST");
   });
 
   it("로그아웃하면 토큰이 남지 않는다", () => {
