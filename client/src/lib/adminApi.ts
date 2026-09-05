@@ -13,6 +13,8 @@ export type GoodsOrderStatus =
   | "PAYMENT_COMPLETED"
   | "IN_PRODUCTION"
   | "SHIPPED"
+  /** 현장에서 직접 건넸다. 현장 수령 주문의 끝이다. */
+  | "PICKED_UP"
   | "PAYMENT_EXPIRED"
   | "PAYMENT_FAILED"
   | "CANCELED"
@@ -77,6 +79,13 @@ export type AdminOrderDetail = {
     paidAt: string | null;
     paymentExpiresAt: string | null;
     cancelReason: string | null;
+    /**
+     * 결제 대행사 키가 붙어 있는지.
+     *
+     * 붙어 있으면 취소가 대행사 환불까지 함께 한다. 없으면(계좌이체) 환불은
+     * 사람이 은행에서 먼저 하고, 취소는 그 사실을 적는 일이다.
+     */
+    pgLinked: boolean;
   } | null;
   shipping: {
     guardianName: string;
@@ -387,6 +396,18 @@ export const registerAdminTracking = (
       method: "POST",
       body: JSON.stringify({ trackingCompany, trackingNumber }),
     }
+  );
+
+/**
+ * 현장에서 건넨 주문을 끝낸다.
+ *
+ * 송장을 보내지 않는다. 현장 수령에는 택배사도 송장번호도 없다. 서버는 현장
+ * 수령 주문에만 받아 주고, 이 시각부터 사진 보유 기간을 센다.
+ */
+export const completeAdminPickup = (orderNumber: string) =>
+  adminRequest<void>(
+    `/api/admin/orders/${encodeURIComponent(orderNumber)}/pickup-complete`,
+    { method: "POST" }
   );
 
 export const listAdminAccounts = () =>
