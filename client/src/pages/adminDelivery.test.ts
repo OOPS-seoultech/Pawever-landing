@@ -45,6 +45,12 @@ describe("관리자 화면의 수령 방법", () => {
     expect(list).toContain("<AdminOrderPanel");
   });
 
+  it("고를 수 있는 건이 있으면 그 사실을 먼저 알린다", () => {
+    // 체크 칸만 두면 화면이 그대로 보인다. 무엇을 할 수 있는지 적어 둔다.
+    expect(list).toContain("모두 선택");
+    expect(list).toContain("제작 시작할 수 있는");
+  });
+
   it("여러 건을 골라 한 번에 제작 시작할 수 있다", () => {
     // 제작은 모아서 한다. 낱개 버튼만 두면 100건이면 100번 누른다.
     expect(list).toContain('type="checkbox"');

@@ -148,6 +148,21 @@ export const canCompletePickup = (
   (current === "PAYMENT_COMPLETED" || current === "IN_PRODUCTION");
 
 /**
+ * 묶어서 제작 시작할 수 있는 건인지.
+ *
+ * 제작은 낱개로 하는 일이 아니다. 모아서 만들고, 제작용 목록과 사진도
+ * 묶음으로 내보낸다. 그런데 상태만 한 건씩 눌러야 해서 1차 체험단 100건이면
+ * 100번 누른다.
+ *
+ * 서버의 전이표와 같은 것을 본다. 여기서 더 열면 골라 놓고 눌러도 건너뛴
+ * 것으로만 돌아온다.
+ */
+export const canStartProduction = (
+  role: AdminRole,
+  current: GoodsOrderStatus
+): boolean => settableStatusesFor(role, current).includes("IN_PRODUCTION");
+
+/**
  * 목록 한 줄에서 바로 누르는 처리.
  *
  * 한 건을 끝내려고 상세로 들어갔다 나오면 필터와 페이지가 풀린다. 70건을
@@ -175,13 +190,14 @@ export const primaryRowAction = (
   current: GoodsOrderStatus,
   deliveryMethod: string | undefined
 ): RowAction | null => {
-  if (settableStatusesFor(role, current).includes("IN_PRODUCTION")) {
-    return {
-      kind: "status",
-      label: "제작 시작",
-      nextStatus: "IN_PRODUCTION",
-      confirm: false,
-    };
+  // 제작 시작은 줄에 붙이지 않는다. 모아서 하는 일인데 줄마다 버튼을 두면
+  // 화면은 그대로 보이고 100건이면 100번 누르는 길이 그대로 열려 있다.
+  // 체크 칸으로만 다룬다.
+  //
+  // 이 줄들에는 송장 등록도 붙이지 않는다. 만들기도 전에 송장을 받으면
+  // 순서가 뒤집힌다.
+  if (canStartProduction(role, current)) {
+    return null;
   }
   if (settableStatusesFor(role, current).includes("PAYMENT_COMPLETED")
       && current === "PAYMENT_PENDING") {
@@ -202,21 +218,6 @@ export const primaryRowAction = (
   }
   return null;
 };
-
-/**
- * 묶어서 제작 시작할 수 있는 건인지.
- *
- * 제작은 낱개로 하는 일이 아니다. 모아서 만들고, 제작용 목록과 사진도
- * 묶음으로 내보낸다. 그런데 상태만 한 건씩 눌러야 해서 1차 체험단 100건이면
- * 100번 누른다.
- *
- * 서버의 전이표와 같은 것을 본다. 여기서 더 열면 골라 놓고 눌러도 건너뛴
- * 것으로만 돌아온다.
- */
-export const canStartProduction = (
-  role: AdminRole,
-  current: GoodsOrderStatus
-): boolean => settableStatusesFor(role, current).includes("IN_PRODUCTION");
 
 /** 사진 자리 하나. 비어 있으면 "미기입"으로 보여 준다. */
 export type PhotoSlotRow = {
