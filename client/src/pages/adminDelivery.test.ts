@@ -45,6 +45,18 @@ describe("관리자 화면의 수령 방법", () => {
     expect(list).toContain("<AdminOrderPanel");
   });
 
+  it("여러 건을 골라 한 번에 제작 시작할 수 있다", () => {
+    // 제작은 모아서 한다. 낱개 버튼만 두면 100건이면 100번 누른다.
+    expect(list).toContain('type="checkbox"');
+    expect(list).toContain("startAdminProduction(");
+    expect(list).toContain("건 선택됨");
+  });
+
+  it("고른 건 가운데 못 옮긴 것을 알려 준다", () => {
+    // 조용히 넘어가면 눌렀는데 안 바뀐 것을 화면만 보고는 모른다.
+    expect(list).toContain("skipped");
+  });
+
   it("줄마다 다음에 할 일이 하나 붙는다", () => {
     expect(list).toContain("primaryRowAction(");
     expect(list).toContain(">처리</th>");

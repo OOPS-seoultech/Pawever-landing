@@ -14,6 +14,7 @@ import {
   changeAdminOrderStatus,
   completeAdminPickup,
   listAdminOrders,
+  startAdminProduction,
   type AdminOrderListResponse,
   type AdminOrderSummary,
   type GoodsOrderStatus,
@@ -21,6 +22,7 @@ import {
 import { formatDateTime, formatKrw } from "@/lib/adminFormat";
 import { AdminOrderPanel } from "./AdminOrderPanel";
 import {
+  canStartProduction,
   filterableStatusesFor,
   primaryRowAction,
   STATUS_LABELS,
@@ -80,6 +82,14 @@ export default function AdminOrders() {
   /** 지금 처리 중인 주문번호. 두 번 눌러 두 번 나가지 않게 한다. */
   const [acting, setActing] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  /**
+   * 묶어서 처리하려고 고른 주문.
+   *
+   * 제작은 낱개로 하는 일이 아니다. 1차 체험단 100건을 한 건씩 누르면
+   * 100번이다.
+   */
+  const [picked, setPicked] = useState<string[]>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -122,6 +132,12 @@ export default function AdminOrders() {
     if (role) void load();
   }, [role, load]);
 
+  // 목록이 바뀌면 고른 것을 비운다. 안 보이는 주문이 골라진 채로 남으면
+  // 무엇을 누르는지 모르는 채 누르게 된다.
+  useEffect(() => {
+    setPicked([]);
+  }, [selected, query, submittedFrom, submittedTo, minPhotoCount, goodsType, page]);
+
   const toggleStatus = (status: GoodsOrderStatus) => {
     setPage(0);
     setSelected((current) =>
@@ -135,6 +151,38 @@ export default function AdminOrders() {
     event.preventDefault();
     setPage(0);
     setQuery(searchInput);
+  };
+
+  /** 이 화면에서 묶어 제작 시작할 수 있는 줄. */
+  const startable = (data?.orders ?? []).filter((order) =>
+    canStartProduction(role ?? "PRODUCTION", order.status)
+  );
+  const allPicked = startable.length > 0 && picked.length === startable.length;
+
+  const runBulk = async () => {
+    if (bulkBusy || picked.length === 0) return;
+    setBulkBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const result = await startAdminProduction(picked);
+      setNotice(
+        result.skipped.length === 0
+          ? `${result.changed}건을 제작 중으로 옮겼습니다.`
+          : `${result.changed}건을 옮겼습니다. 옮기지 못한 ${result.skipped.length}건: ${result.skipped.join(", ")}`
+      );
+      setPicked([]);
+      await load();
+    } catch (caught) {
+      const failure = caught as AdminApiError;
+      if (failure.needsSignIn) {
+        setLocation("/admin", { replace: true });
+        return;
+      }
+      setError(failure.message);
+    } finally {
+      setBulkBusy(false);
+    }
   };
 
   /**
@@ -312,6 +360,24 @@ export default function AdminOrders() {
         ) : null}
       </div>
 
+      {/* 고른 것이 있을 때만 나타난다. 늘 떠 있으면 목록이 그만큼 밀린다. */}
+      {picked.length > 0 ? (
+        <div className="mb-3 flex flex-wrap items-center gap-3 rounded-lg border border-primary/40 bg-primary/5 px-3 py-2">
+          <span className="text-sm font-medium">{picked.length}건 선택됨</span>
+          <Button size="sm" disabled={bulkBusy} onClick={runBulk}>
+            {bulkBusy ? "처리 중..." : "제작 시작"}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={bulkBusy}
+            onClick={() => setPicked([])}
+          >
+            선택 해제
+          </Button>
+        </div>
+      ) : null}
+
       {error ? <AdminError message={error} /> : null}
       {notice ? (
         <p className="mb-3 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
@@ -323,6 +389,23 @@ export default function AdminOrders() {
         <table className="w-full min-w-[860px] text-sm">
           <thead className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
             <tr>
+              <th className="w-8 px-3 py-2">
+                {/* 이 페이지에서 제작 시작할 수 있는 줄만 고른다. 고를 수
+                    없는 줄까지 켜 두면 눌러도 건너뛴 것으로만 돌아온다. */}
+                <input
+                  type="checkbox"
+                  aria-label="제작 시작할 수 있는 주문 모두 선택"
+                  disabled={startable.length === 0}
+                  checked={allPicked}
+                  onChange={(event) =>
+                    setPicked(
+                      event.target.checked
+                        ? startable.map((order) => order.orderNumber)
+                        : []
+                    )
+                  }
+                />
+              </th>
               <th className="px-3 py-2 font-medium">주문번호</th>
               <th className="px-3 py-2 font-medium">신청일</th>
               <th className="px-3 py-2 font-medium">굿즈</th>
@@ -363,6 +446,22 @@ export default function AdminOrders() {
                 onClick={() => setOpened(order.orderNumber)}
                 className="cursor-pointer border-b last:border-0 hover:bg-muted/40"
               >
+                <td className="px-3 py-2" onClick={(event) => event.stopPropagation()}>
+                  {canStartProduction(role ?? "PRODUCTION", order.status) ? (
+                    <input
+                      type="checkbox"
+                      aria-label={`${order.orderNumber} 선택`}
+                      checked={picked.includes(order.orderNumber)}
+                      onChange={(event) =>
+                        setPicked((current) =>
+                          event.target.checked
+                            ? [...current, order.orderNumber]
+                            : current.filter((n) => n !== order.orderNumber)
+                        )
+                      }
+                    />
+                  ) : null}
+                </td>
                 <td className="px-3 py-2 font-mono text-xs">{order.orderNumber}</td>
                 <td className="px-3 py-2 text-muted-foreground">
                   {formatDateTime(order.submittedAt)}

@@ -203,6 +203,21 @@ export const primaryRowAction = (
   return null;
 };
 
+/**
+ * 묶어서 제작 시작할 수 있는 건인지.
+ *
+ * 제작은 낱개로 하는 일이 아니다. 모아서 만들고, 제작용 목록과 사진도
+ * 묶음으로 내보낸다. 그런데 상태만 한 건씩 눌러야 해서 1차 체험단 100건이면
+ * 100번 누른다.
+ *
+ * 서버의 전이표와 같은 것을 본다. 여기서 더 열면 골라 놓고 눌러도 건너뛴
+ * 것으로만 돌아온다.
+ */
+export const canStartProduction = (
+  role: AdminRole,
+  current: GoodsOrderStatus
+): boolean => settableStatusesFor(role, current).includes("IN_PRODUCTION");
+
 /** 사진 자리 하나. 비어 있으면 "미기입"으로 보여 준다. */
 export type PhotoSlotRow = {
   slot: number;
