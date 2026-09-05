@@ -56,6 +56,24 @@ export type AdminOrderListResponse = {
     inProduction: number;
     readyToShip: number;
   };
+  /**
+   * 뷰마다 몇 건인지.
+   *
+   * 탭에 숫자가 없으면 어느 일이 밀려 있는지 알려고 탭을 하나씩 눌러 봐야
+   * 한다. 화면이 건 필터를 따르지 않는다.
+   */
+  viewCounts: Record<string, number>;
+};
+
+/**
+ * 묶음 처리 결과.
+ *
+ * @param changedOrderNumbers 되돌리려면 무엇을 옮겼는지 알아야 한다.
+ */
+export type AdminBulkResult = {
+  changed: number;
+  skipped: string[];
+  changedOrderNumbers: string[];
 };
 
 export type AdminOrderDetail = {
@@ -417,10 +435,45 @@ export const completeAdminPickup = (orderNumber: string) =>
  * 되돌리면 방금 통과한 것까지 다시 눌러야 한다.
  */
 export const startAdminProduction = (orderNumbers: string[]) =>
-  adminRequest<{ changed: number; skipped: string[] }>(
-    "/api/admin/orders/start-production",
-    { method: "POST", body: JSON.stringify({ orderNumbers }) }
+  adminRequest<AdminBulkResult>("/api/admin/orders/start-production", {
+    method: "POST",
+    body: JSON.stringify({ orderNumbers }),
+  });
+
+/**
+ * 지금 조건에 맞는 전부를 제작 중으로 옮긴다.
+ *
+ * 100건이 다섯 페이지에 걸쳐 있으면 페이지마다 골라야 한다. 서버가 목록을
+ * 뽑을 때와 같은 조건으로 고르므로, 화면이 보고 있는 것과 같은 것을 옮긴다.
+ */
+export const startAdminProductionMatching = (params: {
+  q?: string;
+  goodsType?: string;
+  submittedFrom?: string;
+  submittedTo?: string;
+  minPhotoCount?: number;
+}) => {
+  const query = new URLSearchParams();
+  if (params.q?.trim()) query.set("q", params.q.trim());
+  if (params.goodsType?.trim()) query.set("goodsType", params.goodsType.trim());
+  if (params.submittedFrom) query.set("submittedFrom", params.submittedFrom);
+  if (params.submittedTo) query.set("submittedTo", params.submittedTo);
+  if (params.minPhotoCount != null)
+    query.set("minPhotoCount", String(params.minPhotoCount));
+
+  const suffix = query.toString();
+  return adminRequest<AdminBulkResult>(
+    `/api/admin/orders/start-production/matching${suffix ? `?${suffix}` : ""}`,
+    { method: "POST" }
   );
+};
+
+/** 방금 한 묶음 제작 시작을 되돌린다. */
+export const undoAdminProduction = (orderNumbers: string[]) =>
+  adminRequest<AdminBulkResult>("/api/admin/orders/start-production/undo", {
+    method: "POST",
+    body: JSON.stringify({ orderNumbers }),
+  });
 
 export const listAdminAccounts = () =>
   adminRequest<AdminAccount[]>("/api/admin/accounts");

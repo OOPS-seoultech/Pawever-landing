@@ -3,10 +3,13 @@ import {
   canCancel,
   CANCEL_REASONS,
   cancelGuide,
+  ADMIN_ORDER_VIEWS,
   canStartProduction,
   primaryRowAction,
+  statusesForView,
   canCompletePickup,
   canRegisterTracking,
+  FILTERABLE_STATUSES,
   filterableStatusesFor,
   photoSlotRows,
   statusChangeHint,
@@ -295,6 +298,42 @@ describe("묶어서 제작 시작", () => {
     ] as GoodsOrderStatus[]) {
       expect(canStartProduction("ADMIN", no), no).toBe(false);
     }
+  });
+});
+
+describe("일 단위 뷰", () => {
+  // 상태 아홉 개를 칩으로 늘어놓으면 기본이 "전체"가 되어, 8월의 100건이
+  // 오늘의 세 건을 덮는다.
+  it("서버와 같은 다섯 뷰를 같은 순서로 든다", () => {
+    expect(ADMIN_ORDER_VIEWS.map((view) => view.key)).toEqual([
+      "PAYMENT_CHECK",
+      "PRODUCTION_QUEUE",
+      "IN_PRODUCTION",
+      "DONE",
+      "PROBLEM",
+    ]);
+  });
+
+  it("제작 대기는 결제 완료와 1차 체험단을 함께 담는다", () => {
+    // 돈을 받은 방식은 다르지만 다음에 할 일이 같다.
+    expect(statusesForView("PRODUCTION_QUEUE")).toEqual([
+      "PAYMENT_COMPLETED",
+      "LEGACY_FREE",
+    ]);
+  });
+
+  it("모든 상태가 어느 뷰에는 들어간다", () => {
+    // 빠진 상태가 있으면 그 주문은 화면 어디에서도 보이지 않는다.
+    const covered = ADMIN_ORDER_VIEWS.flatMap((view) => statusesForView(view.key));
+    for (const status of FILTERABLE_STATUSES) {
+      expect(covered, status).toContain(status);
+    }
+  });
+
+  it("탭마다 그 화면에서 할 일이 적혀 있다", () => {
+    // 탭 이름만으로는 무엇을 하는 자리인지 알기 어렵다.
+    expect(ADMIN_ORDER_VIEWS.every((view) => view.label.length > 0)).toBe(true);
+    expect(ADMIN_ORDER_VIEWS[1].label).toBe("제작 대기");
   });
 });
 

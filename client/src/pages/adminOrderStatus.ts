@@ -148,6 +148,46 @@ export const canCompletePickup = (
   (current === "PAYMENT_COMPLETED" || current === "IN_PRODUCTION");
 
 /**
+ * 목록을 일 단위로 나눈 자리. 서버의 AdminOrderView 와 같아야 한다.
+ *
+ * 상태 아홉 개를 칩으로 늘어놓으면 기본이 "전체"가 되어, 8월에 들어온
+ * 100건이 오늘 들어온 세 건을 덮는다. 실제로 하는 일은 넷뿐이고 일마다
+ * 보는 값도 누르는 것도 다르다.
+ *
+ * 결제 완료와 1차 체험단은 돈을 받은 방식이 다르지만 다음에 할 일이 같아서
+ * 한 자리에 둔다.
+ */
+export type AdminOrderViewKey =
+  | "PAYMENT_CHECK"
+  | "PRODUCTION_QUEUE"
+  | "IN_PRODUCTION"
+  | "DONE"
+  | "PROBLEM";
+
+export const ADMIN_ORDER_VIEWS: readonly {
+  key: AdminOrderViewKey;
+  label: string;
+  statuses: GoodsOrderStatus[];
+}[] = [
+  { key: "PAYMENT_CHECK", label: "입금 확인", statuses: ["PAYMENT_PENDING"] },
+  {
+    key: "PRODUCTION_QUEUE",
+    label: "제작 대기",
+    statuses: ["PAYMENT_COMPLETED", "LEGACY_FREE"],
+  },
+  { key: "IN_PRODUCTION", label: "제작 중", statuses: ["IN_PRODUCTION"] },
+  { key: "DONE", label: "완료", statuses: ["SHIPPED", "PICKED_UP"] },
+  {
+    key: "PROBLEM",
+    label: "문제",
+    statuses: ["PAYMENT_EXPIRED", "PAYMENT_FAILED", "CANCELED", "CANCEL_FAILED"],
+  },
+];
+
+export const statusesForView = (key: AdminOrderViewKey): GoodsOrderStatus[] =>
+  ADMIN_ORDER_VIEWS.find((view) => view.key === key)?.statuses ?? [];
+
+/**
  * 묶어서 제작 시작할 수 있는 건인지.
  *
  * 제작은 낱개로 하는 일이 아니다. 모아서 만들고, 제작용 목록과 사진도
