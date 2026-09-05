@@ -63,6 +63,19 @@ describe("관리자 화면의 수령 방법", () => {
     expect(page).toContain("useParams");
   });
 
+  it("상세를 열면 사진이 바로 보인다", () => {
+    // 제작에 쓰는 값이라 한 번 더 눌러야 보이면 그 클릭이 매번 붙는다.
+    // 링크를 받는 일은 상세를 읽을 때 함께 한다.
+    expect(detail).toMatch(/getAdminOrder\([^)]*\);[\s\S]{0,600}requestPhotoLinks\(/);
+    expect(detail).not.toContain("미리보기 열기");
+  });
+
+  it("링크가 닫히면 다시 불러올 자리가 있다", () => {
+    // 5분이 지나면 그림이 깨진다. 그때 되살릴 방법이 없으면 화면을 닫았다
+    // 다시 열어야 한다.
+    expect(detail).toContain("다시 불러오기");
+  });
+
   it("상세는 방법을 주소보다 먼저 말한다", () => {
     // 주소가 빈 이유를 알고 나서 봐야 빠뜨린 것과 구분된다.
     const methodAt = detail.indexOf('label="수령 방법"');

@@ -84,6 +84,18 @@ export function AdminOrderPanel({
       setOrder(detail);
       setCompany(detail.shipping?.trackingCompany ?? "");
       setInvoice(detail.shipping?.trackingNumber ?? "");
+
+      // 사진은 제작에 쓰는 값이라 열자마자 보여야 한다. 한 번 더 눌러야
+      // 보이면, 상세를 여는 일이 잦아진 지금은 그 클릭이 매번 붙는다.
+      //
+      // 링크를 받는 일은 서버에 접속기록으로 남는다. 화면에서 본 것과
+      // 파일로 가져간 것을 서버가 다른 이름으로 적으므로, 자동으로 받아도
+      // 실제로 가져간 사람을 찾는 데 방해가 되지 않는다.
+      if (detail.photos.some((photo) => photo.filled)) {
+        setLinks(await requestPhotoLinks(orderNumber));
+      } else {
+        setLinks(null);
+      }
     } catch (caught) {
       handle(caught);
     }
@@ -231,8 +243,8 @@ export function AdminOrderPanel({
 
         <Section title="사진">
           <p className="mb-3 text-sm text-muted-foreground">
-            사진 1은 필수, 2~5는 선택입니다. 받은 링크는 5분 뒤 닫히고, 누가
-            받았는지 이력에 남습니다.
+            사진 1은 필수, 2~5는 선택입니다. 누르면 원본이 새 탭에 열립니다.
+            보이는 사진은 5분 뒤 닫히고, 누가 열어 봤는지 이력에 남습니다.
           </p>
 
           {/* 올리지 않은 자리도 자리로 남긴다. 빼 버리면 안 올린 것인지
@@ -262,7 +274,7 @@ export function AdminOrderPanel({
                           : "bg-muted/40 text-muted-foreground"
                       }`}
                     >
-                      {row.filled ? "링크 받기" : "미기입"}
+                      {row.filled ? "불러오는 중" : "미기입"}
                     </div>
                   )}
                   <span className="mt-1 block text-[11px] text-muted-foreground">
@@ -275,23 +287,24 @@ export function AdminOrderPanel({
 
           {links ? (
             <p className="mb-2 text-xs text-muted-foreground">
-              링크가 {formatDateTime(links.photos[0]?.expiresAt)}까지 열립니다.
-              지나면 다시 받으면 됩니다.
+              {formatDateTime(links.photos[0]?.expiresAt)}까지 보입니다. 지나면
+              다시 불러오세요.
             </p>
           ) : null}
 
           <div className="flex flex-wrap gap-2">
+            {/* 5분이 지나면 그림이 깨진다. 그때 다시 받는 자리다. */}
             <Button
               variant="secondary"
               size="sm"
-              disabled={pending}
+              disabled={pending || !order.photos.some((photo) => photo.filled)}
               onClick={() =>
                 run(async () => {
                   setLinks(await requestPhotoLinks(order.orderNumber));
-                }, "미리보기를 열었습니다.")
+                }, "사진을 다시 불러왔습니다.")
               }
             >
-              미리보기 열기
+              다시 불러오기
             </Button>
             <Button
               variant="outline"
