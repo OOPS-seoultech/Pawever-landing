@@ -15,18 +15,22 @@ import {
   completeAdminPickup,
   listAdminOrders,
   startAdminProduction,
+  startAdminProductionMatching,
+  undoAdminProduction,
   type AdminOrderListResponse,
   type AdminOrderSummary,
-  type GoodsOrderStatus,
 } from "@/lib/adminApi";
 import { formatDateTime, formatKrw } from "@/lib/adminFormat";
 import { AdminOrderPanel } from "./AdminOrderPanel";
 import {
+  ADMIN_ORDER_VIEWS,
   canStartProduction,
   filterableStatusesFor,
   primaryRowAction,
+  statusesForView,
   STATUS_LABELS,
   statusTone,
+  type AdminOrderViewKey,
 } from "./adminOrderStatus";
 
 const PAGE_SIZE = 20;
@@ -56,7 +60,16 @@ export default function AdminOrders() {
   const role = useAdminGuard();
   const [, setLocation] = useLocation();
 
-  const [selected, setSelected] = useState<GoodsOrderStatus[]>([]);
+  /**
+   * 지금 보고 있는 일.
+   *
+   * 상태 칩 아홉 개를 늘어놓으면 기본이 "전체"가 되어, 8월에 들어온 100건이
+   * 오늘 들어온 세 건을 덮는다. 들어오면 할 일이 남은 자리부터 본다.
+   */
+  const [view, setView] = useState<AdminOrderViewKey>("PAYMENT_CHECK");
+  const selected = statusesForView(view).filter((status) =>
+    filterableStatusesFor(role ?? "PRODUCTION").includes(status)
+  );
   const [searchInput, setSearchInput] = useState("");
   // 입력할 때마다 부르지 않는다. 주문번호를 한 글자씩 칠 때마다 고객 목록을
   // 새로 긁어 오게 된다.
@@ -90,6 +103,13 @@ export default function AdminOrders() {
    */
   const [picked, setPicked] = useState<string[]>([]);
   const [bulkBusy, setBulkBusy] = useState(false);
+  /**
+   * 방금 옮긴 주문.
+   *
+   * 100건을 잘못 옮겼을 때 한 건씩 되돌리게 두지 않는다. 다음 처리를
+   * 하거나 화면을 옮기면 사라진다.
+   */
+  const [undoable, setUndoable] = useState<string[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -97,7 +117,7 @@ export default function AdminOrders() {
     try {
       setData(
         await listAdminOrders({
-          status: selected,
+          status: statusesForView(view),
           q: query,
           submittedFrom: submittedFrom || undefined,
           submittedTo: submittedTo || undefined,
@@ -118,7 +138,7 @@ export default function AdminOrders() {
       setLoading(false);
     }
   }, [
-    selected,
+    view,
     query,
     submittedFrom,
     submittedTo,
@@ -136,16 +156,7 @@ export default function AdminOrders() {
   // 무엇을 누르는지 모르는 채 누르게 된다.
   useEffect(() => {
     setPicked([]);
-  }, [selected, query, submittedFrom, submittedTo, minPhotoCount, goodsType, page]);
-
-  const toggleStatus = (status: GoodsOrderStatus) => {
-    setPage(0);
-    setSelected((current) =>
-      current.includes(status)
-        ? current.filter((item) => item !== status)
-        : [...current, status]
-    );
-  };
+  }, [view, query, submittedFrom, submittedTo, minPhotoCount, goodsType, page]);
 
   const search = (event: FormEvent) => {
     event.preventDefault();
@@ -171,7 +182,77 @@ export default function AdminOrders() {
           ? `${result.changed}건을 제작 중으로 옮겼습니다.`
           : `${result.changed}건을 옮겼습니다. 옮기지 못한 ${result.skipped.length}건: ${result.skipped.join(", ")}`
       );
+      setUndoable(result.changedOrderNumbers);
       setPicked([]);
+      await load();
+    } catch (caught) {
+      const failure = caught as AdminApiError;
+      if (failure.needsSignIn) {
+        setLocation("/admin", { replace: true });
+        return;
+      }
+      setError(failure.message);
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  /**
+   * 조건에 맞는 전부를 옮긴다.
+   *
+   * 보이는 스무 건이 아니라 이 뷰의 조건에 맞는 전부다. 되돌릴 수 없는 일이
+   * 아니지만 안 보이는 줄까지 건드리므로 한 번 더 묻는다.
+   */
+  const runMatching = async () => {
+    const total = data?.totalCount ?? 0;
+    if (bulkBusy || total === 0) return;
+    if (
+      !window.confirm(
+        `지금 조건에 맞는 ${total}건을 제작 중으로 옮깁니다. 계속할까요?`
+      )
+    ) {
+      return;
+    }
+    setBulkBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const result = await startAdminProductionMatching({
+        q: query,
+        goodsType: goodsType || undefined,
+        submittedFrom: submittedFrom || undefined,
+        submittedTo: submittedTo || undefined,
+        minPhotoCount: minPhotoCount ? Number(minPhotoCount) : undefined,
+      });
+      setNotice(
+        result.skipped.length === 0
+          ? `${result.changed}건을 제작 중으로 옮겼습니다.`
+          : `${result.changed}건을 옮겼습니다. 옮기지 못한 ${result.skipped.length}건: ${result.skipped.join(", ")}`
+      );
+      setUndoable(result.changedOrderNumbers);
+      setPicked([]);
+      await load();
+    } catch (caught) {
+      const failure = caught as AdminApiError;
+      if (failure.needsSignIn) {
+        setLocation("/admin", { replace: true });
+        return;
+      }
+      setError(failure.message);
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  /** 방금 옮긴 것을 되돌린다. */
+  const runUndo = async () => {
+    if (bulkBusy || undoable.length === 0) return;
+    setBulkBusy(true);
+    setError(null);
+    try {
+      const result = await undoAdminProduction(undoable);
+      setNotice(`${result.changed}건을 되돌렸습니다.`);
+      setUndoable([]);
       await load();
     } catch (caught) {
       const failure = caught as AdminApiError;
@@ -236,29 +317,38 @@ export default function AdminOrders() {
 
   return (
     <AdminShell title="굿즈 주문" role={role}>
-      {data ? (
-        <div className="mb-5 grid grid-cols-3 gap-3">
-          <SummaryCard label="결제 완료" value={data.summary.paymentCompleted} />
-          <SummaryCard label="제작 중" value={data.summary.inProduction} />
-          <SummaryCard label="발송 대기" value={data.summary.readyToShip} />
-        </div>
-      ) : null}
-
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        {filterableStatusesFor(role ?? "PRODUCTION").map((status) => {
-          const on = selected.includes(status);
+      {/* 일 단위로 나눈 탭. 상태 칩을 늘어놓으면 기본이 "전체"가 되어
+          8월의 100건이 오늘의 세 건을 덮는다. 숫자는 필터와 무관한 전체다 —
+          탭은 "무엇이 남았나"이지 "지금 목록이 몇 건인가"가 아니다. */}
+      <div className="mb-4 flex flex-wrap items-center gap-1 border-b">
+        {ADMIN_ORDER_VIEWS.filter((item) =>
+          statusesForView(item.key).some((status) =>
+            filterableStatusesFor(role ?? "PRODUCTION").includes(status)
+          )
+        ).map((item) => {
+          const on = view === item.key;
+          const count = data?.viewCounts?.[item.key];
           return (
             <button
-              key={status}
+              key={item.key}
               type="button"
-              onClick={() => toggleStatus(status)}
-              className={`rounded-full border px-3 py-1 text-xs transition ${
+              onClick={() => {
+                setPage(0);
+                setUndoable([]);
+                setView(item.key);
+              }}
+              className={`-mb-px border-b-2 px-3 py-2 text-sm transition ${
                 on
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border bg-background text-muted-foreground hover:text-foreground"
+                  ? "border-primary font-medium text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
-              {STATUS_LABELS[status]}
+              {item.label}
+              {count != null ? (
+                <span className="ml-1.5 text-xs text-muted-foreground">
+                  {count}
+                </span>
+              ) : null}
             </button>
           );
         })}
@@ -372,8 +462,17 @@ export default function AdminOrders() {
             size="sm"
             onClick={() => setPicked(startable.map((order) => order.orderNumber))}
           >
-            모두 선택
+            이 페이지 모두 선택
           </Button>
+          {/* 페이지에 다 담기지 않을 때만. 스무 건이 전부면 위 버튼과 같은
+              일을 두 번 두는 셈이다. */}
+          {(data?.totalCount ?? 0) > startable.length ? (
+            <Button size="sm" disabled={bulkBusy} onClick={runMatching}>
+              {bulkBusy
+                ? "처리 중..."
+                : `조건에 맞는 ${data?.totalCount}건 모두 제작 시작`}
+            </Button>
+          ) : null}
         </div>
       ) : null}
 
@@ -397,9 +496,20 @@ export default function AdminOrders() {
 
       {error ? <AdminError message={error} /> : null}
       {notice ? (
-        <p className="mb-3 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
-          {notice}
-        </p>
+        <div className="mb-3 flex flex-wrap items-center gap-3 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+          <span>{notice}</span>
+          {/* 100건을 잘못 옮겼을 때 한 건씩 되돌리게 두지 않는다. */}
+          {undoable.length > 0 ? (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={bulkBusy}
+              onClick={runUndo}
+            >
+              되돌리기
+            </Button>
+          ) : null}
+        </div>
       ) : null}
 
       <div className="overflow-x-auto rounded-lg border bg-background">
@@ -618,14 +728,5 @@ function RowAction({
     >
       {busy ? "처리 중..." : action.label}
     </Button>
-  );
-}
-
-function SummaryCard({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-lg border bg-background px-4 py-3">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-1 text-2xl font-semibold">{value}</p>
-    </div>
   );
 }

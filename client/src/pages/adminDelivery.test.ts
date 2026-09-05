@@ -45,6 +45,21 @@ describe("관리자 화면의 수령 방법", () => {
     expect(list).toContain("<AdminOrderPanel");
   });
 
+  it("탭으로 일을 나누고 건수를 함께 보여 준다", () => {
+    expect(list).toContain("ADMIN_ORDER_VIEWS");
+    expect(list).toContain("viewCounts");
+  });
+
+  it("조건에 맞는 전체를 한 번에 고를 수 있다", () => {
+    // 100건이 다섯 페이지면 페이지마다 골라야 한다.
+    expect(list).toContain("startAdminProductionMatching(");
+  });
+
+  it("처리한 뒤 되돌릴 수 있다", () => {
+    expect(list).toContain("undoAdminProduction(");
+    expect(list).toContain("되돌리기");
+  });
+
   it("고를 수 있는 건이 있으면 그 사실을 먼저 알린다", () => {
     // 체크 칸만 두면 화면이 그대로 보인다. 무엇을 할 수 있는지 적어 둔다.
     expect(list).toContain("모두 선택");
