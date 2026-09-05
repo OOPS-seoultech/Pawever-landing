@@ -147,6 +147,62 @@ export const canCompletePickup = (
   deliveryMethod === "PICKUP" &&
   (current === "PAYMENT_COMPLETED" || current === "IN_PRODUCTION");
 
+/**
+ * 목록 한 줄에서 바로 누르는 처리.
+ *
+ * 한 건을 끝내려고 상세로 들어갔다 나오면 필터와 페이지가 풀린다. 70건을
+ * 그렇게 처리하면 같은 자리를 몇 번씩 찾아 들어간다. 그래서 지금 상태에서
+ * 다음에 할 일 하나만 줄에 세워 둔다.
+ *
+ * 규칙은 위 전이표와 권한 규칙에서 그대로 나온다 — 여기서 더 열면 눌러도
+ * 오류만 돌아온다.
+ *
+ * kind
+ * - status: 상태를 바로 옮긴다
+ * - pickup: 현장 수령으로 끝낸다
+ * - open: 값을 더 받아야 해서 상세를 연다(택배 송장은 두 칸이 필요하다)
+ */
+export type RowAction = {
+  kind: "status" | "pickup" | "open";
+  label: string;
+  nextStatus?: GoodsOrderStatus;
+  /** 되돌릴 수 없는 것만 한 번 더 묻는다. 매번 물으면 70번 더 누른다. */
+  confirm: boolean;
+};
+
+export const primaryRowAction = (
+  role: AdminRole,
+  current: GoodsOrderStatus,
+  deliveryMethod: string | undefined
+): RowAction | null => {
+  if (settableStatusesFor(role, current).includes("IN_PRODUCTION")) {
+    return {
+      kind: "status",
+      label: "제작 시작",
+      nextStatus: "IN_PRODUCTION",
+      confirm: false,
+    };
+  }
+  if (settableStatusesFor(role, current).includes("PAYMENT_COMPLETED")
+      && current === "PAYMENT_PENDING") {
+    return {
+      kind: "status",
+      label: "입금 확인",
+      nextStatus: "PAYMENT_COMPLETED",
+      confirm: false,
+    };
+  }
+  if (canCompletePickup(role, current, deliveryMethod)) {
+    // 파기 시계를 켜고 되돌릴 수 없다.
+    return { kind: "pickup", label: "수령 완료", confirm: true };
+  }
+  if (canRegisterTracking(role, current, deliveryMethod) && current !== "SHIPPED") {
+    // 택배사와 송장번호 두 값을 받아야 한다. 버튼 하나로는 끝나지 않는다.
+    return { kind: "open", label: "송장 등록", confirm: false };
+  }
+  return null;
+};
+
 /** 사진 자리 하나. 비어 있으면 "미기입"으로 보여 준다. */
 export type PhotoSlotRow = {
   slot: number;

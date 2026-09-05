@@ -21,8 +21,10 @@ const list = readFileSync(
   "utf8"
 ).replace(/\s+/g, " ");
 
+// 상세 본문은 패널에 있다. 목록의 드로어와 /admin/orders/:orderNumber 가
+// 같은 것을 그려야 해서 한 곳에 둔다.
 const detail = readFileSync(
-  new URL("./AdminOrderDetail.tsx", import.meta.url),
+  new URL("./AdminOrderPanel.tsx", import.meta.url),
   "utf8"
 ).replace(/\s+/g, " ");
 
@@ -33,6 +35,32 @@ describe("관리자 화면의 수령 방법", () => {
     expect(list).toContain('order.deliveryMethod === "PICKUP"');
     expect(list).toContain("현장 수령");
     expect(list).toContain("택배");
+  });
+
+  it("목록에서 상세로 화면을 옮기지 않는다", () => {
+    // 상세로 갔다 돌아오면 필터도 페이지도 풀린다. 70건을 그렇게 처리하면
+    // 같은 자리를 몇 번씩 찾아 들어간다.
+    expect(list).toContain("setOpened(order.orderNumber)");
+    expect(list).not.toContain("setLocation(`/admin/orders/${order.orderNumber}`)");
+    expect(list).toContain("<AdminOrderPanel");
+  });
+
+  it("줄마다 다음에 할 일이 하나 붙는다", () => {
+    expect(list).toContain("primaryRowAction(");
+    expect(list).toContain(">처리</th>");
+    // 줄을 누르면 드로어가 열린다. 버튼은 그 자리에서 끝내는 것이라
+    // 눌림이 줄까지 올라가면 안 된다.
+    expect(list).toContain("event.stopPropagation()");
+  });
+
+  it("상세 주소는 북마크용으로 남는다", () => {
+    // 지금까지 나눈 링크가 깨지면 안 된다.
+    const page = readFileSync(
+      new URL("./AdminOrderDetail.tsx", import.meta.url),
+      "utf8"
+    ).replace(/\s+/g, " ");
+    expect(page).toContain("<AdminOrderPanel");
+    expect(page).toContain("useParams");
   });
 
   it("상세는 방법을 주소보다 먼저 말한다", () => {

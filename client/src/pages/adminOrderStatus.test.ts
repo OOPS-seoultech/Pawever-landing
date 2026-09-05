@@ -3,6 +3,7 @@ import {
   canCancel,
   CANCEL_REASONS,
   cancelGuide,
+  primaryRowAction,
   canCompletePickup,
   canRegisterTracking,
   filterableStatusesFor,
@@ -198,6 +199,74 @@ describe("현장 수령", () => {
   it("수령 완료는 손으로 고르지 못한다", () => {
     // 발송 완료와 같다. 현장 수령 버튼을 거쳐야 파기 시계가 함께 켜진다.
     expect(settableStatusesFor("ADMIN", "IN_PRODUCTION")).not.toContain("PICKED_UP");
+  });
+});
+
+describe("목록에서 바로 하는 처리", () => {
+  // 한 건을 끝내려고 목록에서 상세로 들어갔다 나오면 필터와 페이지가
+  // 풀린다. 70건을 그렇게 처리하면 같은 자리를 몇 번씩 찾아 들어간다.
+  it("결제 대기에는 입금 확인이 붙는다", () => {
+    const action = primaryRowAction("ADMIN", "PAYMENT_PENDING", "PICKUP");
+    expect(action?.kind).toBe("status");
+    expect(action?.label).toBe("입금 확인");
+    expect(action?.nextStatus).toBe("PAYMENT_COMPLETED");
+  });
+
+  it("결제 완료에는 제작 시작이 붙는다", () => {
+    const action = primaryRowAction("ADMIN", "PAYMENT_COMPLETED", "SHIPPING");
+    expect(action?.kind).toBe("status");
+    expect(action?.nextStatus).toBe("IN_PRODUCTION");
+  });
+
+  it("제작 중 현장 수령 건에는 수령 완료가 붙는다", () => {
+    const action = primaryRowAction("ADMIN", "IN_PRODUCTION", "PICKUP");
+    expect(action?.kind).toBe("pickup");
+    expect(action?.label).toBe("수령 완료");
+  });
+
+  it("제작 중 택배 건은 송장을 받아야 하므로 상세를 연다", () => {
+    // 택배사와 송장번호 두 값을 받아야 한다. 목록 버튼 하나로는 끝나지 않는다.
+    const action = primaryRowAction("ADMIN", "IN_PRODUCTION", "SHIPPING");
+    expect(action?.kind).toBe("open");
+    expect(action?.label).toBe("송장 등록");
+  });
+
+  it("제작팀에게는 제작 시작만 붙는다", () => {
+    // 입금 확인도 수령 완료도 관리자 일이다. 서버가 막는 것을 화면이
+    // 열어 두면 눌러도 오류만 돌아온다.
+    expect(primaryRowAction("PRODUCTION", "PAYMENT_COMPLETED", "PICKUP")?.nextStatus).toBe(
+      "IN_PRODUCTION"
+    );
+    expect(primaryRowAction("PRODUCTION", "PAYMENT_PENDING", "PICKUP")).toBeNull();
+    expect(primaryRowAction("PRODUCTION", "IN_PRODUCTION", "PICKUP")).toBeNull();
+  });
+
+  it("끝난 주문에는 아무것도 붙지 않는다", () => {
+    for (const done of [
+      "SHIPPED",
+      "PICKED_UP",
+      "CANCELED",
+      "PAYMENT_EXPIRED",
+      "PAYMENT_FAILED",
+    ] as GoodsOrderStatus[]) {
+      expect(primaryRowAction("ADMIN", done, "PICKUP"), done).toBeNull();
+    }
+  });
+
+  it("1차 체험단에는 제작 시작이 붙는다", () => {
+    // 결제는 없었지만 만들어 보내야 하는 물건이다.
+    expect(primaryRowAction("ADMIN", "LEGACY_FREE", "SHIPPING")?.nextStatus).toBe(
+      "IN_PRODUCTION"
+    );
+  });
+
+  it("한 번 더 묻는 것은 되돌릴 수 없는 것뿐이다", () => {
+    // 입금 확인과 제작 시작은 잘못 눌러도 되돌릴 수 있다. 매번 물으면
+    // 70건을 처리하는 동안 70번 더 누른다.
+    expect(primaryRowAction("ADMIN", "PAYMENT_PENDING", "PICKUP")?.confirm).toBe(false);
+    expect(primaryRowAction("ADMIN", "PAYMENT_COMPLETED", "PICKUP")?.confirm).toBe(false);
+    // 수령 완료는 파기 시계를 켜고 되돌릴 수 없다.
+    expect(primaryRowAction("ADMIN", "IN_PRODUCTION", "PICKUP")?.confirm).toBe(true);
   });
 });
 
