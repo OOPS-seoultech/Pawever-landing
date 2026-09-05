@@ -2,16 +2,27 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { AdminError, AdminShell, useAdminGuard } from "@/components/AdminShell";
 import {
   AdminApiError,
+  changeAdminOrderStatus,
+  completeAdminPickup,
   listAdminOrders,
   type AdminOrderListResponse,
+  type AdminOrderSummary,
   type GoodsOrderStatus,
 } from "@/lib/adminApi";
 import { formatDateTime, formatKrw } from "@/lib/adminFormat";
+import { AdminOrderPanel } from "./AdminOrderPanel";
 import {
   filterableStatusesFor,
+  primaryRowAction,
   STATUS_LABELS,
   statusTone,
 } from "./adminOrderStatus";
@@ -59,6 +70,16 @@ export default function AdminOrders() {
   const [data, setData] = useState<AdminOrderListResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  /**
+   * 드로어에 띄운 주문.
+   *
+   * 상세로 화면을 옮기지 않는다. 옮겼다 돌아오면 필터도 페이지도 풀려,
+   * 70건을 처리하는 동안 같은 자리를 몇 번씩 찾아 들어가게 된다.
+   */
+  const [opened, setOpened] = useState<string | null>(null);
+  /** 지금 처리 중인 주문번호. 두 번 눌러 두 번 나가지 않게 한다. */
+  const [acting, setActing] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -114,6 +135,53 @@ export default function AdminOrders() {
     event.preventDefault();
     setPage(0);
     setQuery(searchInput);
+  };
+
+  /**
+   * 줄에서 바로 처리한다.
+   *
+   * 끝나면 목록을 다시 읽는다. 상태 뱃지와 위 요약이 방금 한 일을 따라와야
+   * 다음 건으로 넘어갈 수 있다.
+   */
+  const runRowAction = async (
+    order: AdminOrderSummary,
+    action: NonNullable<ReturnType<typeof primaryRowAction>>
+  ) => {
+    if (acting) return;
+    if (action.kind === "open") {
+      setOpened(order.orderNumber);
+      return;
+    }
+    if (
+      action.confirm &&
+      !window.confirm(
+        `${order.orderNumber} 을(를) ${action.label} 로 바꿉니다. 되돌릴 수 없습니다.`
+      )
+    ) {
+      return;
+    }
+
+    setActing(order.orderNumber);
+    setError(null);
+    setNotice(null);
+    try {
+      if (action.kind === "pickup") {
+        await completeAdminPickup(order.orderNumber);
+      } else {
+        await changeAdminOrderStatus(order.orderNumber, action.nextStatus!);
+      }
+      setNotice(`${order.orderNumber} — ${action.label} 처리했습니다.`);
+      await load();
+    } catch (caught) {
+      const failure = caught as AdminApiError;
+      if (failure.needsSignIn) {
+        setLocation("/admin", { replace: true });
+        return;
+      }
+      setError(failure.message);
+    } finally {
+      setActing(null);
+    }
   };
 
   const totalPages = data ? Math.max(Math.ceil(data.totalCount / PAGE_SIZE), 1) : 1;
@@ -245,6 +313,11 @@ export default function AdminOrders() {
       </div>
 
       {error ? <AdminError message={error} /> : null}
+      {notice ? (
+        <p className="mb-3 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+          {notice}
+        </p>
+      ) : null}
 
       <div className="overflow-x-auto rounded-lg border bg-background">
         <table className="w-full min-w-[860px] text-sm">
@@ -262,12 +335,15 @@ export default function AdminOrders() {
               <th className="px-3 py-2 font-medium">수령</th>
               <th className="px-3 py-2 font-medium">금액</th>
               <th className="px-3 py-2 font-medium">상태</th>
+              {/* 한 건을 끝내려고 상세로 들어갔다 나오면 필터와 페이지가
+                  풀린다. 다음에 할 일 하나를 줄에 세워 둔다. */}
+              <th className="px-3 py-2 font-medium">처리</th>
             </tr>
           </thead>
           <tbody>
             {loading && !data ? (
               <tr>
-                <td colSpan={10} className="px-3 py-8 text-center text-muted-foreground">
+                <td colSpan={11} className="px-3 py-8 text-center text-muted-foreground">
                   불러오는 중...
                 </td>
               </tr>
@@ -275,7 +351,7 @@ export default function AdminOrders() {
 
             {data?.orders.length === 0 ? (
               <tr>
-                <td colSpan={10} className="px-3 py-8 text-center text-muted-foreground">
+                <td colSpan={11} className="px-3 py-8 text-center text-muted-foreground">
                   조건에 맞는 주문이 없습니다.
                 </td>
               </tr>
@@ -284,7 +360,7 @@ export default function AdminOrders() {
             {data?.orders.map((order) => (
               <tr
                 key={order.orderNumber}
-                onClick={() => setLocation(`/admin/orders/${order.orderNumber}`)}
+                onClick={() => setOpened(order.orderNumber)}
                 className="cursor-pointer border-b last:border-0 hover:bg-muted/40"
               >
                 <td className="px-3 py-2 font-mono text-xs">{order.orderNumber}</td>
@@ -319,11 +395,45 @@ export default function AdminOrders() {
                     {order.statusLabel ?? STATUS_LABELS[order.status]}
                   </span>
                 </td>
+                <td className="px-3 py-2">
+                  <RowAction
+                    order={order}
+                    role={role ?? "PRODUCTION"}
+                    busy={acting === order.orderNumber}
+                    disabled={Boolean(acting) || loading}
+                    onRun={runRowAction}
+                  />
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* 상세를 옆에서 연다. 목록은 그대로 남아 방금 보던 자리에서 이어
+          간다. 주소(/admin/orders/:orderNumber)는 북마크용으로 남겨 둔다. */}
+      <Sheet
+        open={opened !== null}
+        onOpenChange={(next) => {
+          if (!next) setOpened(null);
+        }}
+      >
+        <SheetContent
+          side="right"
+          className="w-full overflow-y-auto p-4 sm:max-w-xl lg:max-w-3xl"
+        >
+          <SheetHeader className="p-0">
+            <SheetTitle className="text-base">주문 {opened}</SheetTitle>
+          </SheetHeader>
+          {opened ? (
+            <AdminOrderPanel
+              orderNumber={opened}
+              role={role}
+              onChanged={load}
+            />
+          ) : null}
+        </SheetContent>
+      </Sheet>
 
       <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
         <span>전체 {data?.totalCount ?? 0}건</span>
@@ -350,6 +460,48 @@ export default function AdminOrders() {
         </div>
       </div>
     </AdminShell>
+  );
+}
+
+/**
+ * 줄에서 다음에 할 일 하나.
+ *
+ * 여러 개를 세우면 어느 것이 다음인지 매번 고르게 된다. 지금 상태에서
+ * 할 일은 대개 하나다.
+ */
+function RowAction({
+  order,
+  role,
+  busy,
+  disabled,
+  onRun,
+}: {
+  order: AdminOrderSummary;
+  role: "ADMIN" | "PRODUCTION";
+  busy: boolean;
+  disabled: boolean;
+  onRun: (
+    order: AdminOrderSummary,
+    action: NonNullable<ReturnType<typeof primaryRowAction>>
+  ) => void;
+}) {
+  const action = primaryRowAction(role, order.status, order.deliveryMethod);
+  if (!action) {
+    return <span className="text-xs text-muted-foreground">—</span>;
+  }
+  return (
+    <Button
+      size="sm"
+      variant={action.kind === "pickup" ? "default" : "secondary"}
+      disabled={disabled}
+      onClick={(event) => {
+        // 줄을 누르면 드로어가 열린다. 버튼은 그 자리에서 끝내는 것이다.
+        event.stopPropagation();
+        onRun(order, action);
+      }}
+    >
+      {busy ? "처리 중..." : action.label}
+    </Button>
   );
 }
 
