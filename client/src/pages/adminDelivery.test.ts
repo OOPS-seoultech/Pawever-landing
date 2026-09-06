@@ -109,6 +109,11 @@ describe("관리자 화면의 수령 방법", () => {
     expect(detail).toContain("다시 불러오기");
   });
 
+  it("상태 변경이 결제 여부를 함께 본다", () => {
+    // 1차 체험단을 결제 완료로 되돌리면 받지도 않은 돈이 매출로 잡힌다.
+    expect(detail).toMatch(/settableStatusesFor\([^)]*paidAt/);
+  });
+
   it("상세는 방법을 주소보다 먼저 말한다", () => {
     // 주소가 빈 이유를 알고 나서 봐야 빠뜨린 것과 구분된다.
     const methodAt = detail.indexOf('label="수령 방법"');

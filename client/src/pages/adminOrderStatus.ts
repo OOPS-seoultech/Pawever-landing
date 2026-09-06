@@ -79,20 +79,37 @@ const MANUAL_TRANSITIONS: Partial<Record<GoodsOrderStatus, GoodsOrderStatus[]>> 
   {
     PAYMENT_PENDING: ["PAYMENT_COMPLETED", "PAYMENT_EXPIRED", "PAYMENT_FAILED"],
     PAYMENT_COMPLETED: ["IN_PRODUCTION"],
-    IN_PRODUCTION: ["PAYMENT_COMPLETED"],
+    // 뒤로 갈 곳이 둘이다. 돈을 받은 주문은 결제 완료로, 1차 체험단은 다시
+    // 체험단으로 돌아간다. 어느 쪽인지는 결제 시각이 가른다.
+    IN_PRODUCTION: ["PAYMENT_COMPLETED", "LEGACY_FREE"],
     LEGACY_FREE: ["IN_PRODUCTION"],
   };
 
 /** 제작팀이 스스로 바꿀 수 있는 상태. 발송과 취소는 관리자만 한다. */
 const PRODUCTION_SETTABLE: GoodsOrderStatus[] = ["IN_PRODUCTION"];
 
+/**
+ * @param paid 결제가 확인된 주문인지. 제작 중에서 되돌릴 곳이 여기서 갈린다 —
+ *             1차 체험단을 결제 완료로 되돌리면 받지도 않은 돈이 매출로 잡히고,
+ *             결제한 주문을 체험단으로 옮기면 받은 돈이 장부에서 사라진다.
+ *             모르면(제작팀에게는 결제 정보가 내려가지 않는다) 좁히지 않는다.
+ *             서버가 어차피 막는다.
+ */
 export const settableStatusesFor = (
   role: AdminRole,
-  current: GoodsOrderStatus
+  current: GoodsOrderStatus,
+  paid?: boolean
 ): GoodsOrderStatus[] =>
-  (MANUAL_TRANSITIONS[current] ?? []).filter(
-    (status) => role === "ADMIN" || PRODUCTION_SETTABLE.includes(status)
-  );
+  (MANUAL_TRANSITIONS[current] ?? [])
+    .filter((status) => role === "ADMIN" || PRODUCTION_SETTABLE.includes(status))
+    .filter((status) => {
+      if (paid === undefined) return true;
+      if (status === "PAYMENT_COMPLETED" && current === "IN_PRODUCTION") {
+        return paid;
+      }
+      if (status === "LEGACY_FREE") return !paid;
+      return true;
+    });
 
 /**
  * 손으로 바꿀 곳이 없는 상태에서 화면이 덧붙일 말.
