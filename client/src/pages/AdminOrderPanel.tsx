@@ -131,7 +131,13 @@ export function AdminOrderPanel({
     );
   }
 
-  const options = settableStatusesFor(role ?? "PRODUCTION", order.status);
+  // 되돌릴 곳이 결제 여부로 갈린다. 제작팀에게는 결제 정보가 내려가지
+  // 않으므로 그때는 좁히지 않는다.
+  const options = settableStatusesFor(
+    role ?? "PRODUCTION",
+    order.status,
+    order.payment ? Boolean(order.payment.paidAt) : undefined
+  );
   // 계좌이체 주문은 환불을 사람이 먼저 한다. 결제 대행사 주문과 같은 말을
   // 하면 환불 안 된 취소가 생긴다.
   const cancelWords = cancelGuide(order.payment?.pgLinked ?? false);

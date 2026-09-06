@@ -69,9 +69,23 @@ describe("관리자 주문 상태 규칙", () => {
     ]);
   });
 
-  it("제작 중에서는 결제 완료로 한 단계만 되돌릴 수 있다", () => {
+  it("제작 중에서 되돌릴 곳은 결제 여부로 갈린다", () => {
+    // 1차 체험단은 결제가 없어서 결제 완료로 못 돌아간다. 그 길만 두면
+    // 제작 중으로 한 번 옮긴 체험단이 앞으로만 갈 수 있게 된다.
+    expect(settableStatusesFor("ADMIN", "IN_PRODUCTION", true)).toEqual([
+      "PAYMENT_COMPLETED",
+    ]);
+    expect(settableStatusesFor("ADMIN", "IN_PRODUCTION", false)).toEqual([
+      "LEGACY_FREE",
+    ]);
+  });
+
+  it("결제 여부를 모르면 되돌릴 곳을 좁히지 않는다", () => {
+    // 제작팀에게는 결제 정보가 내려가지 않는다. 모른다고 길을 지우면
+    // 할 수 있는 일을 못 하게 된다. 서버가 어차피 막는다.
     expect(settableStatusesFor("ADMIN", "IN_PRODUCTION")).toEqual([
       "PAYMENT_COMPLETED",
+      "LEGACY_FREE",
     ]);
   });
 
