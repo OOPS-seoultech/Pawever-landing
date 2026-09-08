@@ -839,18 +839,22 @@ function OrderCard({
           <p className="mt-1 text-xs text-muted-foreground">
             {formatDateTime(order.submittedAt)} ·{" "}
             {order.goodsTypeLabel || order.goodsType} · 사진 {order.photoCount}/5
-            {" · "}
-            {/* 부칠 건과 넘겨줄 건이 갈린다. 상세를 열어 봐야 알면 스무 건을
-                포장하는 동안 한 건은 섞인다. */}
+          </p>
+
+          {/* 수령 방법은 줄을 따로 쓴다. 앞 줄에 이어 붙이면 폰 너비에서
+              "현장 수령"이 두 줄로 갈라져 배지 바탕이 끊긴다. 부칠 건과
+              넘겨줄 건을 가르는 값이라 흐리게 두면 스무 건을 포장하는 동안
+              한 건은 섞인다. */}
+          <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
             {order.deliveryMethod === "PICKUP" ? (
-              <span className="rounded bg-amber-100 px-1.5 py-0.5 text-amber-900">
+              <span className="whitespace-nowrap rounded bg-amber-100 px-1.5 py-0.5 text-amber-900">
                 현장 수령
               </span>
             ) : (
-              "택배"
+              <span>택배</span>
             )}
-            {" · "}
-            {formatKrw(order.paymentAmountKrw)}
+            <span>·</span>
+            <span>{formatKrw(order.paymentAmountKrw)}</span>
           </p>
         </button>
       </div>
