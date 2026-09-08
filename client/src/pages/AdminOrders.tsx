@@ -110,6 +110,14 @@ export default function AdminOrders() {
    * 하거나 화면을 옮기면 사라진다.
    */
   const [undoable, setUndoable] = useState<string[]>([]);
+  /**
+   * 좁은 화면에서 조건 칸을 접어 둔다.
+   *
+   * 제출일·굿즈·사진 장수 세 칸이 폰에서는 한 줄에 안 들어가 세 줄로 서고,
+   * 목록이 그만큼 아래로 밀린다. 현장에서 하는 일은 조건 거는 일이 아니라
+   * 방금 들어온 건을 보는 일이다. 넓은 화면에서는 늘 펴 둔다.
+   */
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -314,6 +322,13 @@ export default function AdminOrders() {
   };
 
   const totalPages = data ? Math.max(Math.ceil(data.totalCount / PAGE_SIZE), 1) : 1;
+  /**
+   * 접어 둔 칸에 걸린 조건 수.
+   *
+   * 안 적어 주면 목록이 왜 비었는지 알려고 접힌 칸을 열어 봐야 한다.
+   */
+  const filterCount = [submittedFrom, submittedTo, minPhotoCount, goodsType]
+    .filter(Boolean).length;
 
   return (
     <AdminShell title="굿즈 주문" role={role}>
@@ -337,7 +352,7 @@ export default function AdminOrders() {
                 setUndoable([]);
                 setView(item.key);
               }}
-              className={`-mb-px border-b-2 px-3 py-2 text-sm transition ${
+              className={`-mb-px border-b-2 px-3 py-2.5 text-sm transition ${
                 on
                   ? "border-primary font-medium text-foreground"
                   : "border-transparent text-muted-foreground hover:text-foreground"
@@ -372,7 +387,23 @@ export default function AdminOrders() {
         </Button>
       </form>
 
-      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border bg-background p-3">
+      {/* 폰에서만 나온다. 넓은 화면은 아래 칸이 늘 펴져 있어 이 버튼이
+          가리키는 것이 없다. */}
+      <Button
+        variant="outline"
+        size="sm"
+        className="mb-3 md:hidden"
+        onClick={() => setFiltersOpen((current) => !current)}
+      >
+        검색 조건 {filtersOpen ? "접기" : "펼치기"}
+        {filterCount > 0 ? ` (${filterCount})` : ""}
+      </Button>
+
+      <div
+        className={`mb-4 flex-wrap items-end gap-3 rounded-lg border bg-background p-3 md:flex ${
+          filtersOpen ? "flex" : "hidden"
+        }`}
+      >
         <label className="text-xs text-muted-foreground">
           제출일
           <div className="mt-1 flex items-center gap-1">
@@ -512,7 +543,10 @@ export default function AdminOrders() {
         </div>
       ) : null}
 
-      <div className="overflow-x-auto rounded-lg border bg-background">
+      {/* 열 열두 개는 860px 아래로 못 줄인다. 폰에서는 아래 카드로 같은
+          것을 보여 준다. 표를 가로로 밀게 두면 오른쪽 끝의 처리 버튼이
+          늘 화면 밖에 있다. */}
+      <div className="hidden overflow-x-auto rounded-lg border bg-background md:block">
         <table className="w-full min-w-[860px] text-sm">
           <thead className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
             <tr>
@@ -636,6 +670,43 @@ export default function AdminOrders() {
         </table>
       </div>
 
+      {/* 폰에서 쓰는 같은 목록. 표를 줄인 것이 아니라, 손가락으로 누를 수
+          있게 다시 세운 것이다. 한 건에서 확인하는 것과 누르는 것을 한 장에
+          담는다. */}
+      <ul className="space-y-2 md:hidden">
+        {loading && !data ? (
+          <li className="rounded-lg border bg-background px-3 py-8 text-center text-sm text-muted-foreground">
+            불러오는 중...
+          </li>
+        ) : null}
+
+        {data?.orders.length === 0 ? (
+          <li className="rounded-lg border bg-background px-3 py-8 text-center text-sm text-muted-foreground">
+            조건에 맞는 주문이 없습니다.
+          </li>
+        ) : null}
+
+        {data?.orders.map((order) => (
+          <OrderCard
+            key={order.orderNumber}
+            order={order}
+            role={role ?? "PRODUCTION"}
+            picked={picked.includes(order.orderNumber)}
+            onPick={(on) =>
+              setPicked((current) =>
+                on
+                  ? [...current, order.orderNumber]
+                  : current.filter((n) => n !== order.orderNumber)
+              )
+            }
+            busy={acting === order.orderNumber}
+            disabled={Boolean(acting) || loading}
+            onOpen={() => setOpened(order.orderNumber)}
+            onRun={runRowAction}
+          />
+        ))}
+      </ul>
+
       {/* 상세를 옆에서 연다. 목록은 그대로 남아 방금 보던 자리에서 이어
           간다. 주소(/admin/orders/:orderNumber)는 북마크용으로 남겨 둔다. */}
       <Sheet
@@ -686,6 +757,117 @@ export default function AdminOrders() {
         </div>
       </div>
     </AdminShell>
+  );
+}
+
+/**
+ * 폰에서 보는 주문 한 건.
+ *
+ * 표를 가로로 미는 대신 세로로 다시 세운다. 열두 열에 나뉘어 있던 것을 네
+ * 줄로 접되, 그 자리에서 누르는 것 — 고르기와 처리 — 은 손가락 크기로
+ * 남긴다. 카드를 누르면 표의 줄을 누른 것과 같이 상세가 열린다.
+ */
+function OrderCard({
+  order,
+  role,
+  picked,
+  onPick,
+  busy,
+  disabled,
+  onOpen,
+  onRun,
+}: {
+  order: AdminOrderSummary;
+  role: "ADMIN" | "PRODUCTION";
+  picked: boolean;
+  onPick: (on: boolean) => void;
+  busy: boolean;
+  disabled: boolean;
+  onOpen: () => void;
+  onRun: (
+    order: AdminOrderSummary,
+    action: NonNullable<ReturnType<typeof primaryRowAction>>
+  ) => void;
+}) {
+  const action = primaryRowAction(role, order.status, order.deliveryMethod);
+  const selectable = canStartProduction(role, order.status);
+
+  return (
+    <li
+      className={`rounded-lg border bg-background ${
+        picked ? "border-primary bg-primary/5" : ""
+      }`}
+    >
+      <div className="flex items-start gap-3 px-3 py-3">
+        {selectable ? (
+          // 칸만 두면 폰에서 못 누른다. 둘레까지 눌리게 라벨로 감싼다.
+          <label className="-m-1 shrink-0 cursor-pointer p-1">
+            <input
+              type="checkbox"
+              aria-label={`${order.orderNumber} 선택`}
+              checked={picked}
+              onChange={(event) => onPick(event.target.checked)}
+              className="h-5 w-5"
+            />
+          </label>
+        ) : null}
+
+        <button
+          type="button"
+          onClick={onOpen}
+          className="min-w-0 flex-1 text-left"
+        >
+          <div className="flex items-start justify-between gap-2">
+            <span className="truncate font-medium">{order.petName}</span>
+            <span
+              className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${
+                TONE_CLASS[statusTone(order.status)]
+              }`}
+            >
+              {order.statusLabel ?? STATUS_LABELS[order.status]}
+            </span>
+          </div>
+
+          <p className="mt-0.5 truncate text-sm text-muted-foreground">
+            {order.guardianNameMasked} · {order.phoneMasked}
+          </p>
+
+          <p className="mt-1 truncate font-mono text-xs text-muted-foreground">
+            {order.orderNumber}
+          </p>
+
+          <p className="mt-1 text-xs text-muted-foreground">
+            {formatDateTime(order.submittedAt)} ·{" "}
+            {order.goodsTypeLabel || order.goodsType} · 사진 {order.photoCount}/5
+            {" · "}
+            {/* 부칠 건과 넘겨줄 건이 갈린다. 상세를 열어 봐야 알면 스무 건을
+                포장하는 동안 한 건은 섞인다. */}
+            {order.deliveryMethod === "PICKUP" ? (
+              <span className="rounded bg-amber-100 px-1.5 py-0.5 text-amber-900">
+                현장 수령
+              </span>
+            ) : (
+              "택배"
+            )}
+            {" · "}
+            {formatKrw(order.paymentAmountKrw)}
+          </p>
+        </button>
+      </div>
+
+      {action ? (
+        <div className="border-t px-3 py-2">
+          <Button
+            className="w-full"
+            variant={action.kind === "pickup" ? "default" : "secondary"}
+            disabled={disabled}
+            onClick={() => onRun(order, action)}
+          >
+            {busy ? "처리 중..." : action.label}
+          </Button>
+        </div>
+      ) : null}
+    </li>
   );
 }
 
