@@ -88,3 +88,27 @@ describe("설문 화면에서 뒤로 갈 곳", () => {
     ).toEqual({ kind: "landing", path: "/flea" });
   });
 });
+
+/**
+ * 화면이 자기 채널을 들고 다니는지.
+ *
+ * 플리마켓 화면이 상시 판매의 캠페인을 읽고 있었다. 남은 자리도 마감 여부도
+ * 남의 것을 보고 정한다는 뜻이다. 정원이 하나는 70, 하나는 100이라 한쪽이
+ * 차도 다른 쪽 수를 보고 계속 받는다.
+ *
+ * 소스를 글자로 재는 것은 좋은 방법이 아니지만, 이 셋은 컴포넌트 안에 있어
+ * 따로 부를 수가 없다. 채널을 빼먹은 자리가 하나라도 남으면 잡는다.
+ */
+import { readFileSync } from "node:fs";
+
+describe("설문 화면이 자기 채널을 묻는다", () => {
+  const form = readFileSync(
+    new URL("./GoodsSurveyForm.tsx", import.meta.url),
+    "utf8"
+  );
+
+  it("캠페인 조회에 채널을 빼먹은 자리가 없다", () => {
+    expect(form).not.toContain("getSurveyCampaign()");
+    expect(form.match(/getSurveyCampaign\(channel\)/g)?.length).toBe(3);
+  });
+});

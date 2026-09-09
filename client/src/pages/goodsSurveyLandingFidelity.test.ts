@@ -153,8 +153,10 @@ describe("굿즈 제작 정보 화면", () => {
   it("굿즈가 닫혀 있으면 제작 단계로 보내지 않는다", () => {
     // 배송 정보와 사진까지 다 채우게 한 뒤 거절하면 그때 쓴 것이 통째로 날아간다.
     // 그래서 굿즈 여부는 제작 화면으로 넘어가는 갈림길에서 한 번만 판단한다.
+    // 채널을 달고 물어야 한다. 빼면 플리마켓 화면이 상시 판매의 마감 여부를
+    // 보고 정한다 - 정원이 70과 100으로 다르다.
     expect(formSource).toContain(
-      "const latest = await getSurveyCampaign().catch(() => campaign)"
+      "const latest = await getSurveyCampaign(channel).catch(() => campaign)"
     );
     expect(formSource).toContain("if (!(latest?.goodsOpen ?? false))");
     expect(formSource).toContain('setStage("full")');
