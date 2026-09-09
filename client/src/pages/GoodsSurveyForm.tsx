@@ -892,8 +892,11 @@ export default function GoodsSurveyForm() {
 
   // 굿즈 상태는 화면 문구를 정하는 데 쓴다. 조회에 실패하면 닫힌 것으로 두고,
   // 실제 갈림길에서 한 번 더 확인한다.
+  //
+  // 자기 채널을 물어야 한다. 채널을 빼면 플리마켓 화면이 상시 판매의 수를
+  // 읽어, 남은 자리도 마감 여부도 남의 것을 보고 정한다.
   useEffect(() => {
-    void getSurveyCampaign()
+    void getSurveyCampaign(channel)
       .then(applyCampaign)
       .catch(() => {
         // 최종 판정은 서버가 한다. 여기서 실패해도 설문 진행은 막지 않는다.
@@ -903,6 +906,25 @@ export default function GoodsSurveyForm() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [stage, currentQuestionId]);
+
+  /**
+   * 이 탭에서 쓰다 만 신청이 있으면 그 자리에서 이어 쓴다.
+   *
+   * 아래 효과는 쓰다 만 것이 있으면 비켜선다 - 설문을 절반 쓴 사람을 직행으로
+   * 덮으면 그때까지 쓴 답이 사라지기 때문이다. 그런데 비켜서기만 하고 아무도
+   * 화면을 옮기지 않아서, 직행으로 온 사람은 "신청서를 준비하고 있어요"에
+   * 갇혔다. 오류도 아니고 기다려도 오지 않는다.
+   *
+   * 현장에서 이게 제일 위험하다. 한 사람이 신청하다 뒤로 나가 QR 을 다시
+   * 찍으면 같은 탭이라 여기로 온다.
+   *
+   * 새로 만들지 않고 있던 것을 이어 쓴다. 새로 만들면 정원을 한 칸 더 먹고,
+   * 이미 올려둔 사진도 두고 온다.
+   */
+  useEffect(() => {
+    if (!directPurchase || stage !== "preparing" || !draftSession) return;
+    setStage("production");
+  }, [directPurchase, stage, draftSession]);
 
   /**
    * 직행으로 들어오면 설문을 거치지 않고 제작 화면으로 보낸다.
@@ -1158,7 +1180,7 @@ export default function GoodsSurveyForm() {
         // 자리가 없어도 사연은 남길 수 있고, 굿즈 여부는 제작 화면으로 넘어가는
         // 갈림길에서 한 번만 판단한다. 그래야 다 채운 뒤 거절당하는 일도 없고,
         // 사연을 쓰러 온 사람이 문 앞에서 막히지도 않는다.
-        const latest = await getSurveyCampaign().catch(() => null);
+        const latest = await getSurveyCampaign(channel).catch(() => null);
         if (latest) {
           applyCampaign(latest);
           setRemaining(latest.remaining);
@@ -1520,7 +1542,7 @@ export default function GoodsSurveyForm() {
 
     // 설문을 채우는 동안 굿즈가 닫혔을 수 있다. 화면에 들고 있던 값 대신
     // 지금 상태를 다시 확인한다. 조회에 실패하면 마지막으로 받은 값을 쓴다.
-    const latest = await getSurveyCampaign().catch(() => campaign);
+    const latest = await getSurveyCampaign(channel).catch(() => campaign);
     if (latest) {
       applyCampaign(latest);
       setRemaining(latest.remaining);
