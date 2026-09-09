@@ -1161,6 +1161,10 @@ export default function GoodsSurveyForm() {
           questionnaireVersion: GOODS_SURVEY_VERSION,
           selectedGoods: initialGoods,
           tracking: createSubmissionTrackingContext(),
+          // 초안이 어느 모집에 묶이는지가 여기서 정해지고, 한 번 정해지면
+          // 주문이 끝날 때까지 그 모집을 따라간다. 빼먹으면 화면은 현장가를
+          // 보여 주면서 서버는 상시 판매의 값과 정원으로 잡는다.
+          channel,
         });
         setDraftSession(session);
         setRemaining(session.remaining);

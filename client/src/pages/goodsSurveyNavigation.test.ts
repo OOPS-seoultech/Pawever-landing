@@ -111,4 +111,25 @@ describe("설문 화면이 자기 채널을 묻는다", () => {
     expect(form).not.toContain("getSurveyCampaign()");
     expect(form.match(/getSurveyCampaign\(channel\)/g)?.length).toBe(3);
   });
+
+  /**
+   * 초안이 어느 모집에 묶이는지가 여기서 정해진다. 한 번 정해지면 주문이
+   * 끝날 때까지 그 모집을 따라가므로, 빼먹으면 화면은 현장가를 보여 주면서
+   * 서버는 상시 판매의 값과 정원으로 잡는다.
+   *
+   * 자리가 둘이다 - 직행으로 들어올 때와 설문을 시작할 때. 직행만 채널을
+   * 넘기고 있었다.
+   */
+  it("초안을 만드는 자리마다 채널을 넘긴다", () => {
+    // createSurveyDraft( 부터 그 호출을 닫는 "});" 까지를 한 덩어리로 본다.
+    const calls = form
+      .split("createSurveyDraft({")
+      .slice(1)
+      .map(rest => rest.slice(0, rest.indexOf("});")));
+
+    expect(calls.length).toBe(2);
+    for (const call of calls) {
+      expect(call).toContain("channel,");
+    }
+  });
 });
