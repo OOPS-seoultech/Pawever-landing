@@ -678,7 +678,7 @@ export default function GoodsSurveyForm() {
    *
    * 플리마켓 랜딩(/flea)의 버튼만 이 값을 붙여 보낸다. 값도 정원도 여기서
    * 갈리므로 서버에도 알려야 하고, 알리지 않으면 서버는 상시 판매로 본다 —
-   * 화면은 11,900원이라고 적어 두고 29,900원이 청구된다.
+   * 화면은 현장가를 적어 두고 상시 판매가가 청구된다.
    */
   const channel = useMemo<"online" | "flea">(
     () =>
