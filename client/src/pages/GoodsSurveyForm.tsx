@@ -12,6 +12,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
+import { backTargetFrom, landingPathFor } from "./goodsSurveyNavigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import {
@@ -687,6 +688,15 @@ export default function GoodsSurveyForm() {
   );
 
   /**
+   * 떠나온 랜딩.
+   *
+   * 네 자리에서 "/goods-survey" 를 손으로 적고 있었다. 플리마켓에서 QR 을
+   * 찍고 온 사람이 뒤로 눌러도, 사연 화면에서 나가도 상시 판매 랜딩으로
+   * 갔다 — 값도 수령 방법도 다른 화면이다.
+   */
+  const landingPath = landingPathFor(channel);
+
+  /**
    * 만든 물건을 어떻게 건넬지.
    *
    * 현장 수령은 행사장이 있는 플리마켓에서만 고를 수 있다. 상시 판매에는
@@ -792,6 +802,13 @@ export default function GoodsSurveyForm() {
   const [noticeError, setNoticeError] = useState("");
   const [apiBusy, setApiBusy] = useState(false);
   const [apiError, setApiError] = useState("");
+  /**
+   * 자리를 잡아 달라고 다시 부른 횟수.
+   *
+   * 망이 한 번 어긋났다고 화면을 새로 고치게 하면, 줄을 선 사람은 그냥
+   * 간다. 이 값이 바뀌면 아래 효과가 다시 돈다.
+   */
+  const [prepareAttempt, setPrepareAttempt] = useState(0);
   const [draftSaveState, setDraftSaveState] = useState<
     "idle" | "saving" | "saved" | "offline"
   >("idle");
@@ -927,8 +944,10 @@ export default function GoodsSurveyForm() {
       cancelled = true;
     };
     // 진입 시 한 번만 돈다. 의존성을 넓히면 제작 화면에서 다시 실행된다.
+    // prepareAttempt 만 예외다 — 사람이 "다시 시도"를 누른 것이라 다시 돌
+    // 이유가 분명하다.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [directPurchase]);
+  }, [directPurchase, prepareAttempt]);
 
   useEffect(() => {
     if (stage !== "questions" || !currentQuestion) return;
@@ -1342,37 +1361,30 @@ export default function GoodsSurveyForm() {
       });
     };
 
-    if (stage === "story") {
-      trackBack(0);
+    const target = backTargetFrom({
+      stage,
+      directPurchase,
+      channel,
+      hasStory: Boolean(story.scene.trim()),
+    });
+
+    if (target.kind === "landing") {
+      setLocation(target.path);
+      return;
+    }
+
+    if (target.kind === "stage") {
+      trackBack(target.stage === "story" ? 14 : 0);
       if (draftSession) {
         persistSnapshot(
           draftSession,
           answers,
           currentQuestionId,
           questionActiveMs,
-          "closing"
+          target.stage
         );
       }
-      setStage("closing");
-      return;
-    }
-    if (stage === "production") {
-      const previousStage = story.scene.trim() ? "story" : "closing";
-      trackBack(previousStage === "story" ? 14 : 0);
-      if (draftSession) {
-        persistSnapshot(
-          draftSession,
-          answers,
-          currentQuestionId,
-          questionActiveMs,
-          previousStage
-        );
-      }
-      setStage(previousStage);
-      return;
-    }
-    if (stage !== "questions") {
-      setLocation("/goods-survey");
+      setStage(target.stage);
       return;
     }
 
@@ -1709,7 +1721,7 @@ export default function GoodsSurveyForm() {
             className="gsf-icon-button"
             onClick={
               stage === "intro" || stage === "preparing"
-                ? () => setLocation("/goods-survey")
+                ? () => setLocation(landingPath)
                 : goBack
             }
             aria-label={
@@ -1780,8 +1792,32 @@ export default function GoodsSurveyForm() {
               <span className="gsf-message-icon" aria-hidden="true">
                 <PawPrint />
               </span>
-              <h1>신청서를 준비하고 있어요.</h1>
-              <p>잠시만 기다려 주세요. 곧 사진과 정보를 받는 화면이 열려요.</p>
+              {/* 자리를 못 잡았으면 기다리라고 하지 않는다. 기다려도 오지
+                  않는데 기다리라고 적으면 화면이 거짓말을 한다. */}
+              {apiError ? (
+                <>
+                  <h1>신청서를 열지 못했어요.</h1>
+                  <p>{apiError}</p>
+                  <button
+                    type="button"
+                    className="gsf-primary"
+                    disabled={apiBusy}
+                    onClick={() => {
+                      setApiError("");
+                      setPrepareAttempt(current => current + 1);
+                    }}
+                  >
+                    {apiBusy ? "여는 중..." : "다시 시도"}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <h1>신청서를 준비하고 있어요.</h1>
+                  <p>
+                    잠시만 기다려 주세요. 곧 사진과 정보를 받는 화면이 열려요.
+                  </p>
+                </>
+              )}
             </section>
           )}
 
@@ -1893,7 +1929,7 @@ export default function GoodsSurveyForm() {
               <button
                 type="button"
                 className="gsf-text-button"
-                onClick={() => setLocation("/goods-survey")}
+                onClick={() => setLocation(landingPath)}
               >
                 랜딩페이지 보기
               </button>
@@ -2523,7 +2559,7 @@ export default function GoodsSurveyForm() {
               <button
                 type="button"
                 className="gsf-text-button"
-                onClick={() => setLocation("/goods-survey")}
+                onClick={() => setLocation(landingPath)}
               >
                 처음 화면으로 돌아가기
               </button>
@@ -2643,9 +2679,7 @@ export default function GoodsSurveyForm() {
               <button
                 type="button"
                 className="gsf-primary"
-                onClick={() =>
-                  setLocation(channel === "flea" ? "/flea" : "/goods-survey")
-                }
+                onClick={() => setLocation(landingPath)}
               >
                 랜딩페이지로 돌아가기
               </button>
