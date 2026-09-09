@@ -341,7 +341,8 @@ export const saveSurveyStory = (
 const createPhotoUpload = (
   session: SurveyDraftSession,
   file: File,
-  clientFileId: string
+  clientFileId: string,
+  contentType: string
 ) =>
   apiRequest<PhotoUpload>(
     `/api/public/goods-survey/responses/${session.responseId}/photos/presign`,
@@ -350,7 +351,9 @@ const createPhotoUpload = (
       headers: editHeaders(session),
       body: JSON.stringify({
         clientFileId,
-        contentType: file.type,
+        // file.type 을 그대로 쓰지 않는다. 인앱 브라우저에서 빈 값으로 와
+        // 서버의 @NotBlank 에 걸린다. 부르는 쪽이 이름 끝까지 보고 정한다.
+        contentType,
         size: file.size,
       }),
     }
@@ -368,9 +371,10 @@ const confirmPhotoUpload = (session: SurveyDraftSession, photoId: string) =>
 export const uploadSurveyPhoto = async (
   session: SurveyDraftSession,
   file: File,
-  clientFileId: string
+  clientFileId: string,
+  contentType: string
 ) => {
-  const upload = await createPhotoUpload(session, file, clientFileId);
+  const upload = await createPhotoUpload(session, file, clientFileId, contentType);
   if (upload.status === "CONFIRMED") return upload.photoId;
   if (!upload.uploadUrl) {
     throw new GoodsSurveyApiError(

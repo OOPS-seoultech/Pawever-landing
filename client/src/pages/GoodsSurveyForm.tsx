@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { backTargetFrom, landingPathFor } from "./goodsSurveyNavigation";
+import { photoContentType, PHOTO_TYPE_HELP } from "./goodsSurveyPhotoType";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import {
@@ -1444,15 +1445,22 @@ export default function GoodsSurveyForm() {
    * 있는데 새로 고른 것으로 갈아치우면, 그 사람은 세 장을 영영 못 채운다.
    */
   const addPhotos = (picked: File[]) => {
-    const invalid = picked.find(
-      file =>
-        !["image/jpeg", "image/png", "image/webp"].includes(file.type) ||
-        file.size > 10 * 1024 * 1024
-    );
-    if (invalid) {
+    const tooBig = picked.find(file => file.size > 10 * 1024 * 1024);
+    if (tooBig) {
       // 이미 고른 것은 건드리지 않는다. 실수 한 번에 처음부터 고르게 만들면
       // 고칠 기회가 아니라 벌이 된다.
-      setApiError("사진은 JPG·PNG·WEBP 형식, 장당 10MB 이하만 올릴 수 있어요.");
+      setApiError("사진은 장당 10MB 이하만 올릴 수 있어요.");
+      return;
+    }
+
+    // 형식은 file.type 만 보지 않는다. 인앱 브라우저는 멀쩡한 JPG 에도 빈
+    // 값을 준다. 그래도 못 받는 것이면 여기서 자른다 - 다 올리고 기다린
+    // 뒤에 서버가 거절하는 쪽이 더 나쁘다.
+    const unsupported = picked.find(file => photoContentType(file) === null);
+    if (unsupported) {
+      setApiError(
+        `사진은 JPG·PNG·WEBP 형식만 올릴 수 있어요. ${PHOTO_TYPE_HELP}`
+      );
       return;
     }
 
@@ -1628,7 +1636,13 @@ export default function GoodsSurveyForm() {
             clientFileId = createClientId();
             fileClientIds.current.set(key, clientFileId);
           }
-          return uploadSurveyPhoto(draftSession, file, clientFileId);
+          // 고르는 자리에서 이미 걸렀다. 여기까지 온 것은 형식이 있다.
+          return uploadSurveyPhoto(
+            draftSession,
+            file,
+            clientFileId,
+            photoContentType(file) ?? "image/jpeg"
+          );
         })
       );
       // 사진 공개는 사진 단계에서 따로 물어본 답을 쓴다. 사연 공개 동의를
@@ -2236,6 +2250,9 @@ export default function GoodsSurveyForm() {
                     JPG·PNG·WEBP, 장당 10MB 이하·{GOODS_PHOTO_MIN_COUNT}~
                     {GOODS_PHOTO_MAX_COUNT}장 · 나눠서 골라도 됩니다
                   </span>
+                  {/* accept 를 image/* 로 넓히지 말 것. 좁게 적어 두면
+                      iOS 사진 보관함이 HEIC 를 JPEG 로 바꿔서 넘겨준다.
+                      넓히면 원본 HEIC 가 그대로 와서 오히려 더 많이 막힌다. */}
                   <input
                     ref={photoInputRef}
                     type="file"
