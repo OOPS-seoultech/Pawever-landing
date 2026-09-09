@@ -149,9 +149,11 @@ export const mockSubmit = (
             surveyParticipant: false,
             orderNumber: "PE-2026-000123",
             listPriceKrw: 29_900,
-            discountAmountKrw: 18_000,
+            // 서버의 flea-discount-krw 와 같아야 한다. 9/9 에 18,000 에서
+            // 16,000 으로 줄여 현장가가 13,900 이 되었다.
+            discountAmountKrw: 16_000,
             shippingFeeKrw: 0,
-            paymentAmountKrw: 11_900,
+            paymentAmountKrw: 13_900,
             bank: {
               name: "기업은행",
               account: "000-000000-00-000",

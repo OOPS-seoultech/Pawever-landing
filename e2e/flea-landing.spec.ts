@@ -14,9 +14,16 @@ import { mockCampaign, mockFleaCampaign, photoFile } from "./fixtures/api";
  *       주문 제작 받고, 바로 제작 후 판매해볼까 합니다."
  */
 
-/** 디자인이 화면에 적어 둔 값. 서버가 계산하는 값과 같아야 한다. */
-const FLEA_PRICE = "11,900원";
+/**
+ * 화면에 적히는 값. 서버가 계산하는 값과 같아야 한다.
+ *
+ * 9/9 에 11,900 에서 올렸다 — 하루 문의가 19건이라 이튿날을 10건 안으로
+ * 받으려는 요청이었다. 피그마는 아직 11,900 과 60.2% 로 그려져 있다.
+ */
+const FLEA_PRICE = "13,900원";
 const LIST_PRICE = "29,900원";
+/** 정가에서 내려온 비율. (29,900 - 13,900) / 29,900 */
+const FLEA_DISCOUNT = "53.5%";
 
 test.describe("플리마켓 랜딩", () => {
   test.beforeEach(async ({ page }) => {
@@ -27,8 +34,12 @@ test.describe("플리마켓 랜딩", () => {
 
   test("현장 한정가와 수량을 디자인대로 적는다", async ({ page }) => {
     // 근거: [5472:1478] "서울과학기술대학교 플리마켓 전용가"
-    //       [5472:1480] "11,900원"  [5498:2395] "60.2% 할인"
     //       [5472:1662] "이번에도 선착순 70개만 제작합니다."
+    //
+    // 값과 할인율은 피그마([5472:1480] "11,900원", [5498:2395] "60.2%")와
+    // 다르다. 9/9 에 값을 올렸고, 할인율은 값에서 끌어내므로 함께 움직인다.
+    // 60.2% 를 그대로 두면 29,900원짜리를 13,900원에 팔면서 60.2% 할인이라고
+    // 적는 것이 되어 거짓 표시다.
     //
     // 값이 화면과 서버에서 갈리면 사람은 동의하지 않은 금액을 청구받는다.
     await page.goto("/flea");
@@ -37,7 +48,9 @@ test.describe("플리마켓 랜딩", () => {
       "서울과학기술대학교 플리마켓 전용가"
     );
     await expect(page.locator(".flea-price-card")).toContainText(FLEA_PRICE);
-    await expect(page.locator(".flea-price-card")).toContainText("60.2%");
+    await expect(page.locator(".flea-price-card")).toContainText(
+      FLEA_DISCOUNT
+    );
     // 정가는 취소선으로만 나온다.
     await expect(page.locator(".flea-was")).toHaveText(
       `기존 판매가 ${LIST_PRICE}`
@@ -189,13 +202,13 @@ test.describe("플리마켓 랜딩", () => {
   });
 
   test("FAQ 가 이 화면의 값과 같은 말을 한다", async ({ page }) => {
-    // 디자인의 답변은 상시 판매 기준이라, 11,900원을 보고 들어온 사람에게
+    // 디자인의 답변은 상시 판매 기준이라, 현장가를 보고 들어온 사람에게
     // 23,900원을 말하고 배송비 3,000원을 기본인 것처럼 적었다. 한 페이지가
     // 두 말을 하면 어느 쪽이 참인지 알 수 없다.
     await page.goto("/flea");
     const faq = page.locator(".gs-faq-list");
 
-    await expect(faq).toContainText("현장가 11,900원은 설문과 상관없이");
+    await expect(faq).toContainText(`현장가 ${FLEA_PRICE}은 설문과 상관없이`);
     // 07 이 이미 70개라고 말한다. 아래에서 "아직 공개 안 함"이면 안 된다.
     await expect(faq).toContainText("선착순 70개만 제작합니다");
     await expect(faq).not.toContainText("오픈 시 공개합니다");
@@ -223,7 +236,7 @@ test.describe("플리마켓 랜딩", () => {
   test("정가 버튼만 상시 판매로 간다", async ({ page }) => {
     // 근거: [5472:1767] "온라인 배송비 별도, 과기대 외 다른 지인에게 소개용"
     //
-    // 현장 밖 사람에게 11,900원을 주면 안 된다. 이 버튼에는 channel 이 붙지
+    // 현장 밖 사람에게 현장가를 주면 안 된다. 이 버튼에는 channel 이 붙지
     // 않아야 하고, 그러면 서버가 상시 모집으로 받아 정가를 매긴다.
     await page.goto("/flea");
     await page.locator('[data-cta-id="btn_F4"]').click();
