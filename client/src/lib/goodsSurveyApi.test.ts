@@ -14,6 +14,78 @@ describe("내부 설문 API", () => {
     vi.resetModules();
   });
 
+  /**
+   * 닿지 않는 망에서 하염없이 기다리지 않는다.
+   *
+   * 2026-09-08 밤, 학교 와이파이에 붙은 폰에서 신청 화면이 "신청서를
+   * 준비하고 있어요"에서 넘어가지 않았다. 그 망이 API 를 막고 있었는데,
+   * 요청에 시한이 없어 오류도 안 나고 다시 시도할 자리도 없었다. 현장에서
+   * 이러면 줄이 선 채로 아무것도 못 한다.
+   */
+  it("망이 닿지 않으면 무엇을 해 볼지 적은 오류로 바꾼다", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValue(new TypeError("Failed to fetch"))
+    );
+
+    await expect(
+      createSurveyDraft({
+        questionnaireVersion: "2026-07-23-v1",
+        selectedGoods: "figure",
+        tracking: { visitId: "visit-1" },
+      })
+    ).rejects.toMatchObject({
+      code: "NETWORK_UNREACHABLE",
+      message: expect.stringContaining("데이터"),
+    });
+  });
+
+  it("모든 요청이 시한을 달고 나간다", async () => {
+    // 끊어 주는 망은 곧장 실패하지만 조용히 버리는 망은 영영 답이 없다.
+    // 그때는 시한이 유일하게 사람을 화면에서 놓아 주는 것이다.
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          success: true,
+          data: {
+            responseId: "response-1",
+            editToken: "edit-token",
+            status: "DRAFT",
+            remaining: 73,
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      )
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await createSurveyDraft({
+      questionnaireVersion: "2026-07-23-v1",
+      selectedGoods: "figure",
+      tracking: { visitId: "visit-1" },
+    });
+
+    const [, init] = fetchMock.mock.calls[0];
+    expect(init.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it("시한이 지나 끊긴 것도 같은 안내로 바꾼다", async () => {
+    // 브라우저가 시한을 넘기면 AbortError 를 던진다. 사람에게는 닿지 않은
+    // 것과 같은 일이므로 같은 말을 해야 한다.
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValue(new DOMException("timeout", "TimeoutError"))
+    );
+
+    await expect(
+      createSurveyDraft({
+        questionnaireVersion: "2026-07-23-v1",
+        selectedGoods: "figure",
+        tracking: { visitId: "visit-1" },
+      })
+    ).rejects.toMatchObject({ code: "NETWORK_UNREACHABLE" });
+  });
+
   it("같은 출처의 /api 경로로 익명 초안을 만들고 편집 토큰을 받는다", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(

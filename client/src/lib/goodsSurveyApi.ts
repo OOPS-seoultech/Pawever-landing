@@ -156,14 +156,57 @@ const resolveApiUrl = (path: string) =>
     ? `${apiBaseUrl}${path.startsWith("/") ? path : `/${path}`}`
     : path;
 
+/**
+ * 한 번의 요청을 기다려 주는 시간.
+ *
+ * 여기로 오가는 것은 작은 JSON 뿐이다. 사진 자체는 이 함수를 거치지 않고
+ * S3 로 곧장 올라가므로, 느린 망에서도 이만큼 걸릴 이유가 없다.
+ */
+const REQUEST_TIMEOUT_MS = 15_000;
+
+/**
+ * 닿지 않는 망에서 하염없이 기다리지 않는다.
+ *
+ * 2026-09-08 밤, 학교 와이파이에 붙은 폰에서 신청 화면이 "신청서를 준비하고
+ * 있어요"에서 넘어가지 않았다. 그 망이 API 를 막고 있었는데, 요청에 시한이
+ * 없어 오류도 안 나고 다시 시도할 자리도 없었다. 끊어 주는 망은 곧장
+ * 실패하지만 조용히 버리는 망은 영영 답이 없다 — 사람은 그 둘을 구별하지
+ * 못하고 화면만 본다.
+ *
+ * 현장에서 이러면 줄이 선 채로 아무것도 못 한다. 그래서 무엇을 해 볼지까지
+ * 적는다. 대개 데이터로 바꾸면 되고, 그 말을 화면이 해 줘야 파는 사람이
+ * 한 명씩 붙잡고 설명하지 않는다.
+ */
+const withTimeout = (init?: RequestInit) => {
+  // 아주 오래된 브라우저에는 없다. 시한이 없는 것이 못 쓰는 것보다 낫다.
+  if (typeof AbortSignal === "undefined" || !AbortSignal.timeout) {
+    return init;
+  }
+  return { ...init, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) };
+};
+
+const UNREACHABLE_MESSAGE =
+  "네트워크에 연결하지 못했어요. 와이파이 대신 데이터로 바꾸거나 잠시 후 다시 시도해 주세요.";
+
 const apiRequest = async <T>(path: string, init?: RequestInit): Promise<T> => {
-  const response = await fetch(resolveApiUrl(path), {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...init?.headers,
-    },
-  });
+  let response: Response;
+  try {
+    response = await fetch(resolveApiUrl(path), {
+      ...withTimeout(init),
+      headers: {
+        "Content-Type": "application/json",
+        ...init?.headers,
+      },
+    });
+  } catch {
+    // 여기로 오는 것은 서버가 거절한 것이 아니라 서버에 닿지 못한 것이다.
+    // 상태 코드가 없으므로 0 으로 둔다.
+    throw new GoodsSurveyApiError(
+      UNREACHABLE_MESSAGE,
+      "NETWORK_UNREACHABLE",
+      0
+    );
+  }
 
   let envelope: ApiEnvelope<T> | null = null;
   try {

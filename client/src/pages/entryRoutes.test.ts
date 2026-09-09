@@ -43,9 +43,15 @@ describe("굿즈 랜딩·설문에서 웹사이트로 나가는 길", () => {
     //
     // 첫 화면은 둘이다 — 설문으로 온 사람은 intro, 바로 신청하러 온 사람은
     // 자리를 잡는 동안 preparing 을 본다. 어느 쪽에서 뒤로 가든 랜딩이다.
+    //
+    // 어느 랜딩인지까지 여기서 재지 않는다. 예전에는 "/goods-survey" 를 글자
+    // 그대로 재고 있었는데, 그래서 플리마켓에서 온 사람이 상시 판매 랜딩으로
+    // 가는 것을 이 시험이 통과시켰다. 통로가 landingPath 하나인지만 보고,
+    // 그 값이 무엇인지는 goodsSurveyNavigation.test.ts 가 잰다.
     expect(form).toContain(
-      'stage === "intro" || stage === "preparing" ? () => setLocation("/goods-survey") : goBack'
+      'stage === "intro" || stage === "preparing" ? () => setLocation(landingPath) : goBack'
     );
+    expect(form).not.toContain('setLocation("/goods-survey")');
   });
 });
 
