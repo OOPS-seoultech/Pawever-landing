@@ -9,11 +9,27 @@ export const GOODS_PRICE = {
   presale: 29_900,
   member: 23_900,
   /* 과기대 플리마켓 현장 한정가. 서버의 flea-discount-krw 를 뺀 값과 같다
-     (29,900 − 18,000 = 11,900, 디자인의 "60.2% 할인"). */
-  flea: 11_900,
+     (29,900 − 16,000 = 13,900). 어긋나면 동의 문구에 적은 금액과 청구되는
+     금액이 달라진다. */
+  flea: 13_900,
   competitor: 350_000,
   shipping: 3_000,
 } as const;
+
+/**
+ * 현장가가 정가에서 몇 퍼센트 내려온 것인지.
+ *
+ * 손으로 적으면 값을 올린 날 할인율만 옛 수로 남는다. 29,900원짜리를
+ * 13,900원에 팔면서 "60.2% 할인"이라고 적으면 그냥 틀린 게 아니라 거짓
+ * 표시다. 값 하나만 고치면 화면이 따라오게 둔다.
+ *
+ * 소수 한 자리로 적는다 — 디자인이 "60.2%"처럼 한 자리를 쓴다.
+ */
+export const fleaDiscountPercentText = () =>
+  (
+    ((GOODS_PRICE.presale - GOODS_PRICE.flea) / GOODS_PRICE.presale) *
+    100
+  ).toFixed(1);
 
 /** 설문 참여자에게 깎아 주는 금액. 서버의 survey-discount-krw 와 같다. */
 export const GOODS_SURVEY_DISCOUNT = GOODS_PRICE.presale - GOODS_PRICE.member;

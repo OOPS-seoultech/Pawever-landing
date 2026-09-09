@@ -10,12 +10,14 @@ import {
 /**
  * 플리마켓 랜딩에서 넘어온 주문(/goods-survey/survey?direct=1&channel=flea).
  *
- * 화면과 서버가 같은 값을 봐야 한다. 랜딩이 11,900원이라고 적어 두고 주문
- * 화면이 29,900원으로 열리면, 사람은 동의한 적 없는 금액을 청구받는다.
+ * 화면과 서버가 같은 값을 봐야 한다. 랜딩이 현장가를 적어 두고 주문 화면이
+ * 정가로 열리면, 사람은 동의한 적 없는 금액을 청구받는다.
  *
  * 근거: [피그마 0uW99BqaTJKUVlowzQswli / 8-2. Rending Page]
- *       5472:1480 "11,900원" · 5472:1482 "방문수령 외 택배 시 배송비 3,000원 별도"
+ *       5472:1482 "방문수령 외 택배 시 배송비 3,000원 별도"
  *       5472:1755 "선착순 70명 예약하고, 과기대에서 수령하기"
+ *
+ * 값은 9/9 에 11,900 에서 13,900 으로 올렸다. 피그마는 아직 11,900 이다.
  */
 
 const FLEA = "/goods-survey/survey?direct=1&channel=flea";
@@ -51,7 +53,7 @@ test.describe("플리마켓 주문", () => {
   });
 
   test("들어온 경로를 서버에 알린다", async ({ page }) => {
-    // 값이 갈리는 판정은 서버가 한다. 화면이 혼자 11,900원을 그려 놓고
+    // 값이 갈리는 판정은 서버가 한다. 화면이 혼자 현장가를 그려 놓고
     // 알리지 않으면, 서버는 이 사람을 상시 판매로 보고 29,900원을 매긴다.
     const bodies: string[] = [];
     page.on("request", request => {
@@ -69,9 +71,9 @@ test.describe("플리마켓 주문", () => {
     expect(bodies.join(" ")).toContain('"channel":"flea"');
   });
 
-  test("현장 수령이 기본이고, 그때 값은 11,900원이다", async ({ page }) => {
+  test("현장 수령이 기본이고, 그때 값은 13,900원이다", async ({ page }) => {
     // 랜딩이 "선착순 70명 예약하고, 과기대에서 수령하기"로 부른다. 택배가
-    // 기본이면 랜딩이 약속한 11,900원이 주문 화면에서 14,900원이 된다.
+    // 기본이 아니면 랜딩이 약속한 값에 배송비가 붙어 버린다.
     await page.goto(FLEA);
 
     await expect(page.locator(".gsf-delivery")).toBeVisible();
@@ -79,9 +81,9 @@ test.describe("플리마켓 주문", () => {
       page.locator('.gsf-delivery label:has-text("과기대에서 받아가기") input')
     ).toBeChecked();
 
-    await expect(consent(page)).toContainText("제작비 11,900원");
+    await expect(consent(page)).toContainText("제작비 13,900원");
     await expect(consent(page)).toContainText("방문수령(배송비 없음)");
-    await expect(consent(page)).toContainText("11,900원을 결제하는 데");
+    await expect(consent(page)).toContainText("13,900원을 결제하는 데");
   });
 
   test("현장 수령이면 주소를 묻지 않는다", async ({ page }) => {
@@ -116,9 +118,9 @@ test.describe("플리마켓 주문", () => {
     await expect(page.getByPlaceholder("우편번호")).toBeVisible();
     await expect(page.getByPlaceholder("도로명 주소")).toBeVisible();
 
-    // 제작비 11,900 + 배송비 3,000 = 14,900
+    // 제작비 13,900 + 배송비 3,000 = 16,900
     await expect(consent(page)).toContainText("배송비 3,000원");
-    await expect(consent(page)).toContainText("14,900원을 결제하는 데");
+    await expect(consent(page)).toContainText("16,900원을 결제하는 데");
   });
 
   test("접수되면 어디로 넣을지가 화면에 뜬다", async ({ page }) => {
@@ -162,7 +164,7 @@ test.describe("플리마켓 주문", () => {
       "PE-2026-000123"
     );
     // 현장 수령이라 배송비가 붙지 않은 값 그대로다.
-    await expect(page.locator(".gsf-payment-notice")).toContainText("11,900원");
+    await expect(page.locator(".gsf-payment-notice")).toContainText("13,900원");
 
     await expect(bank.getByRole("button")).toContainText("계좌번호 복사");
   });

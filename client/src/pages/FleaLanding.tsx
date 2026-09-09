@@ -5,7 +5,11 @@ import { usePageEngagement, useScrollDepth } from "@/lib/analytics/react";
 import { getSurveyCampaign, type SurveyCampaign } from "@/lib/goodsSurveyApi";
 import { saveGoodsSurveyPhotoHandoff } from "@/lib/goodsSurveyPhotoHandoff";
 import { PhotoIntakeCard, PrimaryCta } from "./goodsSurveyIntake";
-import { wonText } from "./goodsSurveyContent";
+import {
+  fleaDiscountPercentText,
+  GOODS_PRICE,
+  wonText,
+} from "./goodsSurveyContent";
 import "./GoodsSurvey.css";
 import "./FleaLanding.css";
 
@@ -32,7 +36,10 @@ const ASSET_BASE = "/goods-survey";
 const INTAKE_HEADING = "등록해주세요.";
 
 /** 이 화면이 파는 값. 서버가 같은 값을 계산한다(GoodsOrderService.priceFor). */
-const FLEA_PRICE = 11_900;
+// 값은 한 곳에서만 정한다. 여기에 따로 적어 두면 값을 올린 날 한쪽만
+// 고치게 된다.
+const FLEA_PRICE = GOODS_PRICE.flea;
+const FLEA_DISCOUNT_PERCENT = fleaDiscountPercentText();
 const LIST_PRICE = 29_900;
 const SHIPPING_FEE = 3_000;
 
@@ -157,17 +164,17 @@ const voices = [
  * 10 FAQ 의 여섯 문답(5472:1809).
  *
  * 질문은 디자인 그대로다. 답변 셋은 이 화면에 맞지 않아 성욱님 확인을 받고
- * 고쳤다 — 디자인의 답변은 상시 판매 기준이라, 11,900원에 사려고 들어온
- * 사람에게 23,900원을 말하고 배송비 3,000원을 기본인 것처럼 적었다.
+ * 고쳤다 — 디자인의 답변은 상시 판매 기준이라, 현장가를 보고 들어온
+ * 사람에게 상시 판매가를 말하고 배송비를 기본인 것처럼 적었다.
  * 고친 문장은 나혜님 원문이 아니므로, 문구 검토 때 이 셋을 함께 봐야 한다.
  */
 const faqs = [
   {
     question: "설문하면 무엇이 달라지나요?",
-    // 고침: 이 화면은 설문을 거치지 않는다. 원문은 23,900원만 말해서, 방금
-    // 11,900원을 보고 들어온 사람이 자기 값이 아닌 수를 읽게 된다.
+    // 고침: 이 화면은 설문을 거치지 않는다. 원문은 상시 판매가만 말해서,
+    // 방금 현장가를 보고 들어온 사람이 자기 값이 아닌 수를 읽게 된다.
     answer:
-      "과기대 플리마켓 현장가 11,900원은 설문과 상관없이 적용됩니다. 온라인 상시 판매에서는 설문을 마치면 23,900원에 구매할 수 있습니다.",
+      `과기대 플리마켓 현장가 ${wonText(GOODS_PRICE.flea)}은 설문과 상관없이 적용됩니다. 온라인 상시 판매에서는 설문을 마치면 ${wonText(GOODS_PRICE.member)}에 구매할 수 있습니다.`,
   },
   {
     question: "사진은 어떤 걸 보내야 하나요?",
@@ -355,7 +362,7 @@ export default function FleaLanding() {
             <strong>
               {wonText(FLEA_PRICE)}
               <em>
-                <b>60.2%</b> 할인
+                <b>{FLEA_DISCOUNT_PERCENT}%</b> 할인
               </em>
             </strong>
             <small>
@@ -591,10 +598,10 @@ export default function FleaLanding() {
           <p className="flea-caption">* 실제 출력 이미지</p>
 
           <article className="flea-buy-card">
-            <span>과기대 플리마켓 전용 60.2% 할인가</span>
+            <span>과기대 플리마켓 전용 {FLEA_DISCOUNT_PERCENT}% 할인가</span>
             <strong>{wonText(FLEA_PRICE)}</strong>
             <small>선착순 70개 한정수량</small>
-            {buyCta("figure", "대동제 맞이 60.2% 저렴하게")}
+            {buyCta("figure", `대동제 맞이 ${FLEA_DISCOUNT_PERCENT}% 저렴하게`)}
           </article>
         </section>
 
