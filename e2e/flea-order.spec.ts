@@ -17,7 +17,8 @@ import {
  *       5472:1482 "방문수령 외 택배 시 배송비 3,000원 별도"
  *       5472:1755 "선착순 70명 예약하고, 과기대에서 수령하기"
  *
- * 값은 9/9 에 11,900 에서 13,900 으로 올렸다. 피그마는 아직 11,900 이다.
+ * 값은 9/9 에 11,900 → 13,900 → 14,900 으로 두 번 올렸다. 피그마는 아직
+ * 11,900 이다.
  */
 
 const FLEA = "/goods-survey/survey?direct=1&channel=flea";
@@ -71,7 +72,7 @@ test.describe("플리마켓 주문", () => {
     expect(bodies.join(" ")).toContain('"channel":"flea"');
   });
 
-  test("현장 수령이 기본이고, 그때 값은 13,900원이다", async ({ page }) => {
+  test("현장 수령이 기본이고, 그때 값은 14,900원이다", async ({ page }) => {
     // 랜딩이 "선착순 70명 예약하고, 과기대에서 수령하기"로 부른다. 택배가
     // 기본이 아니면 랜딩이 약속한 값에 배송비가 붙어 버린다.
     await page.goto(FLEA);
@@ -81,9 +82,9 @@ test.describe("플리마켓 주문", () => {
       page.locator('.gsf-delivery label:has-text("과기대에서 받아가기") input')
     ).toBeChecked();
 
-    await expect(consent(page)).toContainText("제작비 13,900원");
+    await expect(consent(page)).toContainText("제작비 14,900원");
     await expect(consent(page)).toContainText("방문수령(배송비 없음)");
-    await expect(consent(page)).toContainText("13,900원을 결제하는 데");
+    await expect(consent(page)).toContainText("14,900원을 결제하는 데");
   });
 
   test("현장 수령이면 주소를 묻지 않는다", async ({ page }) => {
@@ -118,9 +119,9 @@ test.describe("플리마켓 주문", () => {
     await expect(page.getByPlaceholder("우편번호")).toBeVisible();
     await expect(page.getByPlaceholder("도로명 주소")).toBeVisible();
 
-    // 제작비 13,900 + 배송비 3,000 = 16,900
+    // 제작비 14,900 + 배송비 3,000 = 17,900
     await expect(consent(page)).toContainText("배송비 3,000원");
-    await expect(consent(page)).toContainText("16,900원을 결제하는 데");
+    await expect(consent(page)).toContainText("17,900원을 결제하는 데");
   });
 
   test("접수되면 어디로 넣을지가 화면에 뜬다", async ({ page }) => {
@@ -164,7 +165,7 @@ test.describe("플리마켓 주문", () => {
       "PE-2026-000123"
     );
     // 현장 수령이라 배송비가 붙지 않은 값 그대로다.
-    await expect(page.locator(".gsf-payment-notice")).toContainText("13,900원");
+    await expect(page.locator(".gsf-payment-notice")).toContainText("14,900원");
 
     await expect(bank.getByRole("button")).toContainText("계좌번호 복사");
   });
