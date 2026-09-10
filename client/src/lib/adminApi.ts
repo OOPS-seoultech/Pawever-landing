@@ -43,6 +43,13 @@ export type AdminOrderSummary = {
    * 구분되지 않는다.
    */
   deliveryMethod: string;
+  /**
+   * 키링 부자재를 붙이는 주문인지.
+   *
+   * 목록에 없으면 제작팀이 한 건씩 상세를 열어 확인해야 한다. 스무 건을
+   * 만드는 동안 한 건은 반드시 고리 없이 나간다.
+   */
+  keyringAdded: boolean;
   trackingNumber: string | null;
 };
 
@@ -89,6 +96,8 @@ export type AdminOrderDetail = {
     listPriceKrw: number;
     discountAmountKrw: number;
     promotionName: string | null;
+    /** 키링 부자재값. 안 붙였으면 0. 청구액에 이미 합쳐져 있다. */
+    keyringFeeKrw: number;
     paymentAmountKrw: number;
   } | null;
   /** 제작팀에게는 null 로 온다. 만드는 데 필요 없는 값이다. */

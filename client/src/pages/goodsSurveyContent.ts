@@ -14,6 +14,9 @@ export const GOODS_PRICE = {
   flea: 14_900,
   competitor: 350_000,
   shipping: 3_000,
+  /* 키링 부자재값. 서버의 keyring-fee-krw 와 같아야 한다. 어긋나면 동의
+     문구에 적은 금액과 청구되는 금액이 달라진다. */
+  keyring: 2_000,
 } as const;
 
 /**
@@ -49,6 +52,26 @@ export const applicablePriceKrw = (
   if (channel === "flea") return GOODS_PRICE.flea;
   return directPurchase ? GOODS_PRICE.presale : GOODS_PRICE.member;
 };
+
+/**
+ * 이 사람이 실제로 낼 금액.
+ *
+ * 제작비·부자재·배송비가 세 곳에서 따로 계산되고 있었다. 동의 문구가 적는
+ * 금액과 서버가 청구하는 금액이 어긋나면, 사람은 동의한 적 없는 돈을
+ * 청구받는다. 한 곳에서 세고 화면은 그 값을 읽기만 한다.
+ *
+ * 서버의 GoodsOrderPricing 과 같은 순서로 센다 — 정가에서 깎고, 부자재를
+ * 더하고, 배송비를 더한다.
+ */
+export const payableKrw = (input: {
+  directPurchase: boolean;
+  channel: "online" | "flea";
+  deliveryMethod: "shipping" | "pickup";
+  keyringAdded: boolean;
+}) =>
+  applicablePriceKrw(input.directPurchase, input.channel) +
+  (input.keyringAdded ? GOODS_PRICE.keyring : 0) +
+  shippingFeeKrw(input.deliveryMethod);
 
 /**
  * 이 주문에 붙는 배송비.
