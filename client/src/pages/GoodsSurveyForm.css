@@ -1519,13 +1519,15 @@
  * 값이 갈리는 선택이라 고른 쪽이 한눈에 보여야 한다. 잘못 고른 채 넘어가면
  * 배송비 3,000원이 붙거나, 부칠 곳 없는 주문이 들어온다.
  */
-.gsf-delivery {
+.gsf-delivery,
+.gsf-keyring {
   margin: 0 0 18px;
   padding: 0;
   border: 0;
 }
 
-.gsf-delivery legend {
+.gsf-delivery legend,
+.gsf-keyring legend {
   margin-bottom: 8px;
   padding: 0;
   font-size: 14px;
@@ -1533,7 +1535,8 @@
   color: var(--gsf-ink);
 }
 
-.gsf-delivery label {
+.gsf-delivery label,
+.gsf-keyring label {
   display: flex;
   gap: 10px;
   align-items: flex-start;
@@ -1545,23 +1548,27 @@
   cursor: pointer;
 }
 
-.gsf-delivery label:has(input:checked) {
+.gsf-delivery label:has(input:checked),
+.gsf-keyring label:has(input:checked) {
   border-color: var(--gsf-accent);
   background: var(--gsf-accent-soft);
 }
 
-.gsf-delivery input {
+.gsf-delivery input,
+.gsf-keyring input {
   margin-top: 3px;
   accent-color: var(--gsf-accent);
 }
 
-.gsf-delivery strong {
+.gsf-delivery strong,
+.gsf-keyring strong {
   display: block;
   font-size: 15px;
   font-weight: 700;
 }
 
-.gsf-delivery small {
+.gsf-delivery small,
+.gsf-keyring small {
   display: block;
   margin-top: 2px;
   font-size: 12px;

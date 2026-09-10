@@ -124,6 +124,8 @@ export type ApplicationPayload = {
   publicPhotoIds: string[];
   conversionEventId: string;
   tracking: SurveyTrackingPayload;
+  /** 키링 부자재를 붙일지. 금액은 서버가 다시 계산한다. */
+  keyringAdded: boolean;
   privacyAgreed: boolean;
   shippingConfirmed: boolean;
   /** 광고성 정보 수신 동의. 선택 항목이라 false 로 와도 신청은 성립한다. */

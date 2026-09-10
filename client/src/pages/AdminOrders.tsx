@@ -637,13 +637,22 @@ export default function AdminOrders() {
                   {order.photoCount}/5
                 </td>
                 <td className="px-3 py-2">
-                  {order.deliveryMethod === "PICKUP" ? (
-                    <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-900">
-                      현장 수령
-                    </span>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">택배</span>
-                  )}
+                  <div className="flex flex-wrap items-center gap-1">
+                    {order.deliveryMethod === "PICKUP" ? (
+                      <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-900">
+                        현장 수령
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">택배</span>
+                    )}
+                    {/* 고리를 달아야 하는 건. 상세를 열어야 알면 스무 건을
+                        만드는 동안 한 건은 고리 없이 나간다. */}
+                    {order.keyringAdded ? (
+                      <span className="rounded bg-sky-100 px-1.5 py-0.5 text-xs text-sky-900">
+                        키링
+                      </span>
+                    ) : null}
+                  </div>
                 </td>
                 <td className="px-3 py-2">{formatKrw(order.paymentAmountKrw)}</td>
                 <td className="px-3 py-2">
@@ -853,6 +862,11 @@ function OrderCard({
             ) : (
               <span>택배</span>
             )}
+            {order.keyringAdded ? (
+              <span className="whitespace-nowrap rounded bg-sky-100 px-1.5 py-0.5 text-sky-900">
+                키링
+              </span>
+            ) : null}
             <span>·</span>
             <span>{formatKrw(order.paymentAmountKrw)}</span>
           </p>

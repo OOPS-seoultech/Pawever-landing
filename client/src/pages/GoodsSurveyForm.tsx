@@ -80,6 +80,7 @@ import {
 import {
   GOODS_PRICE,
   applicablePriceKrw,
+  payableKrw,
   formatPhoneNumber,
   shippingFeeKrw,
   wonText,
@@ -707,6 +708,25 @@ export default function GoodsSurveyForm() {
     () => (channel === "flea" ? "pickup" : "shipping")
   );
   const pickup = channel === "flea" && deliveryMethod === "pickup";
+  /**
+   * 키링 부자재를 붙일지.
+   *
+   * 현장에서 2,000원 추가하면 키링으로 만들어 주기로 했다. 기본은 꺼짐이다 —
+   * 켜 두면 더 낼 뜻이 없는 사람에게 2,000원을 얹은 채로 동의를 받게 된다.
+   */
+  const [keyringAdded, setKeyringAdded] = useState(false);
+  /**
+   * 동의 문구에 적을 금액.
+   *
+   * 제작비·부자재·배송비를 이 자리에서 다시 더하지 않는다. 서버가 청구하는
+   * 금액과 어긋나면 사람은 동의한 적 없는 돈을 청구받는다.
+   */
+  const totalPayableKrw = payableKrw({
+    directPurchase,
+    channel,
+    deliveryMethod: pickup ? "pickup" : "shipping",
+    keyringAdded,
+  });
   const restoredDraft = useMemo(() => {
     const draft = loadGoodsSurveyDraft();
     if (
@@ -1661,6 +1681,9 @@ export default function GoodsSurveyForm() {
           guardianName: production.guardianName,
           phone: production.phone,
           deliveryMethod: pickup ? "pickup" : "shipping",
+          // 금액은 서버가 다시 계산한다. 여기서 참이라고 보내도 낼 돈은
+          // 서버가 정하므로, 화면이 보낸 금액을 믿는 자리가 생기지 않는다.
+          keyringAdded,
           // 현장 수령이면 적어 두었던 주소도 보내지 않는다. 쓰지 않을 주소를
           // 남기면 지킬 것만 늘어난다.
           postalCode: pickup ? "" : production.postalCode,
@@ -2362,6 +2385,30 @@ export default function GoodsSurveyForm() {
                   </fieldset>
                 )}
 
+                {/* 부자재는 수령 방법 옆에 둔다. 둘 다 "무엇을 어떻게 받을지"라
+                    한자리에서 정하는 편이 낫고, 값이 달라지는 것도 둘뿐이다. */}
+                {/* 수령 방법과 같은 모양이지만 클래스는 따로 둔다. 같은
+                    이름을 쓰면 "수령 방법 칸"을 가리키는 자리마다 둘이
+                    잡힌다. */}
+                {channel === "flea" && (
+                  <fieldset className="gsf-keyring">
+                    <legend>키링</legend>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={keyringAdded}
+                        onChange={event => setKeyringAdded(event.target.checked)}
+                      />
+                      <span>
+                        <strong>키링으로 만들기</strong>
+                        <small>
+                          고리를 달아 드려요 · {wonText(GOODS_PRICE.keyring)} 추가
+                        </small>
+                      </span>
+                    </label>
+                  </fieldset>
+                )}
+
                 {(
                   [
                     ["petName", "아이 이름", "반려견 이름"],
@@ -2448,18 +2495,16 @@ export default function GoodsSurveyForm() {
                         동의한 금액과 청구되는 금액이 어긋난다. */}
                     제작비{" "}
                     {wonText(applicablePriceKrw(directPurchase, channel))}
+                    {keyringAdded ? (
+                      <> + 키링 {wonText(GOODS_PRICE.keyring)}</>
+                    ) : null}
                     {pickup ? (
                       <> · 방문수령(배송비 없음)</>
                     ) : (
                       <> + 배송비 {wonText(GOODS_PRICE.shipping)}</>
                     )}{" "}
                     ={" "}
-                    <strong>
-                      {wonText(
-                        applicablePriceKrw(directPurchase, channel) +
-                          shippingFeeKrw(pickup ? "pickup" : "shipping")
-                      )}
-                    </strong>
+                    <strong>{wonText(totalPayableKrw)}</strong>
                     을 결제하는 데 동의합니다. <em>필수</em>
                   </span>
                 </label>
