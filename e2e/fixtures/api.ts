@@ -150,10 +150,11 @@ export const mockSubmit = (
             orderNumber: "PE-2026-000123",
             listPriceKrw: 29_900,
             // 서버의 flea-discount-krw 와 같아야 한다. 9/9 에 18,000 →
-            // 16,000 → 15,000 으로 줄여 현장가가 14,900 이 되었다.
-            discountAmountKrw: 15_000,
+            // 16,000 → 15,000, 9/11 에 11,000 으로 줄여 현장가가 18,900 이
+            // 되었다.
+            discountAmountKrw: 11_000,
             shippingFeeKrw: 0,
-            paymentAmountKrw: 14_900,
+            paymentAmountKrw: 18_900,
             bank: {
               name: "기업은행",
               account: "000-000000-00-000",

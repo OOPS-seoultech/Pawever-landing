@@ -15,22 +15,22 @@ describe("낼 금액", () => {
   it("현장 수령에 키링을 안 붙이면 제작비 그대로다", () => {
     expect(
       payableKrw({ ...flea, deliveryMethod: "pickup", keyringAdded: false })
-    ).toBe(14_900);
+    ).toBe(18_900);
   });
 
   it("키링을 붙이면 부자재값이 더해진다", () => {
     expect(
       payableKrw({ ...flea, deliveryMethod: "pickup", keyringAdded: true })
-    ).toBe(16_900);
+    ).toBe(20_900);
   });
 
   it("택배면 배송비가 따로 더해진다", () => {
     expect(
       payableKrw({ ...flea, deliveryMethod: "shipping", keyringAdded: false })
-    ).toBe(17_900);
+    ).toBe(21_900);
     expect(
       payableKrw({ ...flea, deliveryMethod: "shipping", keyringAdded: true })
-    ).toBe(19_900);
+    ).toBe(23_900);
   });
 
   it("부자재값이 서버가 붙이는 값과 같다", () => {
