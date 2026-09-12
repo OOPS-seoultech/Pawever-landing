@@ -21,6 +21,7 @@ import {
   type WorkflowOrder,
 } from "@/lib/adminContracts";
 import { formatDateTime, formatKrw } from "@/lib/adminFormat";
+import { AdminModelReview, ModelReviewHistory } from "./AdminModelReview";
 
 export function AdminWorkflowPanel({
   orderNumber,
@@ -205,16 +206,57 @@ export function AdminWorkflowPanel({
       </div>
     );
   const can = (action: string) => row.allowedActions.includes(action);
+  const currentArtifacts = row.artifacts.filter(a =>
+    a.taskId == null
+      ? (row.taskAttempt ?? 1) === 1
+      : a.taskId === (row.modelingTaskId ?? row.taskId)
+  );
+  const previousArtifacts = row.artifacts.filter(
+    a => !currentArtifacts.includes(a)
+  );
   const missing = artifactKinds.filter(
-    item => !row.artifacts.some(a => a.kind === item.kind)
+    item => !currentArtifacts.some(a => a.kind === item.kind)
   );
   const prefix = `/api/admin/orders/${encodeURIComponent(orderNumber)}`;
   const eligible = accounts.filter(
     a =>
       a.status === "ACTIVE" &&
       a.workRoles.includes(
-        row.productionStage === "MODEL_REVIEW" ? "DESIGN_QC" : "MODELING"
+        ["MODEL_REVIEW", "COLOR_MAPPING"].includes(row.productionStage)
+          ? "DESIGN_QC"
+          : "MODELING"
       )
+  );
+  const fileRow = (a: WorkflowOrder["artifacts"][number]) => (
+    <div
+      className="flex min-w-0 flex-wrap items-center gap-2 text-sm"
+      key={a.id}
+    >
+      <span className="break-all">{a.fileName}</span>
+      {has("DOWNLOAD_PRODUCTION_FILES") && (
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={pending}
+          onClick={() => {
+            void adminRequest<{ url: string }>(
+              `/api/production/artifacts/${a.id}/download-link`,
+              { method: "POST" }
+            )
+              .then(link => {
+                const anchor = document.createElement("a");
+                anchor.href = link.url;
+                anchor.target = "_blank";
+                anchor.rel = "noreferrer";
+                anchor.click();
+              })
+              .catch(fail);
+          }}
+        >
+          열기
+        </Button>
+      )}
+    </div>
   );
   return (
     <section
@@ -230,7 +272,11 @@ export function AdminWorkflowPanel({
             {row.goodsType === "figure" ? "3D 피규어" : row.goodsType}
             {row.keyringAdded ? " · 키링 추가" : ""}
           </p>
-          {row.customGoods && <p className="mt-1 break-words text-sm">요청 내용: {row.customGoods}</p>}
+          {row.customGoods && (
+            <p className="mt-1 break-words text-sm">
+              요청 내용: {row.customGoods}
+            </p>
+          )}
         </div>
         <Button
           size="sm"
@@ -304,7 +350,9 @@ export function AdminWorkflowPanel({
           <p className="font-medium">
             주문 금액 {formatKrw(row.expectedAmount ?? 0)}
           </p>
-          {has("VIEW_CUSTOMER_IDENTITY") && row.guardianName && <p className="text-sm">신청 보호자: {row.guardianName}</p>}
+          {has("VIEW_CUSTOMER_IDENTITY") && row.guardianName && (
+            <p className="text-sm">신청 보호자: {row.guardianName}</p>
+          )}
           <label className="block text-sm">
             실제 입금액
             <Input
@@ -439,46 +487,22 @@ export function AdminWorkflowPanel({
       )}
       {has("VIEW_PRODUCTION_FILES") && (
         <div className="space-y-3 border-t pt-4">
+          <ModelReviewHistory row={row} />
           <h3 className="font-medium">모델링 자료</h3>
+          {row.taskAttempt != null && (
+            <p className="text-sm">
+              {row.productionStage === "COLOR_MAPPING"
+                ? "승인된 모델링 자료"
+                : `${row.taskAttempt}차 모델링`}
+            </p>
+          )}
           {artifactKinds.map(item => (
             <div
               key={item.kind}
               className="min-w-0 space-y-2 rounded border p-3"
             >
               <h4 className="text-sm font-medium">{item.label}</h4>
-              {row.artifacts
-                .filter(a => a.kind === item.kind)
-                .map(a => (
-                  <div
-                    className="flex min-w-0 flex-wrap items-center gap-2 text-sm"
-                    key={a.id}
-                  >
-                    <span className="break-all">{a.fileName}</span>
-                    {has("DOWNLOAD_PRODUCTION_FILES") && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={pending}
-                        onClick={() => {
-                          void adminRequest<{ url: string }>(
-                            `/api/production/artifacts/${a.id}/download-link`,
-                            { method: "POST" }
-                          )
-                            .then(link => {
-                              const anchor = document.createElement("a");
-                              anchor.href = link.url;
-                              anchor.target = "_blank";
-                              anchor.rel = "noreferrer";
-                              anchor.click();
-                            })
-                            .catch(fail);
-                        }}
-                      >
-                        열기
-                      </Button>
-                    )}
-                  </div>
-                ))}
+              {currentArtifacts.filter(a => a.kind === item.kind).map(fileRow)}
               {can("UPLOAD_ARTIFACT") && (
                 <label className="block text-xs text-muted-foreground">
                   {item.label} 파일 선택
@@ -497,6 +521,26 @@ export function AdminWorkflowPanel({
               )}
             </div>
           ))}
+          {previousArtifacts.length > 0 && (
+            <details className="space-y-2 rounded border p-3">
+              <summary className="cursor-pointer text-sm font-medium">
+                이전 제출 자료
+              </summary>
+              <p className="text-xs text-muted-foreground">
+                참고용 자료입니다. 수정 작업에는 새 파일을 등록해 주세요.
+              </p>
+              {previousArtifacts.map(a => (
+                <div key={a.id} className="space-y-1 border-t pt-2">
+                  <p className="text-xs text-muted-foreground">
+                    {a.modelingAttempt ?? 1}차 제출 ·{" "}
+                    {artifactKinds.find(kind => kind.kind === a.kind)?.label ??
+                      a.kind}
+                  </p>
+                  {fileRow(a)}
+                </div>
+              ))}
+            </details>
+          )}
           {can("UPLOAD_ARTIFACT") && (
             <p className="text-xs text-muted-foreground">
               파일당 최대 100MB. 출력 파일은 STL 또는 3MF로 등록해 주세요.
@@ -527,10 +571,27 @@ export function AdminWorkflowPanel({
           )}
         </div>
       )}
-      {row.productionStage === "MODEL_REVIEW" && (
+      <AdminModelReview
+        key={`${row.taskId}:${row.version}`}
+        row={row}
+        pending={pending}
+        onReview={decision =>
+          void run(
+            () =>
+              command(`/api/production/tasks/${row.taskId}/review`, {
+                version: row.version,
+                ...decision,
+              }),
+            decision.decision === "APPROVED"
+              ? "검수를 승인했습니다. 색상 작업 대기로 넘어갔습니다."
+              : "수정 작업을 생성했습니다."
+          )
+        }
+      />
+      {row.productionStage === "COLOR_MAPPING" && (
         <p className="text-sm text-muted-foreground">
-          검수용 자료를 확인할 수 있습니다. 검수 승인과 수정 요청은 다음 개발
-          범위입니다.
+          모델 검수가 승인됐습니다. 다음 작업은 부위별 색상과 필라멘트
+          지정입니다.
         </p>
       )}
       <details className="border-t pt-3">
@@ -546,6 +607,8 @@ export function AdminWorkflowPanel({
                   CONFIRM_PAYMENT: "입금 확인",
                   START_TASK: "모델링 시작",
                   COMPLETE_MODELING: "검수 인계",
+                  APPROVE_MODEL: "모델 검수 승인",
+                  REQUEST_MODEL_CHANGES: "모델 수정 요청",
                   ASSIGN_TASK: "담당자 배정",
                   CONFIRM_ARTIFACT: "파일 등록",
                   REQUEST_ARTIFACT: "파일 등록 요청",
