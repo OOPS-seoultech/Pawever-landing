@@ -6,7 +6,12 @@
  * 섞인다.
  */
 
-export type AdminRole = "ADMIN" | "PRODUCTION";
+export type AdminRole =
+  | "OWNER"
+  | "ADMIN"
+  | "PRODUCTION"
+  | "MARKETING"
+  | "SUPPORT";
 
 export type GoodsOrderStatus =
   | "PAYMENT_PENDING"
@@ -22,6 +27,7 @@ export type GoodsOrderStatus =
   | "LEGACY_FREE";
 
 export type AdminOrderSummary = {
+  workflow?: import("./adminContracts").WorkflowOrder;
   orderNumber: string;
   submittedAt: string;
   goodsType: string;
@@ -84,6 +90,7 @@ export type AdminBulkResult = {
 };
 
 export type AdminOrderDetail = {
+  workflow?: import("./adminContracts").WorkflowOrder;
   orderNumber: string;
   submittedAt: string;
   status: GoodsOrderStatus;
@@ -126,7 +133,11 @@ export type AdminOrderDetail = {
     trackingNumber: string | null;
   } | null;
   photos: { slot: number; objectKey: string | null; filled: boolean }[];
-  marketing: { agreed: boolean; agreedAt: string | null; version: string | null } | null;
+  marketing: {
+    agreed: boolean;
+    agreedAt: string | null;
+    version: string | null;
+  } | null;
   statusHistory: {
     fromStatus: string | null;
     toStatus: string;
@@ -161,7 +172,8 @@ export class AdminApiError extends Error {
   constructor(
     message: string,
     readonly code: string,
-    readonly status: number
+    readonly status: number,
+    readonly latest?: unknown
   ) {
     super(message);
     this.name = "AdminApiError";
@@ -238,8 +250,10 @@ export const readAdminRole = (): AdminRole | null => {
       "="
     );
     const claims = JSON.parse(atob(padded)) as { role?: string };
-    return claims.role === "ADMIN" || claims.role === "PRODUCTION"
-      ? claims.role
+    return ["OWNER", "ADMIN", "PRODUCTION", "MARKETING", "SUPPORT"].includes(
+      claims.role ?? ""
+    )
+      ? (claims.role as AdminRole)
       : null;
   } catch {
     // 형태가 다른 값이 들어 있다. 역할을 모르는 것으로 둔다.
@@ -247,7 +261,7 @@ export const readAdminRole = (): AdminRole | null => {
   }
 };
 
-const adminRequest = async <T>(
+export const adminRequest = async <T>(
   path: string,
   init?: RequestInit & { auth?: boolean }
 ): Promise<T> => {
@@ -276,9 +290,11 @@ const adminRequest = async <T>(
       clearAdminToken();
     }
     throw new AdminApiError(
-      envelope?.message ?? "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+      envelope?.message ??
+        "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.",
       envelope?.code ?? "NETWORK_ERROR",
-      response.status
+      response.status,
+      envelope?.data
     );
   }
   return envelope.data as T;
@@ -321,7 +337,7 @@ export type AdminOrderFilter = {
 export const listAdminOrders = (params: AdminOrderFilter) => {
   const query = new URLSearchParams();
   // 상태는 값마다 한 번씩 붙인다. 서버가 List<GoodsOrderStatus> 로 받는다.
-  (params.status ?? []).forEach((status) => query.append("status", status));
+  (params.status ?? []).forEach(status => query.append("status", status));
   if (params.q?.trim()) query.set("q", params.q.trim());
   if (params.goodsType?.trim()) query.set("goodsType", params.goodsType.trim());
   if (params.submittedFrom) query.set("submittedFrom", params.submittedFrom);
