@@ -53,7 +53,9 @@ export const PRODUCTION_VISIBLE_STATUSES: GoodsOrderStatus[] = [
 ];
 
 export const filterableStatusesFor = (role: AdminRole): GoodsOrderStatus[] =>
-  role === "ADMIN" ? FILTERABLE_STATUSES : PRODUCTION_VISIBLE_STATUSES;
+  role === "ADMIN" || role === "OWNER"
+    ? FILTERABLE_STATUSES
+    : PRODUCTION_VISIBLE_STATUSES;
 
 /**
  * 사람이 손으로 옮길 수 있는 길. 서버의 GoodsOrderStatus.MANUAL_TRANSITIONS
@@ -75,15 +77,16 @@ export const filterableStatusesFor = (role: AdminRole): GoodsOrderStatus[] =>
  *
  * 1차 체험단은 결제가 없던 주문이라 제작 중으로만 간다.
  */
-const MANUAL_TRANSITIONS: Partial<Record<GoodsOrderStatus, GoodsOrderStatus[]>> =
-  {
-    PAYMENT_PENDING: ["PAYMENT_COMPLETED", "PAYMENT_EXPIRED", "PAYMENT_FAILED"],
-    PAYMENT_COMPLETED: ["IN_PRODUCTION"],
-    // 뒤로 갈 곳이 둘이다. 돈을 받은 주문은 결제 완료로, 1차 체험단은 다시
-    // 체험단으로 돌아간다. 어느 쪽인지는 결제 시각이 가른다.
-    IN_PRODUCTION: ["PAYMENT_COMPLETED", "LEGACY_FREE"],
-    LEGACY_FREE: ["IN_PRODUCTION"],
-  };
+const MANUAL_TRANSITIONS: Partial<
+  Record<GoodsOrderStatus, GoodsOrderStatus[]>
+> = {
+  PAYMENT_PENDING: ["PAYMENT_COMPLETED", "PAYMENT_EXPIRED", "PAYMENT_FAILED"],
+  PAYMENT_COMPLETED: ["IN_PRODUCTION"],
+  // 뒤로 갈 곳이 둘이다. 돈을 받은 주문은 결제 완료로, 1차 체험단은 다시
+  // 체험단으로 돌아간다. 어느 쪽인지는 결제 시각이 가른다.
+  IN_PRODUCTION: ["PAYMENT_COMPLETED", "LEGACY_FREE"],
+  LEGACY_FREE: ["IN_PRODUCTION"],
+};
 
 /** 제작팀이 스스로 바꿀 수 있는 상태. 발송과 취소는 관리자만 한다. */
 const PRODUCTION_SETTABLE: GoodsOrderStatus[] = ["IN_PRODUCTION"];
@@ -101,8 +104,13 @@ export const settableStatusesFor = (
   paid?: boolean
 ): GoodsOrderStatus[] =>
   (MANUAL_TRANSITIONS[current] ?? [])
-    .filter((status) => role === "ADMIN" || PRODUCTION_SETTABLE.includes(status))
-    .filter((status) => {
+    .filter(
+      status =>
+        role === "ADMIN" ||
+        role === "OWNER" ||
+        PRODUCTION_SETTABLE.includes(status)
+    )
+    .filter(status => {
       if (paid === undefined) return true;
       if (status === "PAYMENT_COMPLETED" && current === "IN_PRODUCTION") {
         return paid;
@@ -137,7 +145,7 @@ export const canRegisterTracking = (
   current: GoodsOrderStatus,
   deliveryMethod: string | undefined = "SHIPPING"
 ): boolean =>
-  role === "ADMIN" &&
+  (role === "ADMIN" || role === "OWNER") &&
   deliveryMethod !== "PICKUP" &&
   (current === "PAYMENT_COMPLETED" ||
     current === "IN_PRODUCTION" ||
@@ -160,7 +168,7 @@ export const canCompletePickup = (
   current: GoodsOrderStatus,
   deliveryMethod: string | undefined
 ): boolean =>
-  role === "ADMIN" &&
+  (role === "ADMIN" || role === "OWNER") &&
   deliveryMethod === "PICKUP" &&
   (current === "PAYMENT_COMPLETED" || current === "IN_PRODUCTION");
 
@@ -197,12 +205,17 @@ export const ADMIN_ORDER_VIEWS: readonly {
   {
     key: "PROBLEM",
     label: "문제",
-    statuses: ["PAYMENT_EXPIRED", "PAYMENT_FAILED", "CANCELED", "CANCEL_FAILED"],
+    statuses: [
+      "PAYMENT_EXPIRED",
+      "PAYMENT_FAILED",
+      "CANCELED",
+      "CANCEL_FAILED",
+    ],
   },
 ];
 
 export const statusesForView = (key: AdminOrderViewKey): GoodsOrderStatus[] =>
-  ADMIN_ORDER_VIEWS.find((view) => view.key === key)?.statuses ?? [];
+  ADMIN_ORDER_VIEWS.find(view => view.key === key)?.statuses ?? [];
 
 /**
  * 묶어서 제작 시작할 수 있는 건인지.
@@ -256,8 +269,10 @@ export const primaryRowAction = (
   if (canStartProduction(role, current)) {
     return null;
   }
-  if (settableStatusesFor(role, current).includes("PAYMENT_COMPLETED")
-      && current === "PAYMENT_PENDING") {
+  if (
+    settableStatusesFor(role, current).includes("PAYMENT_COMPLETED") &&
+    current === "PAYMENT_PENDING"
+  ) {
     return {
       kind: "status",
       label: "입금 확인",
@@ -269,7 +284,10 @@ export const primaryRowAction = (
     // 파기 시계를 켜고 되돌릴 수 없다.
     return { kind: "pickup", label: "수령 완료", confirm: true };
   }
-  if (canRegisterTracking(role, current, deliveryMethod) && current !== "SHIPPED") {
+  if (
+    canRegisterTracking(role, current, deliveryMethod) &&
+    current !== "SHIPPED"
+  ) {
     // 택배사와 송장번호 두 값을 받아야 한다. 버튼 하나로는 끝나지 않는다.
     return { kind: "open", label: "송장 등록", confirm: false };
   }
@@ -299,7 +317,7 @@ export const photoSlotRows = (
   photos: { slot: number; filled: boolean }[] | undefined
 ): PhotoSlotRow[] => {
   const filled = new Set(
-    (photos ?? []).filter((photo) => photo.filled).map((photo) => photo.slot)
+    (photos ?? []).filter(photo => photo.filled).map(photo => photo.slot)
   );
 
   return Array.from({ length: PHOTO_SLOT_COUNT }, (_, index) => {
@@ -387,6 +405,6 @@ export const canCancel = (
   current: GoodsOrderStatus,
   paid: boolean
 ): boolean =>
-  role === "ADMIN" &&
+  (role === "ADMIN" || role === "OWNER") &&
   paid &&
   (current === "PAYMENT_COMPLETED" || current === "IN_PRODUCTION");

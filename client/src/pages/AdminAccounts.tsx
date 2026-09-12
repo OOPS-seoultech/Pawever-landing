@@ -13,8 +13,12 @@ import {
   type AdminRole,
 } from "@/lib/adminApi";
 import { formatDateTime } from "@/lib/adminFormat";
+import { AdminWorkSettings } from "./AdminWorkSettings";
 
 const ROLE_LABELS: Record<AdminRole, string> = {
+  OWNER: "소유자",
+  MARKETING: "마케팅",
+  SUPPORT: "고객 지원",
   ADMIN: "관리자",
   PRODUCTION: "제작팀",
 };
@@ -100,6 +104,7 @@ export default function AdminAccounts() {
 
   return (
     <AdminShell title="담당자" role={role} backTo="/admin/orders">
+      <AdminWorkSettings />
       {error ? <AdminError message={error} /> : null}
 
       <form
@@ -112,20 +117,20 @@ export default function AdminAccounts() {
             type="email"
             required
             value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            onChange={event => setEmail(event.target.value)}
             placeholder="이메일"
             className="max-w-xs"
           />
           <Input
             required
             value={name}
-            onChange={(event) => setName(event.target.value)}
+            onChange={event => setName(event.target.value)}
             placeholder="이름"
             className="max-w-[10rem]"
             maxLength={50}
           />
           <div className="flex gap-1">
-            {(["PRODUCTION", "ADMIN"] as AdminRole[]).map((value) => (
+            {(["PRODUCTION", "ADMIN"] as AdminRole[]).map(value => (
               <button
                 key={value}
                 type="button"
@@ -171,7 +176,7 @@ export default function AdminAccounts() {
             </tr>
           </thead>
           <tbody>
-            {accounts?.map((account) => (
+            {accounts?.map(account => (
               <tr key={account.id} className="border-b last:border-0">
                 <td className="px-3 py-2">{account.name}</td>
                 <td className="px-3 py-2 text-muted-foreground">

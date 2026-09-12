@@ -20,6 +20,7 @@ import {
   type AdminOrderListResponse,
   type AdminOrderSummary,
 } from "@/lib/adminApi";
+import { stageLabels } from "@/lib/adminContracts";
 import { formatDateTime, formatKrw } from "@/lib/adminFormat";
 import { AdminOrderPanel } from "./AdminOrderPanel";
 import {
@@ -56,6 +57,33 @@ const TONE_CLASS: Record<ReturnType<typeof statusTone>, string> = {
   dead: "bg-rose-100 text-rose-900",
 };
 
+function workflowRowAction(
+  role: import("@/lib/adminApi").AdminRole,
+  order: AdminOrderSummary
+): ReturnType<typeof primaryRowAction> {
+  if (
+    order.workflow?.allowedActions.some(action =>
+      [
+        "CONFIRM_PAYMENT",
+        "ENROLL",
+        "ASSIGN_TASK",
+        "START_TASK",
+        "COMPLETE_MODELING",
+      ].includes(action)
+    )
+  ) {
+    return {
+      kind: "open",
+      label: order.workflow.allowedActions.includes("CONFIRM_PAYMENT")
+        ? "입금 대조"
+        : "작업 상세",
+      confirm: false,
+    };
+  }
+  if (order.workflow && order.status === "PAYMENT_PENDING") return null;
+  return primaryRowAction(role, order.status, order.deliveryMethod);
+}
+
 export default function AdminOrders() {
   const role = useAdminGuard();
   const [, setLocation] = useLocation();
@@ -67,7 +95,7 @@ export default function AdminOrders() {
    * 오늘 들어온 세 건을 덮는다. 들어오면 할 일이 남은 자리부터 본다.
    */
   const [view, setView] = useState<AdminOrderViewKey>("PAYMENT_CHECK");
-  const selected = statusesForView(view).filter((status) =>
+  const selected = statusesForView(view).filter(status =>
     filterableStatusesFor(role ?? "PRODUCTION").includes(status)
   );
   const [searchInput, setSearchInput] = useState("");
@@ -173,8 +201,10 @@ export default function AdminOrders() {
   };
 
   /** 이 화면에서 묶어 제작 시작할 수 있는 줄. */
-  const startable = (data?.orders ?? []).filter((order) =>
-    canStartProduction(role ?? "PRODUCTION", order.status)
+  const startable = (data?.orders ?? []).filter(
+    order =>
+      (!order.workflow || order.workflow.productionStage === "BLOCKED") &&
+      canStartProduction(role ?? "PRODUCTION", order.status)
   );
   const allPicked = startable.length > 0 && picked.length === startable.length;
 
@@ -321,14 +351,20 @@ export default function AdminOrders() {
     }
   };
 
-  const totalPages = data ? Math.max(Math.ceil(data.totalCount / PAGE_SIZE), 1) : 1;
+  const totalPages = data
+    ? Math.max(Math.ceil(data.totalCount / PAGE_SIZE), 1)
+    : 1;
   /**
    * 접어 둔 칸에 걸린 조건 수.
    *
    * 안 적어 주면 목록이 왜 비었는지 알려고 접힌 칸을 열어 봐야 한다.
    */
-  const filterCount = [submittedFrom, submittedTo, minPhotoCount, goodsType]
-    .filter(Boolean).length;
+  const filterCount = [
+    submittedFrom,
+    submittedTo,
+    minPhotoCount,
+    goodsType,
+  ].filter(Boolean).length;
 
   return (
     <AdminShell title="굿즈 주문" role={role}>
@@ -336,11 +372,11 @@ export default function AdminOrders() {
           8월의 100건이 오늘의 세 건을 덮는다. 숫자는 필터와 무관한 전체다 —
           탭은 "무엇이 남았나"이지 "지금 목록이 몇 건인가"가 아니다. */}
       <div className="mb-4 flex flex-wrap items-center gap-1 border-b">
-        {ADMIN_ORDER_VIEWS.filter((item) =>
-          statusesForView(item.key).some((status) =>
+        {ADMIN_ORDER_VIEWS.filter(item =>
+          statusesForView(item.key).some(status =>
             filterableStatusesFor(role ?? "PRODUCTION").includes(status)
           )
-        ).map((item) => {
+        ).map(item => {
           const on = view === item.key;
           const count = data?.viewCounts?.[item.key];
           return (
@@ -372,11 +408,11 @@ export default function AdminOrders() {
       <form onSubmit={search} className="mb-4 flex gap-2">
         <Input
           value={searchInput}
-          onChange={(event) => setSearchInput(event.target.value)}
+          onChange={event => setSearchInput(event.target.value)}
           placeholder={
             // 제작팀 검색은 보호자 이름에 걸리지 않는다. 걸린다고 적어 두면
             // 이름을 넣어 보고 결과가 없는 것을 없는 주문으로 읽는다.
-            role === "ADMIN"
+            role === "ADMIN" || role === "OWNER"
               ? "주문번호, 반려동물 또는 보호자 이름"
               : "주문번호 또는 반려동물 이름"
           }
@@ -393,7 +429,7 @@ export default function AdminOrders() {
         variant="outline"
         size="sm"
         className="mb-3 md:hidden"
-        onClick={() => setFiltersOpen((current) => !current)}
+        onClick={() => setFiltersOpen(current => !current)}
       >
         검색 조건 {filtersOpen ? "접기" : "펼치기"}
         {filterCount > 0 ? ` (${filterCount})` : ""}
@@ -410,7 +446,7 @@ export default function AdminOrders() {
             <Input
               type="date"
               value={submittedFrom}
-              onChange={(event) => {
+              onChange={event => {
                 setPage(0);
                 setSubmittedFrom(event.target.value);
               }}
@@ -420,7 +456,7 @@ export default function AdminOrders() {
             <Input
               type="date"
               value={submittedTo}
-              onChange={(event) => {
+              onChange={event => {
                 setPage(0);
                 setSubmittedTo(event.target.value);
               }}
@@ -433,14 +469,14 @@ export default function AdminOrders() {
           굿즈
           <select
             value={goodsType}
-            onChange={(event) => {
+            onChange={event => {
               setPage(0);
               setGoodsType(event.target.value);
             }}
             className="mt-1 block h-8 rounded-md border border-input bg-background px-2 text-sm"
           >
             <option value="">전체</option>
-            {GOODS_TYPES.map((type) => (
+            {GOODS_TYPES.map(type => (
               <option key={type.code} value={type.code}>
                 {type.label}
               </option>
@@ -455,7 +491,7 @@ export default function AdminOrders() {
             min={0}
             max={5}
             value={minPhotoCount}
-            onChange={(event) => {
+            onChange={event => {
               setPage(0);
               setMinPhotoCount(event.target.value);
             }}
@@ -486,12 +522,13 @@ export default function AdminOrders() {
       {picked.length === 0 && startable.length > 0 ? (
         <div className="mb-3 flex flex-wrap items-center gap-3 rounded-lg border bg-muted/40 px-3 py-2">
           <span className="text-sm text-muted-foreground">
-            제작 시작할 수 있는 주문이 이 페이지에 {startable.length}건 있습니다.
+            제작 시작할 수 있는 주문이 이 페이지에 {startable.length}건
+            있습니다.
           </span>
           <Button
             variant="secondary"
             size="sm"
-            onClick={() => setPicked(startable.map((order) => order.orderNumber))}
+            onClick={() => setPicked(startable.map(order => order.orderNumber))}
           >
             이 페이지 모두 선택
           </Button>
@@ -558,10 +595,10 @@ export default function AdminOrders() {
                   aria-label="제작 시작할 수 있는 주문 모두 선택"
                   disabled={startable.length === 0}
                   checked={allPicked}
-                  onChange={(event) =>
+                  onChange={event =>
                     setPicked(
                       event.target.checked
-                        ? startable.map((order) => order.orderNumber)
+                        ? startable.map(order => order.orderNumber)
                         : []
                     )
                   }
@@ -587,7 +624,10 @@ export default function AdminOrders() {
           <tbody>
             {loading && !data ? (
               <tr>
-                <td colSpan={11} className="px-3 py-8 text-center text-muted-foreground">
+                <td
+                  colSpan={11}
+                  className="px-3 py-8 text-center text-muted-foreground"
+                >
                   불러오는 중...
                 </td>
               </tr>
@@ -595,35 +635,45 @@ export default function AdminOrders() {
 
             {data?.orders.length === 0 ? (
               <tr>
-                <td colSpan={11} className="px-3 py-8 text-center text-muted-foreground">
+                <td
+                  colSpan={11}
+                  className="px-3 py-8 text-center text-muted-foreground"
+                >
                   조건에 맞는 주문이 없습니다.
                 </td>
               </tr>
             ) : null}
 
-            {data?.orders.map((order) => (
+            {data?.orders.map(order => (
               <tr
                 key={order.orderNumber}
                 onClick={() => setOpened(order.orderNumber)}
                 className="cursor-pointer border-b last:border-0 hover:bg-muted/40"
               >
-                <td className="px-3 py-2" onClick={(event) => event.stopPropagation()}>
-                  {canStartProduction(role ?? "PRODUCTION", order.status) ? (
+                <td
+                  className="px-3 py-2"
+                  onClick={event => event.stopPropagation()}
+                >
+                  {(!order.workflow ||
+                    order.workflow.productionStage === "BLOCKED") &&
+                  canStartProduction(role ?? "PRODUCTION", order.status) ? (
                     <input
                       type="checkbox"
                       aria-label={`${order.orderNumber} 선택`}
                       checked={picked.includes(order.orderNumber)}
-                      onChange={(event) =>
-                        setPicked((current) =>
+                      onChange={event =>
+                        setPicked(current =>
                           event.target.checked
                             ? [...current, order.orderNumber]
-                            : current.filter((n) => n !== order.orderNumber)
+                            : current.filter(n => n !== order.orderNumber)
                         )
                       }
                     />
                   ) : null}
                 </td>
-                <td className="px-3 py-2 font-mono text-xs">{order.orderNumber}</td>
+                <td className="px-3 py-2 font-mono text-xs">
+                  {order.orderNumber}
+                </td>
                 <td className="px-3 py-2 text-muted-foreground">
                   {formatDateTime(order.submittedAt)}
                 </td>
@@ -632,7 +682,9 @@ export default function AdminOrders() {
                 </td>
                 <td className="px-3 py-2">{order.petName}</td>
                 <td className="px-3 py-2">{order.guardianNameMasked}</td>
-                <td className="px-3 py-2 font-mono text-xs">{order.phoneMasked}</td>
+                <td className="px-3 py-2 font-mono text-xs">
+                  {order.phoneMasked}
+                </td>
                 <td className="px-3 py-2 text-muted-foreground">
                   {order.photoCount}/5
                 </td>
@@ -643,7 +695,9 @@ export default function AdminOrders() {
                         현장 수령
                       </span>
                     ) : (
-                      <span className="text-xs text-muted-foreground">택배</span>
+                      <span className="text-xs text-muted-foreground">
+                        택배
+                      </span>
                     )}
                     {/* 고리를 달아야 하는 건. 상세를 열어야 알면 스무 건을
                         만드는 동안 한 건은 고리 없이 나간다. */}
@@ -654,7 +708,9 @@ export default function AdminOrders() {
                     ) : null}
                   </div>
                 </td>
-                <td className="px-3 py-2">{formatKrw(order.paymentAmountKrw)}</td>
+                <td className="px-3 py-2">
+                  {formatKrw(order.paymentAmountKrw)}
+                </td>
                 <td className="px-3 py-2">
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs ${
@@ -662,6 +718,13 @@ export default function AdminOrders() {
                     }`}
                   >
                     {order.statusLabel ?? STATUS_LABELS[order.status]}
+                    {order.workflow && (
+                      <span className="block text-[11px]">
+                        {stageLabels[order.workflow.productionStage] ??
+                          order.workflow.productionStage}{" "}
+                        · {order.workflow.assignee?.name ?? "미배정"}
+                      </span>
+                    )}
                   </span>
                 </td>
                 <td className="px-3 py-2">
@@ -695,17 +758,17 @@ export default function AdminOrders() {
           </li>
         ) : null}
 
-        {data?.orders.map((order) => (
+        {data?.orders.map(order => (
           <OrderCard
             key={order.orderNumber}
             order={order}
             role={role ?? "PRODUCTION"}
             picked={picked.includes(order.orderNumber)}
-            onPick={(on) =>
-              setPicked((current) =>
+            onPick={on =>
+              setPicked(current =>
                 on
                   ? [...current, order.orderNumber]
-                  : current.filter((n) => n !== order.orderNumber)
+                  : current.filter(n => n !== order.orderNumber)
               )
             }
             busy={acting === order.orderNumber}
@@ -720,7 +783,7 @@ export default function AdminOrders() {
           간다. 주소(/admin/orders/:orderNumber)는 북마크용으로 남겨 둔다. */}
       <Sheet
         open={opened !== null}
-        onOpenChange={(next) => {
+        onOpenChange={next => {
           if (!next) setOpened(null);
         }}
       >
@@ -748,7 +811,7 @@ export default function AdminOrders() {
             variant="outline"
             size="sm"
             disabled={page === 0 || loading}
-            onClick={() => setPage((current) => Math.max(current - 1, 0))}
+            onClick={() => setPage(current => Math.max(current - 1, 0))}
           >
             이전
           </Button>
@@ -759,7 +822,7 @@ export default function AdminOrders() {
             variant="outline"
             size="sm"
             disabled={page + 1 >= totalPages || loading}
-            onClick={() => setPage((current) => current + 1)}
+            onClick={() => setPage(current => current + 1)}
           >
             다음
           </Button>
@@ -787,7 +850,7 @@ function OrderCard({
   onRun,
 }: {
   order: AdminOrderSummary;
-  role: "ADMIN" | "PRODUCTION";
+  role: import("@/lib/adminApi").AdminRole;
   picked: boolean;
   onPick: (on: boolean) => void;
   busy: boolean;
@@ -798,8 +861,10 @@ function OrderCard({
     action: NonNullable<ReturnType<typeof primaryRowAction>>
   ) => void;
 }) {
-  const action = primaryRowAction(role, order.status, order.deliveryMethod);
-  const selectable = canStartProduction(role, order.status);
+  const action = workflowRowAction(role, order);
+  const selectable =
+    (!order.workflow || order.workflow.productionStage === "BLOCKED") &&
+    canStartProduction(role, order.status);
 
   return (
     <li
@@ -815,7 +880,7 @@ function OrderCard({
               type="checkbox"
               aria-label={`${order.orderNumber} 선택`}
               checked={picked}
-              onChange={(event) => onPick(event.target.checked)}
+              onChange={event => onPick(event.target.checked)}
               className="h-5 w-5"
             />
           </label>
@@ -834,6 +899,13 @@ function OrderCard({
               }`}
             >
               {order.statusLabel ?? STATUS_LABELS[order.status]}
+              {order.workflow && (
+                <span className="block text-[11px]">
+                  {stageLabels[order.workflow.productionStage] ??
+                    order.workflow.productionStage}{" "}
+                  · {order.workflow.assignee?.name ?? "미배정"}
+                </span>
+              )}
             </span>
           </div>
 
@@ -847,7 +919,8 @@ function OrderCard({
 
           <p className="mt-1 text-xs text-muted-foreground">
             {formatDateTime(order.submittedAt)} ·{" "}
-            {order.goodsTypeLabel || order.goodsType} · 사진 {order.photoCount}/5
+            {order.goodsTypeLabel || order.goodsType} · 사진 {order.photoCount}
+            /5
           </p>
 
           {/* 수령 방법은 줄을 따로 쓴다. 앞 줄에 이어 붙이면 폰 너비에서
@@ -903,7 +976,7 @@ function RowAction({
   onRun,
 }: {
   order: AdminOrderSummary;
-  role: "ADMIN" | "PRODUCTION";
+  role: import("@/lib/adminApi").AdminRole;
   busy: boolean;
   disabled: boolean;
   onRun: (
@@ -911,7 +984,7 @@ function RowAction({
     action: NonNullable<ReturnType<typeof primaryRowAction>>
   ) => void;
 }) {
-  const action = primaryRowAction(role, order.status, order.deliveryMethod);
+  const action = workflowRowAction(role, order);
   if (!action) {
     return <span className="text-xs text-muted-foreground">—</span>;
   }
@@ -920,7 +993,7 @@ function RowAction({
       size="sm"
       variant={action.kind === "pickup" ? "default" : "secondary"}
       disabled={disabled}
-      onClick={(event) => {
+      onClick={event => {
         // 줄을 누르면 드로어가 열린다. 버튼은 그 자리에서 끝내는 것이다.
         event.stopPropagation();
         onRun(order, action);

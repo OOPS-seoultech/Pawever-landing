@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AdminError } from "@/components/AdminShell";
 import { AdminApiError, adminSignIn, readAdminToken } from "@/lib/adminApi";
+import { getStaff } from "@/lib/adminContracts";
 
 export default function AdminLogin() {
   const [, setLocation] = useLocation();
@@ -16,7 +17,16 @@ export default function AdminLogin() {
   // 이미 들어와 있으면 다시 로그인시킬 이유가 없다.
   useEffect(() => {
     if (readAdminToken()) {
-      setLocation("/admin/orders", { replace: true });
+      void getStaff()
+        .then(staff =>
+          setLocation(
+            staff.permissions.includes("VIEW_ALL_ORDERS")
+              ? "/admin/workflow"
+              : "/admin/my-work",
+            { replace: true }
+          )
+        )
+        .catch(() => {});
     }
     const meta = document.createElement("meta");
     meta.name = "robots";
@@ -35,7 +45,13 @@ export default function AdminLogin() {
     setError(null);
     try {
       await adminSignIn(email.trim(), password);
-      setLocation("/admin/orders", { replace: true });
+      const staff = await getStaff();
+      setLocation(
+        staff.permissions.includes("VIEW_ALL_ORDERS")
+          ? "/admin/workflow"
+          : "/admin/my-work",
+        { replace: true }
+      );
     } catch (caught) {
       const failure = caught as AdminApiError;
       setError(
@@ -71,7 +87,7 @@ export default function AdminLogin() {
             autoComplete="username"
             required
             value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            onChange={event => setEmail(event.target.value)}
           />
         </div>
 
@@ -83,7 +99,7 @@ export default function AdminLogin() {
             autoComplete="current-password"
             required
             value={password}
-            onChange={(event) => setPassword(event.target.value)}
+            onChange={event => setPassword(event.target.value)}
           />
         </div>
 

@@ -1,9 +1,9 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
+import { useStaffSession } from "./AdminSession";
 import {
   clearAdminToken,
-  readAdminRole,
   readAdminToken,
   type AdminRole,
 } from "@/lib/adminApi";
@@ -27,6 +27,7 @@ const useNoIndex = () => {
 };
 
 export const useAdminGuard = () => {
+  const { staff } = useStaffSession();
   const [, setLocation] = useLocation();
   const token = readAdminToken();
 
@@ -36,10 +37,13 @@ export const useAdminGuard = () => {
     }
   }, [token, setLocation]);
 
-  return token ? readAdminRole() : null;
+  return token ? (staff?.role ?? null) : null;
 };
 
 const ROLE_LABELS: Record<AdminRole, string> = {
+  OWNER: "소유자",
+  MARKETING: "마케팅",
+  SUPPORT: "고객 지원",
   ADMIN: "관리자",
   PRODUCTION: "제작팀",
 };
@@ -53,6 +57,7 @@ type Props = {
 };
 
 export function AdminShell({ title, role, children, backTo }: Props) {
+  const { staff, error } = useStaffSession();
   const [, setLocation] = useLocation();
   useNoIndex();
 
@@ -64,7 +69,7 @@ export function AdminShell({ title, role, children, backTo }: Props) {
   return (
     <div className="min-h-screen bg-muted/30">
       <header className="border-b bg-background">
-        <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3">
           {backTo ? (
             <Link
               href={backTo}
@@ -76,7 +81,7 @@ export function AdminShell({ title, role, children, backTo }: Props) {
           <h1 className="text-base font-semibold">{title}</h1>
           <div className="ml-auto flex items-center gap-3">
             {/* 제작팀에게는 담당자 관리가 403 이다. 보여 줄 이유가 없다. */}
-            {role === "ADMIN" ? (
+            {staff?.permissions.includes("MANAGE_ACCOUNTS") ? (
               <Link
                 href="/admin/accounts"
                 className="text-sm text-muted-foreground hover:text-foreground"
@@ -95,7 +100,23 @@ export function AdminShell({ title, role, children, backTo }: Props) {
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
+      <nav
+        aria-label="관리 메뉴"
+        className="mx-auto flex max-w-6xl flex-wrap gap-4 border-b px-4 py-3 text-sm"
+      >
+        {staff?.permissions.includes("VIEW_ORDER_BASIC") && (
+          <Link href="/admin/my-work">내 작업</Link>
+        )}
+        {staff?.permissions.includes("VIEW_ALL_ORDERS") && (
+          <>
+            <Link href="/admin/workflow">입금·제작 관리</Link>
+            <Link href="/admin/orders">전체 주문·배송</Link>
+          </>
+        )}
+      </nav>
+      <main className="mx-auto max-w-6xl px-4 py-6">
+        {error ? <AdminError message={error} /> : children}
+      </main>
     </div>
   );
 }

@@ -19,6 +19,7 @@ import {
   type GoodsOrderStatus,
 } from "@/lib/adminApi";
 import { formatDateTime, formatKrw } from "@/lib/adminFormat";
+import { AdminWorkflowPanel } from "./AdminWorkflowPanel";
 import {
   canCancel,
   CANCEL_REASONS,
@@ -91,7 +92,7 @@ export function AdminOrderPanel({
       // 링크를 받는 일은 서버에 접속기록으로 남는다. 화면에서 본 것과
       // 파일로 가져간 것을 서버가 다른 이름으로 적으므로, 자동으로 받아도
       // 실제로 가져간 사람을 찾는 데 방해가 되지 않는다.
-      if (detail.photos.some((photo) => photo.filled)) {
+      if (detail.photos.some(photo => photo.filled)) {
         setLinks(await requestPhotoLinks(orderNumber));
       } else {
         setLinks(null);
@@ -133,17 +134,31 @@ export function AdminOrderPanel({
 
   // 되돌릴 곳이 결제 여부로 갈린다. 제작팀에게는 결제 정보가 내려가지
   // 않으므로 그때는 좁히지 않는다.
-  const options = settableStatusesFor(
-    role ?? "PRODUCTION",
-    order.status,
-    order.payment ? Boolean(order.payment.paidAt) : undefined
-  );
+  const options =
+    order.workflow && order.workflow.productionStage !== "BLOCKED"
+      ? []
+      : settableStatusesFor(
+          role ?? "PRODUCTION",
+          order.status,
+          order.payment ? Boolean(order.payment.paidAt) : undefined
+        ).filter(status => !(order.workflow && status === "PAYMENT_COMPLETED"));
   // 계좌이체 주문은 환불을 사람이 먼저 한다. 결제 대행사 주문과 같은 말을
   // 하면 환불 안 된 취소가 생긴다.
   const cancelWords = cancelGuide(order.payment?.pgLinked ?? false);
 
   return (
     <>
+      <div className="mb-4">
+        <AdminWorkflowPanel
+          key={orderNumber}
+          orderNumber={orderNumber}
+          showPhotos={false}
+          onChanged={() => {
+            void load();
+            onChanged?.();
+          }}
+        />
+      </div>
       {error ? <AdminError message={error} /> : null}
       {notice ? (
         <p className="mb-4 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
@@ -153,7 +168,10 @@ export function AdminOrderPanel({
 
       <div className="grid gap-4 xl:grid-cols-2">
         <Section title="주문">
-          <Row label="상태" value={order.statusLabel ?? STATUS_LABELS[order.status]} />
+          <Row
+            label="상태"
+            value={order.statusLabel ?? STATUS_LABELS[order.status]}
+          />
           <Row label="신청일" value={formatDateTime(order.submittedAt)} />
           <Row label="굿즈" value={order.goodsTypeLabel || order.goodsType} />
           <Row label="반려동물" value={order.petName} />
@@ -183,7 +201,10 @@ export function AdminOrderPanel({
         {order.payment ? (
           <Section title="결제">
             <Row label="수단" value={order.payment.method ?? "-"} />
-            <Row label="결제 시각" value={formatDateTime(order.payment.paidAt)} />
+            <Row
+              label="결제 시각"
+              value={formatDateTime(order.payment.paidAt)}
+            />
             <Row
               label="만료 시각"
               value={formatDateTime(order.payment.paymentExpiresAt)}
@@ -197,11 +218,7 @@ export function AdminOrderPanel({
         {order.shipping ? (
           <Section title="배송">
             <Row label="보호자" value={order.shipping.guardianName} />
-            <Row
-              label="연락처"
-              value={order.shipping.phone}
-              copyAs="연락처"
-            />
+            <Row label="연락처" value={order.shipping.phone} copyAs="연락처" />
             {/* 방법을 주소보다 먼저 둔다. 주소가 빈 이유를 알고 나서 봐야
                 빠뜨린 것과 구분된다. */}
             <Row
@@ -217,15 +234,17 @@ export function AdminOrderPanel({
             ) : (
               <Row
                 label="주소"
-                value={[
-                  order.shipping.postalCode
-                    ? `(${order.shipping.postalCode})`
-                    : "",
-                  order.shipping.address ?? "",
-                  order.shipping.addressDetail ?? "",
-                ]
-                  .filter(Boolean)
-                  .join(" ") || "-"}
+                value={
+                  [
+                    order.shipping.postalCode
+                      ? `(${order.shipping.postalCode})`
+                      : "",
+                    order.shipping.address ?? "",
+                    order.shipping.addressDetail ?? "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ") || "-"
+                }
                 copyAs="주소"
               />
             )}
@@ -259,12 +278,16 @@ export function AdminOrderPanel({
               고객 사진의 사본이 하나 더 생기고, 파기할 때 그것도 같이
               지워야 한다 — 빠뜨리기 쉬운 자리가 하나 늘어난다. */}
           <ul className="mb-3 grid grid-cols-5 gap-2">
-            {photoSlotRows(order.photos).map((row) => {
-              const link = links?.photos.find((photo) => photo.slot === row.slot);
+            {photoSlotRows(order.photos).map(row => {
+              const link = links?.photos.find(photo => photo.slot === row.slot);
               return (
                 <li key={row.slot} className="text-center">
                   {row.filled && link ? (
-                    <a href={link.url} target="_blank" rel="noreferrer noopener">
+                    <a
+                      href={link.url}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                    >
                       <img
                         src={link.url}
                         alt={`사진 ${row.slot}`}
@@ -303,7 +326,7 @@ export function AdminOrderPanel({
             <Button
               variant="secondary"
               size="sm"
-              disabled={pending || !order.photos.some((photo) => photo.filled)}
+              disabled={pending || !order.photos.some(photo => photo.filled)}
               onClick={() =>
                 run(async () => {
                   setLinks(await requestPhotoLinks(order.orderNumber));
@@ -315,7 +338,7 @@ export function AdminOrderPanel({
             <Button
               variant="outline"
               size="sm"
-              disabled={pending || !order.photos.some((photo) => photo.filled)}
+              disabled={pending || !order.photos.some(photo => photo.filled)}
               onClick={() =>
                 run(async () => {
                   const archive = await downloadAdminPhotoArchive(
@@ -335,7 +358,6 @@ export function AdminOrderPanel({
               전체 내려받기 (ZIP)
             </Button>
           </div>
-
         </Section>
 
         <Section title="상태 변경">
@@ -347,7 +369,7 @@ export function AdminOrderPanel({
           ) : (
             <div className="space-y-3">
               <div className="flex flex-wrap gap-2">
-                {options.map((status) => (
+                {options.map(status => (
                   <button
                     key={status}
                     type="button"
@@ -364,7 +386,7 @@ export function AdminOrderPanel({
               </div>
               <Textarea
                 value={memo}
-                onChange={(event) => setMemo(event.target.value)}
+                onChange={event => setMemo(event.target.value)}
                 placeholder="메모 (선택). 왜 바꾸는지 남겨 두면 나중에 찾을 수 있습니다."
                 maxLength={300}
                 rows={2}
@@ -428,13 +450,13 @@ export function AdminOrderPanel({
             <div className="space-y-2">
               <Input
                 value={company}
-                onChange={(event) => setCompany(event.target.value)}
+                onChange={event => setCompany(event.target.value)}
                 placeholder="택배사"
                 maxLength={50}
               />
               <Input
                 value={invoice}
-                onChange={(event) => setInvoice(event.target.value)}
+                onChange={event => setInvoice(event.target.value)}
                 placeholder="송장번호"
                 maxLength={50}
               />
@@ -470,7 +492,7 @@ export function AdminOrderPanel({
             </p>
 
             <div className="mb-3 flex flex-wrap gap-2">
-              {CANCEL_REASONS.map((reason) => (
+              {CANCEL_REASONS.map(reason => (
                 <button
                   key={reason}
                   type="button"
@@ -491,7 +513,7 @@ export function AdminOrderPanel({
 
             <Input
               value={cancelDetail}
-              onChange={(event) => {
+              onChange={event => {
                 setCancelDetail(event.target.value);
                 setCancelArmed(false);
               }}
@@ -554,8 +576,9 @@ export function AdminOrderPanel({
                   <div className="flex items-center gap-2">
                     <span className="text-muted-foreground">
                       {change.fromStatus
-                        ? STATUS_LABELS[change.fromStatus as GoodsOrderStatus] ??
-                          change.fromStatus
+                        ? (STATUS_LABELS[
+                            change.fromStatus as GoodsOrderStatus
+                          ] ?? change.fromStatus)
                         : "신규"}
                     </span>
                     <span className="text-muted-foreground">→</span>
@@ -585,7 +608,8 @@ export function AdminOrderPanel({
                 <li key={index} className="flex items-center gap-2">
                   <span>{log.action}</span>
                   <span className="ml-auto text-xs text-muted-foreground">
-                    담당자 #{log.adminAccountId} · {formatDateTime(log.accessedAt)}
+                    담당자 #{log.adminAccountId} ·{" "}
+                    {formatDateTime(log.accessedAt)}
                   </span>
                 </li>
               ))}

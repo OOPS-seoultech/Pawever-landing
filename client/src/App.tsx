@@ -21,6 +21,8 @@ import AdminOrders from "./pages/AdminOrders";
 import AdminOrderDetail from "./pages/AdminOrderDetail";
 import AdminAccounts from "./pages/AdminAccounts";
 import AdminAcceptInvite from "./pages/AdminAcceptInvite";
+import AdminMyWork from "./pages/AdminMyWork";
+import { AdminSessionProvider } from "./components/AdminSession";
 import { useEffect } from "react";
 import { initializeAnalytics } from "./lib/analytics/analytics";
 
@@ -51,6 +53,8 @@ function Router() {
       <Route path="/unsubscribe" component={Unsubscribe} />
       {/* 관리자 화면. 더 긴 주소를 먼저 둔다 — /admin 이 앞에 오면 뒤가 안 잡힌다. */}
       <Route path="/admin/accept-invite" component={AdminAcceptInvite} />
+      <Route path="/admin/my-work">{() => <AdminMyWork />}</Route>
+      <Route path="/admin/workflow">{() => <AdminMyWork all />}</Route>
       <Route path="/admin/orders/:orderNumber" component={AdminOrderDetail} />
       <Route path="/admin/orders" component={AdminOrders} />
       <Route path="/admin/accounts" component={AdminAccounts} />
@@ -77,7 +81,9 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <AnalyticsBootstrap />
-          <Router />
+          <AdminSessionProvider>
+            <Router />
+          </AdminSessionProvider>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
