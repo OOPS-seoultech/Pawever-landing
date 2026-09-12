@@ -29,6 +29,7 @@ export type WorkflowOrder = {
   taskAttempt?: number | null;
   modelingTaskId?: number | null;
   reviews?: ModelReview[];
+  filamentMappings?: FilamentMapping[];
   assignee: { id: number; name: string } | null;
   blockingIssues: string[];
   allowedActions: string[];
@@ -54,6 +55,35 @@ export type ModelReview = {
   reviewedAt: string;
   checks?: string[];
 };
+export type Filament = {
+  id: number;
+  spoolId: string;
+  version: number;
+  colorName: string;
+  material: string;
+  finish: string;
+  manufacturer: string;
+  source: string;
+  priceKrw: number | null;
+  remainingGrams: number;
+  active: boolean;
+};
+export type FilamentMapping = {
+  id: number;
+  taskId: number;
+  modelingAttempt: number;
+  partName: string;
+  filamentId: number;
+  spoolId: string;
+  colorName: string;
+  material: string;
+  finish: string;
+  savedAt: string;
+  completedAt: string | null;
+};
+export type FilamentSelection = { partName: string; filamentId: number };
+export const getFilaments = () =>
+  adminRequest<Filament[]>("/api/admin/filaments");
 export type ModelReviewDecision = {
   decision: "APPROVED" | "CHANGES_REQUESTED";
   reasonCode: string | null;
@@ -81,6 +111,7 @@ export const stageLabels: Record<string, string> = {
   MODELING: "모델링 중",
   MODEL_REVIEW: "모델 검수 대기",
   COLOR_MAPPING: "색상 작업 대기",
+  PLATE_PREPARATION: "플레이트 준비",
   COMPLETE: "제작 완료",
 };
 export const paymentLabels: Record<string, string> = {
