@@ -22,6 +22,7 @@ import {
 } from "@/lib/adminContracts";
 import { formatDateTime, formatKrw } from "@/lib/adminFormat";
 import { AdminModelReview, ModelReviewHistory } from "./AdminModelReview";
+import { AdminFilamentMapping } from "./AdminFilamentMapping";
 
 export function AdminWorkflowPanel({
   orderNumber,
@@ -222,7 +223,9 @@ export function AdminWorkflowPanel({
     a =>
       a.status === "ACTIVE" &&
       a.workRoles.includes(
-        ["MODEL_REVIEW", "COLOR_MAPPING"].includes(row.productionStage)
+        ["MODEL_REVIEW", "COLOR_MAPPING", "PLATE_PREPARATION"].includes(
+          row.productionStage
+        )
           ? "DESIGN_QC"
           : "MODELING"
       )
@@ -588,10 +591,29 @@ export function AdminWorkflowPanel({
           )
         }
       />
-      {row.productionStage === "COLOR_MAPPING" && (
+      {has("VIEW_FILAMENT") && (
+        <AdminFilamentMapping
+          key={`${row.taskId}:${row.version}`}
+          row={row}
+          pending={pending}
+          onSave={(mappings, complete) =>
+            void run(
+              () =>
+                command(
+                  `/api/production/tasks/${row.taskId}/filament-mappings`,
+                  { version: row.version, mappings, complete }
+                ),
+              complete
+                ? "색상 지정을 완료했습니다. 플레이트 준비로 넘어갔습니다."
+                : "색상 지정을 저장했습니다."
+            )
+          }
+        />
+      )}
+      {row.productionStage === "PLATE_PREPARATION" && (
         <p className="text-sm text-muted-foreground">
-          모델 검수가 승인됐습니다. 다음 작업은 부위별 색상과 필라멘트
-          지정입니다.
+          부위별 필라멘트 지정이 완료됐습니다. 다음 작업은 출력할 주문을 묶어
+          플레이트를 구성하는 것입니다.
         </p>
       )}
       <details className="border-t pt-3">
@@ -609,6 +631,8 @@ export function AdminWorkflowPanel({
                   COMPLETE_MODELING: "검수 인계",
                   APPROVE_MODEL: "모델 검수 승인",
                   REQUEST_MODEL_CHANGES: "모델 수정 요청",
+                  SAVE_FILAMENT_MAPPING: "부위별 필라멘트 저장",
+                  COMPLETE_FILAMENT_MAPPING: "색상 지정 완료 · 플레이트 준비",
                   ASSIGN_TASK: "담당자 배정",
                   CONFIRM_ARTIFACT: "파일 등록",
                   REQUEST_ARTIFACT: "파일 등록 요청",

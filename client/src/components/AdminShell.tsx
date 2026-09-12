@@ -104,6 +104,9 @@ export function AdminShell({ title, role, children, backTo }: Props) {
         aria-label="관리 메뉴"
         className="mx-auto flex max-w-6xl flex-wrap gap-4 border-b px-4 py-3 text-sm"
       >
+        {staff?.permissions.includes("VIEW_FILAMENT") && (
+          <Link href="/admin/filaments">필라멘트</Link>
+        )}
         {staff?.permissions.includes("VIEW_ORDER_BASIC") && (
           <Link href="/admin/my-work">내 작업</Link>
         )}
