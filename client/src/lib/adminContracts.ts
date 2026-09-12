@@ -30,6 +30,7 @@ export type WorkflowOrder = {
   modelingTaskId?: number | null;
   reviews?: ModelReview[];
   filamentMappings?: FilamentMapping[];
+  printBatch?: { id: number; status: string } | null;
   assignee: { id: number; name: string } | null;
   blockingIssues: string[];
   allowedActions: string[];
@@ -112,6 +113,7 @@ export const stageLabels: Record<string, string> = {
   MODEL_REVIEW: "모델 검수 대기",
   COLOR_MAPPING: "색상 작업 대기",
   PLATE_PREPARATION: "플레이트 준비",
+  PRINT_QUEUE: "출력 대기",
   COMPLETE: "제작 완료",
 };
 export const paymentLabels: Record<string, string> = {
@@ -148,6 +150,7 @@ export const getStaffAccounts = () =>
 export type Defaults = {
   modeling: number | null;
   review: number | null;
+  printing?: number | null;
   version: number;
 };
 export const getDefaults = () =>

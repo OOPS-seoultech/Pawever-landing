@@ -81,6 +81,7 @@ export default function AdminMyWork({ all = false }: { all?: boolean }) {
               <option value="MODEL_REVIEW">검수 대기</option>
               <option value="COLOR_MAPPING">색상 작업 대기</option>
               <option value="PLATE_PREPARATION">플레이트 준비</option>
+              <option value="PRINT_QUEUE">출력 대기</option>
               <option value="ISSUES">확인 필요</option>
             </select>
             <Button variant="outline" onClick={() => void load()}>

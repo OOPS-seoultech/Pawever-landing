@@ -138,6 +138,7 @@ export function AdminWorkSettings() {
               {[
                 ["MODELING", "모델링"],
                 ["DESIGN_QC", "모델 검수"],
+                ["PRINT_FINISHING", "출력·후가공"],
               ].map(([r, label]) => (
                 <label className="flex items-center gap-2 text-sm" key={r}>
                   <input
@@ -191,6 +192,7 @@ export function AdminWorkSettings() {
             [
               ["modeling", "MODELING", "모델링 기본 담당자"],
               ["review", "DESIGN_QC", "검수 기본 담당자"],
+              ["printing", "PRINT_FINISHING", "출력 기본 담당자"],
             ] as const
           ).map(([field, workRole, label]) => (
             <label className="block text-sm" key={field}>
