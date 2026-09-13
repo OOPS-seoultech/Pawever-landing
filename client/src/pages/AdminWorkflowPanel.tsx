@@ -616,6 +616,21 @@ export function AdminWorkflowPanel({
           플레이트를 구성하는 것입니다.
         </p>
       )}
+      {has("MANAGE_PRINT_BATCH") &&
+        (row.printBatch || row.productionStage === "PLATE_PREPARATION") && (
+          <a
+            className="inline-block text-sm underline"
+            href={
+              row.printBatch
+                ? `/admin/print-batches?batch=${row.printBatch.id}`
+                : "/admin/print-batches"
+            }
+          >
+            {row.printBatch
+              ? `플레이트 PB-${row.printBatch.id} 열기`
+              : "플레이트 구성하기"}
+          </a>
+        )}
       <details className="border-t pt-3">
         <summary className="cursor-pointer text-sm font-medium">
           작업 이력 ({events.length})
@@ -633,6 +648,10 @@ export function AdminWorkflowPanel({
                   REQUEST_MODEL_CHANGES: "모델 수정 요청",
                   SAVE_FILAMENT_MAPPING: "부위별 필라멘트 저장",
                   COMPLETE_FILAMENT_MAPPING: "색상 지정 완료 · 플레이트 준비",
+                  SAVE_PRINT_PLATE: "플레이트 구성 저장",
+                  CONFIRM_PRINT_PLATE: "플레이트 확정 · 출력 대기",
+                  CANCEL_PRINT_PLATE: "임시 플레이트 취소",
+                  ASSIGN_PRINT_BATCH: "플레이트 출력 담당자 변경",
                   ASSIGN_TASK: "담당자 배정",
                   CONFIRM_ARTIFACT: "파일 등록",
                   REQUEST_ARTIFACT: "파일 등록 요청",

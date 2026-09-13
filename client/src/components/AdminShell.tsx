@@ -110,6 +110,9 @@ export function AdminShell({ title, role, children, backTo }: Props) {
         {staff?.permissions.includes("VIEW_ORDER_BASIC") && (
           <Link href="/admin/my-work">내 작업</Link>
         )}
+        {staff?.permissions.includes("MANAGE_PRINT_BATCH") && (
+          <Link href="/admin/print-batches">플레이트·출력 대기</Link>
+        )}
         {staff?.permissions.includes("VIEW_ALL_ORDERS") && (
           <>
             <Link href="/admin/workflow">입금·제작 관리</Link>
