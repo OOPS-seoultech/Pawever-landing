@@ -82,6 +82,10 @@ export default function AdminMyWork({ all = false }: { all?: boolean }) {
               <option value="COLOR_MAPPING">색상 작업 대기</option>
               <option value="PLATE_PREPARATION">플레이트 준비</option>
               <option value="PRINT_QUEUE">출력 대기</option>
+              <option value="PRINTING">출력 중</option>
+              <option value="POST_PROCESSING">후가공 대기</option>
+              <option value="QC">품질 검수 대기</option>
+              <option value="PACKING">포장 대기</option>
               <option value="ISSUES">확인 필요</option>
             </select>
             <Button variant="outline" onClick={() => void load()}>

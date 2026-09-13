@@ -22,6 +22,7 @@ import {
 } from "@/lib/adminContracts";
 import { formatDateTime, formatKrw } from "@/lib/adminFormat";
 import { AdminModelReview, ModelReviewHistory } from "./AdminModelReview";
+import { AdminFinishing } from "./AdminFinishing";
 import { AdminFilamentMapping } from "./AdminFilamentMapping";
 
 export function AdminWorkflowPanel({
@@ -227,7 +228,11 @@ export function AdminWorkflowPanel({
           row.productionStage
         )
           ? "DESIGN_QC"
-          : "MODELING"
+          : ["PRINT_QUEUE", "PRINTING", "POST_PROCESSING", "QC"].includes(
+                row.productionStage
+              )
+            ? "PRINT_FINISHING"
+            : "MODELING"
       )
   );
   const fileRow = (a: WorkflowOrder["artifacts"][number]) => (
@@ -574,8 +579,20 @@ export function AdminWorkflowPanel({
           )}
         </div>
       )}
+      <AdminFinishing
+        key={`finishing:${row.taskId}:${row.version}`}
+        row={row}
+        pending={pending}
+        onCommand={(action, body, message) =>
+          void run(
+            () =>
+              command(`/api/production/tasks/${row.taskId}/${action}`, body),
+            message
+          )
+        }
+      />
       <AdminModelReview
-        key={`${row.taskId}:${row.version}`}
+        key={`review:${row.taskId}:${row.version}`}
         row={row}
         pending={pending}
         onReview={decision =>
@@ -593,7 +610,7 @@ export function AdminWorkflowPanel({
       />
       {has("VIEW_FILAMENT") && (
         <AdminFilamentMapping
-          key={`${row.taskId}:${row.version}`}
+          key={`mapping:${row.taskId}:${row.version}`}
           row={row}
           pending={pending}
           onSave={(mappings, complete) =>
@@ -642,6 +659,11 @@ export function AdminWorkflowPanel({
               {(
                 {
                   CONFIRM_PAYMENT: "입금 확인",
+                  START_PRINT_BATCH: "플레이트 출력 시작",
+                  FINISH_PRINT_BATCH: "주문별 출력 결과 기록",
+                  COMPLETE_POST_PROCESSING: "후가공 완료",
+                  PASS_QUALITY_CHECK: "품질 검수 통과",
+                  FAIL_QUALITY_CHECK: "품질 검수 불합격·재작업",
                   START_TASK: "모델링 시작",
                   COMPLETE_MODELING: "검수 인계",
                   APPROVE_MODEL: "모델 검수 승인",

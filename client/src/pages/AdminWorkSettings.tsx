@@ -9,6 +9,7 @@ import {
   type Defaults,
   type StaffAccount,
 } from "@/lib/adminContracts";
+import { AdminCompensation } from "./AdminCompensation";
 import type { AdminRole } from "@/lib/adminApi";
 
 export function AdminWorkSettings() {
@@ -239,6 +240,7 @@ export function AdminWorkSettings() {
           </Button>
         </fieldset>
       )}
+      {canSettings && <AdminCompensation accounts={accounts} />}
     </section>
   );
 }

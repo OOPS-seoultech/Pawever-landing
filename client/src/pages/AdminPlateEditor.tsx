@@ -1,3 +1,4 @@
+import { currentFilamentMappings } from "@/lib/printBatchContracts";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,7 +44,7 @@ export function AdminPlateEditor({
   const included = all.filter(o => selected.includes(o.orderNumber));
   const used = new Map<number, FilamentMapping>();
   for (const order of included)
-    for (const mapping of order.filamentMappings ?? [])
+    for (const mapping of currentFilamentMappings(order))
       if (mapping.completedAt) used.set(mapping.filamentId, mapping);
   const labels = Array.from(used.keys())
     .map(id =>
@@ -130,8 +131,7 @@ export function AdminPlateEditor({
               <span className="min-w-0 break-words">
                 {o.orderNumber} · {o.petName}
                 <span className="mt-1 block text-xs text-muted-foreground">
-                  {o.filamentMappings
-                    ?.filter(m => m.completedAt)
+                  {currentFilamentMappings(o)
                     .map(
                       m =>
                         `${m.partName}: ${m.spoolId} ${m.colorName} ${m.material} ${m.finish}`

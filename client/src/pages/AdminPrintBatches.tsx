@@ -10,6 +10,7 @@ import {
   type WorkflowOrder,
 } from "@/lib/adminContracts";
 import {
+  currentFilamentMappings,
   batchPath,
   batchStatus,
   getBatch,
@@ -19,6 +20,7 @@ import {
   type PrintBatch,
   type PrintStaff,
 } from "@/lib/printBatchContracts";
+import { AdminPrintRun } from "./AdminPrintRun";
 import { AdminPlateEditor } from "./AdminPlateEditor";
 
 export default function AdminPrintBatches() {
@@ -209,7 +211,9 @@ export default function AdminPrintBatches() {
   const visible = rows.filter(
     b =>
       filter === "ALL" ||
-      (filter === "ACTIVE" ? b.status !== "CANCELED" : b.status === filter)
+      (filter === "ACTIVE"
+        ? !["CANCELED", "FINISHED"].includes(b.status)
+        : b.status === filter)
   );
   return (
     <AdminShell title="플레이트·출력 대기" role={role}>
@@ -231,6 +235,8 @@ export default function AdminPrintBatches() {
               <option value="ACTIVE">진행 중</option>
               <option value="DRAFT">임시 구성</option>
               <option value="CONFIRMED">출력 대기</option>
+              <option value="PRINTING">출력 중</option>
+              <option value="FINISHED">출력 종료</option>
               <option value="ALL">취소 포함 전체</option>
             </select>
             <Button
@@ -361,8 +367,8 @@ export default function AdminPrintBatches() {
                           · {o.assignee?.name ?? "미배정"}
                         </p>
                         <p className="break-words text-xs text-muted-foreground">
-                          {o.filamentMappings
-                            ?.map(
+                          {currentFilamentMappings(o)
+                            .map(
                               m => `${m.partName}: ${m.spoolId} ${m.colorName}`
                             )
                             .join(" / ")}
@@ -445,6 +451,21 @@ export default function AdminPrintBatches() {
                       </label>
                     )}
                   </div>
+                  <AdminPrintRun
+                    key={`${selected.id}:${selected.version}`}
+                    batch={selected}
+                    pending={pending}
+                    onCommand={(action, body, message) =>
+                      void run(
+                        () =>
+                          command(
+                            `${batchPath}/${selected.id}/${action}`,
+                            body
+                          ),
+                        message
+                      )
+                    }
+                  />
                   {can("EDIT_BATCH") && (
                     <Button
                       variant="outline"
