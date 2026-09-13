@@ -81,6 +81,8 @@ function workflowRowAction(
     };
   }
   if (order.workflow && order.status === "PAYMENT_PENDING") return null;
+  if (order.workflow && order.workflow.productionStage !== "BLOCKED")
+    return { kind: "open", label: "작업 상세", confirm: false };
   return primaryRowAction(role, order.status, order.deliveryMethod);
 }
 

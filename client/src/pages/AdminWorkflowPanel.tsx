@@ -310,6 +310,12 @@ export function AdminWorkflowPanel({
         <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-900">
           {stageLabels[row.productionStage] ?? row.productionStage}
         </span>
+        {has("VIEW_SHIPMENT") &&
+          row.shipmentStatus === "AWAITING_POST_OFFICE_RESULT" && (
+            <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-900">
+              우체국 결과 대기
+            </span>
+          )}
         <span className="rounded-full bg-muted px-3 py-1">
           담당: {row.assignee?.name ?? "미배정"}
         </span>
@@ -326,6 +332,15 @@ export function AdminWorkflowPanel({
           ))}
         </ul>
       )}
+      {has("PACK_AND_EXPORT_SHIPMENTS") &&
+        ["PACKING", "COMPLETE"].includes(row.productionStage) && (
+          <Button
+            variant="outline"
+            onClick={() => navigate("/admin/shipments")}
+          >
+            포장·준등기 관리 열기
+          </Button>
+        )}
       {error && (
         <p
           role="alert"
