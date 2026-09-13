@@ -30,6 +30,18 @@ export type WorkflowOrder = {
   modelingTaskId?: number | null;
   reviews?: ModelReview[];
   filamentMappings?: FilamentMapping[];
+  finishingHistory?: {
+    id: number;
+    stage: string;
+    attempt: number;
+    decision: string;
+    checks: string[];
+    note: string;
+    reasonCode: string;
+    reworkStage: string;
+    actorName: string;
+    createdAt: string;
+  }[];
   printBatch?: { id: number; status: string } | null;
   assignee: { id: number; name: string } | null;
   blockingIssues: string[];
@@ -114,6 +126,10 @@ export const stageLabels: Record<string, string> = {
   COLOR_MAPPING: "색상 작업 대기",
   PLATE_PREPARATION: "플레이트 준비",
   PRINT_QUEUE: "출력 대기",
+  PRINTING: "출력 중",
+  POST_PROCESSING: "후가공 대기",
+  QC: "품질 검수 대기",
+  PACKING: "포장 대기",
   COMPLETE: "제작 완료",
 };
 export const paymentLabels: Record<string, string> = {
@@ -126,7 +142,11 @@ export const paymentLabels: Record<string, string> = {
   REFUNDED: "환불 완료",
 };
 export const issueLabels: Record<string, string> = {
-  QC_FAILED: "모델 수정 요청이 있습니다. 검수 메모를 확인하고 수정해 주세요.",
+  QC_FAILED: "검수 보정 요청이 있습니다. 검수 기록과 새 작업을 확인해 주세요.",
+  PRINT_FAILED:
+    "출력 실패 기록이 있습니다. 실패 주문을 새 플레이트로 구성해 주세요.",
+  PRINT_ANOMALY:
+    "출력 중 이상 기록이 있습니다. 중간 확인 내용을 검토해 주세요.",
   UNASSIGNED: "활성 담당자를 배정해 주세요.",
   PHOTO_INSUFFICIENT: "고객 사진이 3장 이상 필요합니다.",
   PAYMENT_MISMATCH: "입금액이 주문 금액과 다릅니다.",

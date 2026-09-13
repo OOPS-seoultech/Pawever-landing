@@ -4,7 +4,24 @@ import type { WorkflowOrder } from "./adminContracts";
 export type PrintBatch = {
   id: number;
   version: number;
-  status: "DRAFT" | "CONFIRMED" | "CANCELED";
+  status: "DRAFT" | "CONFIRMED" | "PRINTING" | "FINISHED" | "CANCELED";
+  startedAt?: string | null;
+  finishedAt?: string | null;
+  results?: {
+    id: number;
+    orderNumber: string;
+    attempt: number;
+    result: string;
+    note: string;
+  }[];
+  observations?: {
+    id: number;
+    note: string;
+    purgeGrams: number | null;
+    issues: { orderNumber: string; note: string }[];
+    actorName: string;
+    createdAt: string;
+  }[];
   layoutRevision: number;
   printerName: string;
   printingAssigneeId: number | null;
@@ -48,5 +65,13 @@ export const getPrintStaff = () =>
 export const batchStatus = {
   DRAFT: "임시 구성",
   CONFIRMED: "출력 대기",
+  PRINTING: "출력 중",
+  FINISHED: "출력 종료",
   CANCELED: "취소됨",
 };
+
+export function currentFilamentMappings(order: WorkflowOrder) {
+  const completed = (order.filamentMappings ?? []).filter(m => m.completedAt);
+  const latest = Math.max(0, ...completed.map(m => m.taskId));
+  return completed.filter(m => m.taskId === latest);
+}
