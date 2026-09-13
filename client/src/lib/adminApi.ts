@@ -402,6 +402,27 @@ export const downloadAdminPhotoArchive = async (orderNumber: string) => {
   };
 };
 
+export const downloadShipmentExport = async (id: number) => {
+  const token = readAdminToken();
+  const response = await fetch(
+    resolveApiUrl(`/api/admin/shipments/export-batches/${id}/file`),
+    {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      cache: "no-store",
+    }
+  );
+  if (!response.ok) {
+    if (response.status === 401) clearAdminToken();
+    const error = await response.json().catch(() => null);
+    throw new AdminApiError(
+      error?.message ?? "파일을 받지 못했습니다. 배치에서 다시 받아 주세요.",
+      error?.code ?? "EXPORT_DOWNLOAD_FAILED",
+      response.status
+    );
+  }
+  return { blob: await response.blob(), fileName: `post-office-${id}.xlsx` };
+};
+
 export const changeAdminOrderStatus = (
   orderNumber: string,
   status: GoodsOrderStatus,

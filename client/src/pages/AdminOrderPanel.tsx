@@ -412,7 +412,8 @@ export function AdminOrderPanel({
           )}
         </Section>
 
-        {canCompletePickup(
+        {(!order.workflow || order.workflow.productionStage === "BLOCKED") &&
+        canCompletePickup(
           role ?? "PRODUCTION",
           order.status,
           order.shipping?.deliveryMethod
@@ -437,7 +438,8 @@ export function AdminOrderPanel({
           </Section>
         ) : null}
 
-        {canRegisterTracking(
+        {(!order.workflow || order.workflow.productionStage === "BLOCKED") &&
+        canRegisterTracking(
           role ?? "PRODUCTION",
           order.status,
           order.shipping?.deliveryMethod
