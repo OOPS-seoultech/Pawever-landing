@@ -113,7 +113,8 @@ export function AdminShell({ title, role, children, backTo }: Props) {
         {staff?.permissions.includes("MANAGE_PRINT_BATCH") && (
           <Link href="/admin/print-batches">플레이트·출력 대기</Link>
         )}
-        {staff?.permissions.includes("PACK_AND_EXPORT_SHIPMENTS") && (
+        {(staff?.permissions.includes("PACK_AND_EXPORT_SHIPMENTS") ||
+          staff?.permissions.includes("COMPLETE_PICKUP")) && (
           <Link href="/admin/shipments">포장·준등기</Link>
         )}
         {staff?.permissions.includes("VIEW_ALL_ORDERS") && (
