@@ -73,7 +73,8 @@ export default function AdminAcceptInvite() {
       <Frame>
         <h1 className="text-lg font-semibold">비밀번호를 정했습니다</h1>
         <p className="text-sm text-muted-foreground">
-          이제 로그인할 수 있습니다.
+          전체 관리자가 권한을 승인하면 로그인할 수 있습니다. 승인 전에는
+          로그인해도 들어갈 수 없습니다.
         </p>
         <Button className="w-full" onClick={() => setLocation("/admin")}>
           로그인하러 가기

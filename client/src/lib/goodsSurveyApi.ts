@@ -4,19 +4,33 @@ export const GOODS_SURVEY_VERSION = "2026-07-25-v2";
 export const GOODS_SURVEY_CAPACITY = 100;
 
 /**
- * 제작에 필요한 사진 장수.
+ * 아이 한 마리에 받는 사진 장수.
  *
- * 얼굴·전신·털무늬 세 종이 최소 구성이다. 아무 사진 세 장이 아니라 칸마다
- * 무엇을 찍어야 하는지가 정해져 있고, 그래서 랜딩의 등록 칸도 세 개다.
+ * 세 장을 갖추지 못해 아예 신청하지 못하는 쪽보다, 적더라도 받아 만들어 보는
+ * 쪽이 낫다는 판단으로 최소를 한 장으로 낮췄다. 대신 적게 낸 사람에게는
+ * 결과가 달라질 수 있다고 알리고 확인을 받는다.
  *
- * 랜딩과 주문 화면이 서로 다른 수를 들고 있었다 — 랜딩은 세 칸을 다 채워야
- * 열리는데 주문 화면은 한 장이면 열렸다. 두 화면이 같은 값을 보게 여기 둔다.
- *
- * 근거: [카톡 나혜님] "사진 3개 이상 등록해야 제출 버튼 활성화되도록
- *       변경해주세요. 즉, 사진 3개 이상만 제출 가능하도록 (3-5개)"
+ * 랜딩과 주문 화면이 서로 다른 수를 들고 있었던 적이 있다. 두 화면이 같은
+ * 값을 보게 여기 둔다. 서버도 같은 수로 다시 본다.
  */
-export const GOODS_PHOTO_MIN_COUNT = 3;
+export const GOODS_PHOTO_MIN_COUNT = 1;
 export const GOODS_PHOTO_MAX_COUNT = 5;
+
+/**
+ * 이 장수 이하면 부족하다고 알리고 확인을 받는다.
+ *
+ * 확인했다는 사실은 서버에도 보낸다. 화면에서만 확인하고 넘어가면 요청을
+ * 고쳐 지나갈 수 있다.
+ */
+export const GOODS_PHOTO_WARNING_MAX_COUNT = 2;
+
+/**
+ * 한 신청에 담을 수 있는 아이 수.
+ *
+ * 한 주문에 두 마리를 넣고 한 마리 값만 받은 일이 있었다. 아이마다 줄을
+ * 나눠 받아야 마리 수대로 값을 매길 수 있다.
+ */
+export const GOODS_PET_MAX_COUNT = 5;
 
 // 굿즈를 고르지 않고 설문에 들어온 경우. 아무것도 고르지 않아도 특정 굿즈가
 // 자동으로 붙으면 실제 선호가 아닌 값이 선호도 집계에 섞인다.
@@ -104,10 +118,24 @@ export type StoryPayload = {
 /** 만든 물건을 건네는 방법. 서버의 GoodsDeliveryMethod 와 같은 값이다. */
 export type GoodsDeliveryMethod = "shipping" | "pickup";
 
+/**
+ * 신청서에 담은 아이 한 마리.
+ *
+ * 이름·사진·키링을 아이마다 따로 받는다.
+ */
+export type ApplicationPet = {
+  petName: string;
+  photoIds: string[];
+  publicPhotoIds: string[];
+  /** 키링은 아이마다 고른다. 한 마리만 붙이는 주문이 있다. */
+  keyringAdded: boolean;
+  /** 1·2장으로 낼 때 보여 준 안내를 확인했는지. */
+  lowPhotoAcknowledged: boolean;
+};
+
 export type ApplicationPayload = {
   goodsType: string;
   customGoods: string;
-  petName: string;
   guardianName: string;
   phone: string;
   /**
@@ -120,12 +148,10 @@ export type ApplicationPayload = {
   postalCode: string;
   address: string;
   addressDetail: string;
-  photoIds: string[];
-  publicPhotoIds: string[];
+  /** 한 신청에 담은 아이들. 금액과 정원은 이 수만큼 매겨진다. */
+  pets: ApplicationPet[];
   conversionEventId: string;
   tracking: SurveyTrackingPayload;
-  /** 키링 부자재를 붙일지. 금액은 서버가 다시 계산한다. */
-  keyringAdded: boolean;
   privacyAgreed: boolean;
   shippingConfirmed: boolean;
   /** 광고성 정보 수신 동의. 선택 항목이라 false 로 와도 신청은 성립한다. */

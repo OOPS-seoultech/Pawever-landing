@@ -4,14 +4,29 @@ import { useEffect, useState } from "react";
 /**
  * 09 FINAL 의 사진 등록 카드(Figma Article 5425:1411).
  *
- * 칸마다 무엇을 찍어야 하는지가 정해져 있다. 아무 사진 세 장이 아니라
- * 얼굴·전신·털무늬 세 종이고, 그게 제작에 필요한 최소 구성이다.
+ * 칸마다 무엇을 찍으면 좋은지 적어 둔다. 예전에는 세 칸을 모두 채워야
+ * 넘어갈 수 있었다. 세 장을 갖추지 못해 아예 신청하지 못하는 쪽보다
+ * 적더라도 받아 만들어 보는 쪽이 낫다고 보아 필수를 풀었고, 무엇을 찍어야
+ * 하는지 알려 주는 효과는 안내로 남긴다.
  */
 export const INTAKE_SLOTS = [
   { key: "face", label: "정면 또는 옆모습" },
   { key: "body", label: "몸 전체가 보이게" },
   { key: "coat", label: "특징이 잘 보이게" },
+  { key: "extra1", label: "사진 더 추가" },
+  { key: "extra2", label: "사진 더 추가" },
 ] as const;
+
+/**
+ * 처음 보여 주는 칸 수.
+ *
+ * 다섯 칸을 한꺼번에 펼치면 다 채워야 하는 것처럼 보인다. 세 칸만 보여
+ * 주고 더 넣고 싶은 사람에게만 칸을 연다.
+ */
+const INITIAL_SLOTS = 3;
+
+/** 한 마리에 받는 최소 장수. 주문 화면·서버와 같은 수여야 한다. */
+const MIN_PHOTOS = 1;
 
 // 주문 화면(GoodsSurveyForm)이 받는 조건과 같아야 한다. 여기서 통과한
 // 사진이 그쪽에서 거부되면 사람은 같은 파일을 두 번 거절당한다.
@@ -41,9 +56,12 @@ export function PhotoIntakeCard({
     INTAKE_SLOTS.map(() => null)
   );
   const [error, setError] = useState("");
+  const [openSlots, setOpenSlots] = useState(INITIAL_SLOTS);
 
   const chosen = picked.filter(Boolean).length;
-  const ready = chosen === INTAKE_SLOTS.length;
+  // 한 장만 있어도 넘어갈 수 있다. 사진이 적으면 주문 화면에서 결과가
+  // 달라질 수 있다고 알리고 확인을 받는다.
+  const ready = chosen >= MIN_PHOTOS;
 
   useEffect(() => {
     const urls = picked.map(file => (file ? URL.createObjectURL(file) : null));
@@ -77,7 +95,7 @@ export function PhotoIntakeCard({
           </strong>
         </div>
         <em className="gs-intake-count">
-          {chosen}/{INTAKE_SLOTS.length}
+          {chosen}/{openSlots}
         </em>
       </div>
 
@@ -86,7 +104,7 @@ export function PhotoIntakeCard({
       </p>
 
       <div className="gs-intake-slots">
-        {INTAKE_SLOTS.map(({ key, label }, index) => (
+        {INTAKE_SLOTS.slice(0, openSlots).map(({ key, label }, index) => (
           <label
             className={`gs-intake-slot${previews[index] ? " is-filled" : ""}`}
             key={key}
@@ -113,6 +131,16 @@ export function PhotoIntakeCard({
         ))}
       </div>
 
+      {openSlots < INTAKE_SLOTS.length && (
+        <button
+          type="button"
+          className="gs-intake-more"
+          onClick={() => setOpenSlots(count => count + 1)}
+        >
+          + 사진 칸 추가 (최대 {INTAKE_SLOTS.length}장)
+        </button>
+      )}
+
       {error && (
         <p className="gs-intake-error" role="alert">
           {error}
@@ -128,10 +156,13 @@ export function PhotoIntakeCard({
           onSubmit(picked.filter((file): file is File => file !== null))
         }
       >
-        사진 {INTAKE_SLOTS.length}장 등록하기
+        {chosen > 0 ? `사진 ${chosen}장 등록하기` : "사진을 골라주세요"}
       </button>
 
-      <small>사진은 주문 단계에서 최종 제출됩니다.</small>
+      <small>
+        사진은 주문 단계에서 최종 제출됩니다. 사진이 많을수록 실제 모습에
+        가깝게 만들 수 있어요.
+      </small>
     </div>
   );
 }

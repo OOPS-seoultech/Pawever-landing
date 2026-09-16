@@ -1403,3 +1403,20 @@
   text-decoration: underline;
   cursor: pointer;
 }
+
+/* 사진 칸을 더 여는 버튼. 처음에는 세 칸만 보여 주고, 더 넣고 싶은
+   사람에게만 칸을 연다. 다섯 칸을 한꺼번에 펼치면 다 채워야 하는 것처럼
+   보인다. */
+.gs-intake-more {
+  display: block;
+  width: 100%;
+  margin: 10px 0 0;
+  padding: 10px;
+  border: 1px dashed rgba(43, 35, 32, 0.25);
+  border-radius: 10px;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(43, 35, 32, 0.66);
+  cursor: pointer;
+}

@@ -8,6 +8,7 @@ import {
   disableAdminAccount,
   inviteAdminAccount,
   listAdminAccounts,
+  approveAdminAccount,
   reinviteAdminAccount,
   type AdminAccount,
   type AdminRole,
@@ -25,6 +26,7 @@ const ROLE_LABELS: Record<AdminRole, string> = {
 
 const STATUS_LABELS: Record<AdminAccount["status"], string> = {
   INVITED: "초대함",
+  PENDING_APPROVAL: "승인 대기",
   ACTIVE: "사용 중",
   DISABLED: "사용 정지",
 };
@@ -189,26 +191,52 @@ export default function AdminAccounts() {
                 </td>
                 <td className="px-3 py-2 text-right">
                   <div className="flex justify-end gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled={pending}
-                      onClick={async () => {
-                        setPending(true);
-                        try {
-                          const { inviteToken } = await reinviteAdminAccount(
-                            account.id
-                          );
-                          setInviteLink(linkFor(inviteToken));
-                        } catch (caught) {
-                          handle(caught);
-                        } finally {
-                          setPending(false);
-                        }
-                      }}
-                    >
-                      재초대
-                    </Button>
+                    {/* 가입만으로 권한이 생기지 않는다. 대표가 여기서
+                        권한을 줘야 쓸 수 있다. */}
+                    {account.status === "PENDING_APPROVAL" ? (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        disabled={pending}
+                        onClick={async () => {
+                          setPending(true);
+                          try {
+                            await approveAdminAccount(account.id);
+                            await load();
+                          } catch (caught) {
+                            handle(caught);
+                          } finally {
+                            setPending(false);
+                          }
+                        }}
+                      >
+                        권한 승인
+                      </Button>
+                    ) : null}
+                    {/* 비밀번호를 이미 정한 계정에 다시 보내면 그
+                        비밀번호가 지워진다. 서버도 막지만 누를 수
+                        있게 두면 누른다. */}
+                    {account.status === "INVITED" ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={pending}
+                        onClick={async () => {
+                          setPending(true);
+                          try {
+                            const { inviteToken } =
+                              await reinviteAdminAccount(account.id);
+                            setInviteLink(linkFor(inviteToken));
+                          } catch (caught) {
+                            handle(caught);
+                          } finally {
+                            setPending(false);
+                          }
+                        }}
+                      >
+                        재초대
+                      </Button>
+                    ) : null}
                     {account.status !== "DISABLED" ? (
                       <Button
                         variant="ghost"

@@ -192,7 +192,8 @@ const faqs = [
   },
   {
     question: "사진은 어떤 걸 보내야 하나요?",
-    answer: "얼굴, 전신, 털색과 무늬가 잘 보이는 사진 3장을 준비해 주세요.",
+    answer:
+      "얼굴, 전신, 털색과 무늬가 잘 보이는 사진이면 좋아요. 1장부터 낼 수 있고, 많을수록 실제 모습에 가깝게 만들어요.",
   },
   {
     question: "실제 반려견과 얼마나 비슷하게 나오나요?",
@@ -217,7 +218,7 @@ const faqs = [
 const processSteps = [
   {
     number: "01",
-    title: "사진 3장",
+    title: "사진 1~5장",
     caption: "얼굴·전신·무늬가 잘 보이는 사진",
     figures: [FIGURES.stepFace, FIGURES.stepBody, FIGURES.stepCoat],
   },
@@ -473,7 +474,7 @@ export default function GoodsSurvey() {
             <span>PAWEVER 커스텀 3D 전신 피규어</span>
             <strong>{won(PRICE.presale)}</strong>
             <small>
-              배송비 {won(PRICE.shipping)} 별도 · 사진 3장 제출 · 수작업 검수
+              배송비 {won(PRICE.shipping)} 별도 · 사진 1~5장 제출 · 수작업 검수
             </small>
           </div>
 

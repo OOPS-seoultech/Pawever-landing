@@ -14,6 +14,11 @@ const formSource = readFileSync(
   "utf8"
 );
 
+const petEditorSource = readFileSync(
+  new URL("./goodsSurveyPetEditor.tsx", import.meta.url),
+  "utf8"
+);
+
 const contentSource = readFileSync(
   new URL("./goodsSurveyContent.ts", import.meta.url),
   "utf8"
@@ -132,13 +137,14 @@ describe("굿즈 제작 정보 화면", () => {
   });
 
   it("첨부한 사진을 미리 보여주고 장별로 취소할 수 있다", () => {
-    expect(formSource).toContain("createObjectURL");
-    expect(formSource).toContain("revokeObjectURL");
-    expect(formSource).toContain("gsf-photo-preview");
-    expect(formSource).toContain("gsf-photo-remove");
-    expect(formSource).toContain("첨부 취소");
-    // 같은 파일을 다시 고를 수 있어야 하므로 input 값을 비운다.
-    expect(formSource).toContain("photoInputRef");
+    // 사진은 아이마다 받으므로 아이 줄 컴포넌트가 그린다.
+    expect(petEditorSource).toContain("createObjectURL");
+    expect(petEditorSource).toContain("revokeObjectURL");
+    expect(petEditorSource).toContain("gsf-photo-preview");
+    expect(petEditorSource).toContain("gsf-photo-remove");
+    expect(petEditorSource).toContain("첨부 취소");
+    // 같은 파일을 다시 고를 수 있어야 하므로 고른 뒤 input 값을 비운다.
+    expect(petEditorSource).toContain('event.target.value = ""');
   });
 
   it("아코디언 스케일은 밀려났을 때만 스크롤을 보정한다", () => {
@@ -254,7 +260,7 @@ describe("굿즈 제작 정보 화면", () => {
     // 예전에는 storyConsent.publish 하나로 사진까지 공개 처리해서,
     // 묻지도 않은 반려견 사진이 공개 대상이 됐다.
     expect(formSource).toContain(
-      "const publicPhotoIds = photoPublishConsent ? photoIds : [];"
+      "publicPhotoIds: photoPublishConsent ? photoIds : [],"
     );
     expect(formSource).not.toMatch(
       /publicPhotoIds\s*=\s*storyConsent\.publish/

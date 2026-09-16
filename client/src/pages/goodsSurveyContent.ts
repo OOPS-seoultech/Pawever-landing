@@ -67,11 +67,35 @@ export const payableKrw = (input: {
   directPurchase: boolean;
   channel: "online" | "flea";
   deliveryMethod: "shipping" | "pickup";
-  keyringAdded: boolean;
-}) =>
-  applicablePriceKrw(input.directPurchase, input.channel) +
-  (input.keyringAdded ? GOODS_PRICE.keyring : 0) +
-  shippingFeeKrw(input.deliveryMethod);
+  /**
+   * 신청한 아이 수. 적지 않으면 한 마리로 본다.
+   *
+   * 제작비는 아이마다 붙는다. 한 주문에 두 마리를 신청받고 한 마리 값만
+   * 받은 일이 있었다.
+   */
+  petCount?: number;
+  /**
+   * 키링을 고른 아이 수.
+   *
+   * 키링은 아이마다 따로 고르므로 마리 수와 다를 수 있다. 예전처럼 참·거짓을
+   * 보내면 한 마리분으로 센다.
+   */
+  keyringAdded: boolean | number;
+}) => {
+  const petCount = Math.max(1, input.petCount ?? 1);
+  const keyringCount =
+    typeof input.keyringAdded === "number"
+      ? input.keyringAdded
+      : input.keyringAdded
+        ? 1
+        : 0;
+  return (
+    applicablePriceKrw(input.directPurchase, input.channel) * petCount +
+    GOODS_PRICE.keyring * keyringCount +
+    // 한 상자에 담아 한 번 부친다. 몇 마리든 배송비는 한 번이다.
+    shippingFeeKrw(input.deliveryMethod)
+  );
+};
 
 /**
  * 이 주문에 붙는 배송비.

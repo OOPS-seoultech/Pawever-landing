@@ -1671,3 +1671,136 @@
     animation: none;
   }
 }
+
+/* 아이 한 마리 칸.
+   여러 마리를 신청하면 줄이 쌓이므로, 어디부터 어디까지가 한 아이인지
+   테두리로 구분한다. 한 마리뿐일 때도 같은 모양이라야 화면이 갑자기
+   달라지지 않는다. */
+.gsf-pet {
+  margin: 0 0 16px;
+  padding: 16px;
+  border: 1px solid var(--gsf-line);
+  border-radius: 14px;
+  background: var(--gsf-card);
+}
+
+.gsf-pet-head {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.gsf-pet-head strong {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gsf-ink);
+}
+
+.gsf-pet-remove {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  padding: 6px 10px;
+  border: 1px solid var(--gsf-line);
+  border-radius: 999px;
+  background: #fff;
+  font-size: 13px;
+  color: var(--gsf-ink-soft);
+  cursor: pointer;
+}
+
+.gsf-pet-remove svg {
+  width: 14px;
+  height: 14px;
+}
+
+.gsf-pet-add {
+  display: block;
+  width: 100%;
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border: 1px dashed var(--gsf-line);
+  border-radius: 12px;
+  background: var(--gsf-cream);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gsf-ink-soft);
+  cursor: pointer;
+}
+
+/* 사진이 적을 때의 알림. 막는 것이 아니라 알리는 것이라 오류색을 쓰지 않는다. */
+.gsf-photo-low {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--gsf-accent-dark);
+}
+
+/* 사진이 적을 때 한 번 더 묻는 자리. */
+.gsf-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(43, 35, 32, 0.45);
+}
+
+.gsf-modal {
+  width: 100%;
+  max-width: 360px;
+  padding: 22px 20px 18px;
+  border-radius: 16px;
+  background: var(--gsf-card);
+  box-shadow: 0 18px 40px rgba(43, 35, 32, 0.22);
+}
+
+.gsf-modal strong {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--gsf-ink);
+}
+
+.gsf-modal small {
+  display: block;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--gsf-ink-soft);
+}
+
+.gsf-modal-detail {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--gsf-ink-soft);
+}
+
+.gsf-modal-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.gsf-modal-actions button {
+  flex: 1;
+  padding: 13px 10px;
+  border: 1px solid var(--gsf-line);
+  border-radius: 12px;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gsf-ink);
+  cursor: pointer;
+}
+
+.gsf-modal-actions button.is-primary {
+  border-color: var(--gsf-accent);
+  background: var(--gsf-accent);
+  color: #fff;
+}

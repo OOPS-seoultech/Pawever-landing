@@ -174,7 +174,31 @@ export function AdminOrderPanel({
           />
           <Row label="신청일" value={formatDateTime(order.submittedAt)} />
           <Row label="굿즈" value={order.goodsTypeLabel || order.goodsType} />
-          <Row label="반려동물" value={order.petName} />
+          {/* 한 주문에 여러 마리가 올 수 있다. 첫 아이만 보고 한 마리로
+              여기면 만들다 빠뜨린다. */}
+          <Row
+            label={
+              (order.pets?.length ?? 0) > 1
+                ? `반려동물 ${order.pets?.length}마리`
+                : "반려동물"
+            }
+            value={
+              order.pets && order.pets.length > 0
+                ? order.pets
+                    .map(pet =>
+                      [
+                        pet.petName,
+                        `사진 ${pet.photoCount}장`,
+                        pet.keyringAdded ? "키링" : null,
+                        pet.lowPhotoAcknowledged ? "사진 부족 확인" : null,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")
+                    )
+                    .join("\n")
+                : order.petName
+            }
+          />
           {order.pricing ? (
             <>
               <Row label="정가" value={formatKrw(order.pricing.listPriceKrw)} />
