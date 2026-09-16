@@ -1,4 +1,5 @@
 import { Link } from "wouter";
+import SellerNotice from "@/components/SellerNotice";
 
 /**
  * 모든 페이지가 공유하는 하단 영역.
@@ -33,6 +34,13 @@ export default function SiteFooter() {
           </ul>
         </nav>
       </div>
+      {/*
+       * 판매자 정보와 취소·반품 안내. 지금 있던 줄 아래에 덧붙인다 — 값이 다
+       * 차기 전에는 아무것도 그리지 않으므로 오늘 화면은 그대로다.
+       *
+       *   [카톡 8/24 12:03 단톡, 대표] "1. 홈 화면에 사업자 정보 노출"
+       */}
+      <SellerNotice />
     </footer>
   );
 }

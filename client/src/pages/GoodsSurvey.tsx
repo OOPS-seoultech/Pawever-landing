@@ -1,6 +1,7 @@
 import { ArrowRight, Hourglass, ShieldCheck, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
+import SellerNotice from "@/components/SellerNotice";
 import { setSurveyPhaseContext, trackEvent } from "@/lib/analytics/analytics";
 import { usePageEngagement, useScrollDepth } from "@/lib/analytics/react";
 import {
@@ -957,6 +958,8 @@ export default function GoodsSurvey() {
             <br />
             <Link href="/contact">문의하기</Link>
           </p>
+          {/* 값이 다 차기 전에는 그리지 않는다. lib/sellerNotice 참고. */}
+          <SellerNotice />
         </footer>
 
         {/* 화면 하단 고정 버튼도 판매를 앞세운다. 굿즈가 닫혀 있을 때만
