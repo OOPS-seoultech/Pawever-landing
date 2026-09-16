@@ -151,6 +151,7 @@ test("동명이인은 사람이 고르고, 고른 것만 반영한다", async ({
       json: {
         success: true,
         data: {
+          notificationBatchId: 501,
           results: { "11": "APPLIED", "12": "APPLIED" },
           rows: [
             { ...autoRow, status: "COMMITTED", selectable: false },
@@ -165,6 +166,38 @@ test("동명이인은 사람이 고르고, 고른 것만 반영한다", async ({
       },
     });
   });
+  await page.route("**/api/admin/notification-batches/501", route =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: {
+          id: 501,
+          configured: false,
+          pending: 2,
+          succeeded: 0,
+          failed: 0,
+          events: [
+            {
+              id: 601,
+              orderNumber: "PE-1",
+              trackingNumber: "1234567890123",
+              status: "PENDING_CONFIGURATION",
+              sendAttempts: 0,
+              resultChecks: 0,
+            },
+            {
+              id: 602,
+              orderNumber: "PE-2",
+              trackingNumber: "9876543210987",
+              status: "PENDING_CONFIGURATION",
+              sendAttempts: 0,
+              resultChecks: 0,
+            },
+          ],
+        },
+      },
+    })
+  );
 
   await page.goto("/admin/shipments");
   await page.getByRole("combobox").selectOption("7");
@@ -179,7 +212,9 @@ test("동명이인은 사람이 고르고, 고른 것만 반영한다", async ({
   await expect(page.getByLabel("1번째 줄 선택")).toBeChecked();
   await expect(page.getByLabel("3번째 줄 선택")).not.toBeChecked();
   await expect(page.getByLabel("3번째 줄 선택")).toBeDisabled();
-  await expect(page.getByText("같은 이름이 여러 주문과 맞습니다.")).toBeVisible();
+  await expect(
+    page.getByText("같은 이름이 여러 주문과 맞습니다.")
+  ).toBeVisible();
 
   await page.getByRole("button", { name: "고르기" }).click();
   await expect(page.getByRole("alertdialog")).toContainText("어느 주문인지");
@@ -192,6 +227,10 @@ test("동명이인은 사람이 고르고, 고른 것만 반영한다", async ({
 
   expect(committed).toMatchObject({ selectedRowIds: [11, 12] });
   await expect(page.getByText("반영했습니다").first()).toBeVisible();
+  await expect(page.getByText("알림 설정 대기 2건")).toBeVisible();
+  await expect(
+    page.getByText("알림톡은 아직 발송되지 않았습니다.")
+  ).toBeVisible();
 });
 
 test("붙여넣기만으로는 아무것도 바뀌지 않는다", async ({ page }) => {
@@ -226,4 +265,76 @@ test("붙여넣기만으로는 아무것도 바뀌지 않는다", async ({ page 
   await expect(page.getByLabel("1번째 줄 선택")).toBeChecked();
   // 읽어보기만으로 송장이 붙으면, 확인하려던 사람이 실수로 발송을 만든다.
   expect(commitCalls).toBe(0);
+});
+
+test("실패한 알림만 사유를 받아 재시도한다", async ({ page }) => {
+  await session(page);
+  await page.route("**/api/admin/postal-imports/preview", route =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: { batchId: 99, outboundBatchId: 7, rows: [autoRow], candidates },
+      },
+    })
+  );
+  await page.route("**/api/admin/postal-imports/99/commit", route =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: {
+          notificationBatchId: 502,
+          results: { "11": "APPLIED" },
+          rows: [{ ...autoRow, status: "COMMITTED", selectable: false }],
+        },
+      },
+    })
+  );
+
+  let retried: Record<string, unknown> | null = null;
+  await page.route("**/api/admin/notification-events/603/retry", route => {
+    retried = route.request().postDataJSON();
+    route.fulfill({
+      json: { success: true, data: { id: 603, status: "PENDING" } },
+    });
+  });
+  await page.route("**/api/admin/notification-batches/502", route =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: {
+          id: 502,
+          configured: true,
+          pending: retried ? 1 : 0,
+          succeeded: 0,
+          failed: retried ? 0 : 1,
+          events: [
+            {
+              id: 603,
+              orderNumber: "PE-1",
+              trackingNumber: "1234567890123",
+              status: retried ? "PENDING" : "FAILED",
+              sendAttempts: 1,
+              resultChecks: 1,
+              lastResultMessage: retried ? null : "수신 실패",
+            },
+          ],
+        },
+      },
+    })
+  );
+
+  await page.goto("/admin/shipments");
+  await page.getByRole("combobox").selectOption("7");
+  await page.getByLabel("우체국 접수 내역").fill("접수 내역");
+  await page.getByRole("button", { name: "읽어보기" }).click();
+  await page.getByRole("button", { name: /선택 건 송장 반영/ }).click();
+  await expect(page.getByText(/수신 실패 · 수신 실패/)).toBeVisible();
+
+  page.once("dialog", dialog => dialog.accept("고객 문의 확인 후 재시도"));
+  await page.getByRole("button", { name: "실패 건 재시도" }).click();
+
+  await expect
+    .poll(() => retried)
+    .toEqual({ reason: "고객 문의 확인 후 재시도" });
+  await expect(page.getByText(/발송 대기/)).toBeVisible();
 });
