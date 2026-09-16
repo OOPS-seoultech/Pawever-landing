@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { AdminApiError, adminRequest } from "@/lib/adminApi";
 
@@ -43,6 +43,26 @@ type ImportView = {
   candidates: Candidate[];
 };
 
+type NotificationEvent = {
+  id: number;
+  orderNumber: string;
+  trackingNumber: string;
+  status: string;
+  sendAttempts: number;
+  resultChecks: number;
+  lastResultCode?: string | null;
+  lastResultMessage?: string | null;
+};
+
+type NotificationBatch = {
+  id: number;
+  configured: boolean;
+  pending: number;
+  succeeded: number;
+  failed: number;
+  events: NotificationEvent[];
+};
+
 const STATUS_LABELS: Record<string, string> = {
   AUTO_MATCH: "자동 연결",
   NEEDS_REVIEW: "확인 필요",
@@ -63,6 +83,15 @@ const RESULT_LABELS: Record<string, string> = {
   NOT_SELECTABLE: "고를 수 없는 줄입니다",
 };
 
+const NOTIFICATION_LABELS: Record<string, string> = {
+  PENDING_CONFIGURATION: "알림 설정 대기",
+  PENDING: "발송 대기",
+  ACCEPTED: "제공자 접수 · 수신 확인 중",
+  UNKNOWN: "수신 결과 확인 중",
+  SUCCEEDED: "수신 성공",
+  FAILED: "수신 실패",
+};
+
 const base = "/api/admin/postal-imports";
 
 export default function AdminPostalImport({
@@ -78,6 +107,9 @@ export default function AdminPostalImport({
   const [selected, setSelected] = useState<number[]>([]);
   const [reviewing, setReviewing] = useState<ImportRow | null>(null);
   const [results, setResults] = useState<Record<string, string> | null>(null);
+  const [notification, setNotification] = useState<NotificationBatch | null>(
+    null
+  );
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
 
@@ -95,6 +127,22 @@ export default function AdminPostalImport({
     // 사람이 보지 않은 것을 누르게 된다.
     setSelected(next.rows.filter(r => r.selectable).map(r => r.id));
   };
+
+  const refreshNotification = async (id: number) => {
+    setNotification(
+      await adminRequest<NotificationBatch>(
+        `/api/admin/notification-batches/${id}`
+      )
+    );
+  };
+
+  useEffect(() => {
+    if (!notification || notification.pending === 0) return;
+    const timer = window.setInterval(() => {
+      void refreshNotification(notification.id).catch(handle);
+    }, 10_000);
+    return () => window.clearInterval(timer);
+  }, [notification?.id, notification?.pending]);
 
   const preview = async () => {
     setPending(true);
@@ -146,6 +194,7 @@ export default function AdminPostalImport({
     setError("");
     try {
       const done = await adminRequest<{
+        notificationBatchId?: number;
         results: Record<string, string>;
         rows: ImportRow[];
       }>(`${base}/${view.batchId}/commit`, {
@@ -155,7 +204,28 @@ export default function AdminPostalImport({
       setResults(done.results);
       setView({ ...view, rows: done.rows });
       setSelected([]);
+      if (done.notificationBatchId) {
+        await refreshNotification(done.notificationBatchId);
+      }
       onApplied();
+    } catch (caught) {
+      handle(caught);
+    } finally {
+      setPending(false);
+    }
+  };
+
+  const retryNotification = async (event: NotificationEvent) => {
+    const reason = window.prompt("알림 재시도 사유를 입력해 주세요.");
+    if (!reason?.trim() || !notification) return;
+    setPending(true);
+    setError("");
+    try {
+      await adminRequest(`/api/admin/notification-events/${event.id}/retry`, {
+        method: "POST",
+        body: JSON.stringify({ reason: reason.trim() }),
+      });
+      await refreshNotification(notification.id);
     } catch (caught) {
       handle(caught);
     } finally {
@@ -180,12 +250,17 @@ export default function AdminPostalImport({
         className="h-40 w-full rounded border p-2 font-mono text-xs"
         value={text}
         onChange={event => setText(event.target.value)}
-        placeholder={"1234567890123\t1,800\t01811\t홍길동 보리\n통상 반송불요 20g"}
+        placeholder={
+          "1234567890123\t1,800\t01811\t홍길동 보리\n통상 반송불요 20g"
+        }
         aria-label="우체국 접수 내역"
       />
 
       <div className="flex gap-2">
-        <Button disabled={pending || !text.trim()} onClick={() => void preview()}>
+        <Button
+          disabled={pending || !text.trim()}
+          onClick={() => void preview()}
+        >
           {pending ? "읽는 중..." : "읽어보기"}
         </Button>
         {view && (
@@ -196,6 +271,7 @@ export default function AdminPostalImport({
               setView(null);
               setSelected([]);
               setResults(null);
+              setNotification(null);
             }}
           >
             다시 붙여넣기
@@ -250,7 +326,9 @@ export default function AdminPostalImport({
                       />
                     </td>
                     <td className="px-2 py-1">{row.lineNumber}</td>
-                    <td className="px-2 py-1 font-mono">{row.trackingNumber}</td>
+                    <td className="px-2 py-1 font-mono">
+                      {row.trackingNumber}
+                    </td>
                     <td className="px-2 py-1">{row.recipientLabel}</td>
                     <td className="px-2 py-1 font-mono">{row.postalCode}</td>
                     <td className="px-2 py-1">
@@ -295,6 +373,64 @@ export default function AdminPostalImport({
           >
             선택 건 송장 반영 ({selected.length}건)
           </Button>
+
+          {notification && (
+            <section
+              className="space-y-2 rounded border p-3"
+              aria-label="발송 알림 현황"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <strong>발송 알림 현황</strong>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={pending}
+                  onClick={() =>
+                    void refreshNotification(notification.id).catch(handle)
+                  }
+                >
+                  새로고침
+                </Button>
+              </div>
+              <p>
+                {notification.configured
+                  ? `수신 성공 ${notification.succeeded}건 · 확인 중 ${notification.pending}건 · 실패 ${notification.failed}건`
+                  : `알림 설정 대기 ${notification.pending}건`}
+              </p>
+              {!notification.configured && (
+                <p className="text-muted-foreground">
+                  알림톡은 아직 발송되지 않았습니다.
+                </p>
+              )}
+              <div className="space-y-1">
+                {notification.events.map(event => (
+                  <div
+                    key={event.id}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded bg-muted/40 px-2 py-1"
+                  >
+                    <span>
+                      {event.orderNumber} · {event.trackingNumber} ·{" "}
+                      {NOTIFICATION_LABELS[event.status] ?? event.status}
+                      {event.lastResultMessage &&
+                        ` · ${event.lastResultMessage}`}
+                    </span>
+                    {event.status === "FAILED" && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={pending}
+                        onClick={() => void retryNotification(event)}
+                      >
+                        실패 건 재시도
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </>
       )}
 
