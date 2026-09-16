@@ -158,8 +158,14 @@ test("포장 완료 후 파일 받기가 실패해도 완료 배치에서 같은
   await page.getByRole("button", { name: "배치 7 파일 다시 받기" }).click();
   expect((await download).suggestedFilename()).toBe("post-office-7.xlsx");
   expect(exports).toBe(1);
+  // 파일을 내보낸 뒤에는 그 묶음의 우체국 결과를 넣을 수 있다. 어느 묶음의
+  // 결과인지 먼저 골라야 찾는 범위가 그 안으로 갇힌다.
   await expect(
-    page.getByText("우체국 결과 파일의 실제 샘플 확인 후 제공됩니다.")
+    page.getByText("어느 발송 묶음의 결과인가요?")
+  ).toBeVisible();
+  await page.getByRole("combobox").selectOption("7");
+  await expect(
+    page.getByRole("button", { name: "읽어보기" })
   ).toBeVisible();
 });
 

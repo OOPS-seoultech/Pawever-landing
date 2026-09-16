@@ -9,6 +9,7 @@ import {
   downloadShipmentExport,
 } from "@/lib/adminApi";
 import { workflowCommand } from "@/lib/adminContracts";
+import AdminPostalImport from "./AdminPostalImport";
 
 type PackingOrder = {
   orderNumber: string;
@@ -37,6 +38,9 @@ export default function AdminShipments() {
   const allowed = !!staff?.permissions.includes("PACK_AND_EXPORT_SHIPMENTS");
   const [orders, setOrders] = useState<PackingOrder[]>([]);
   const [batches, setBatches] = useState<ExportBatch[]>([]);
+  // 어느 발송 묶음의 결과를 넣는지 고른다. 묶음을 고르지 않으면 찾는 범위를
+  // 가둘 수 없고, 범위가 풀리면 엉뚱한 주문에 송장이 붙는다.
+  const [importTarget, setImportTarget] = useState<number | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
   const [pending, setPending] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -290,10 +294,44 @@ export default function AdminShipments() {
               </article>
             ))}
           </section>
-          <section className="rounded border p-4 text-sm">
-            <h2 className="mb-2 font-semibold">우체국 결과 가져오기</h2>
-            <p>우체국 결과 파일의 실제 샘플 확인 후 제공됩니다.</p>
-          </section>
+          {batches.length === 0 ? (
+            <section className="rounded border p-4 text-sm">
+              <h2 className="mb-2 font-semibold">우체국 결과 가져오기</h2>
+              <p>먼저 포장 완료로 우체국 제출 파일을 만들어 주세요.</p>
+            </section>
+          ) : (
+            <section className="space-y-3">
+              <label className="block text-sm">
+                <span className="mb-1 block font-semibold">
+                  어느 발송 묶음의 결과인가요?
+                </span>
+                <select
+                  className="w-full rounded border p-2"
+                  value={importTarget ?? ""}
+                  onChange={event =>
+                    setImportTarget(
+                      event.target.value ? Number(event.target.value) : null
+                    )
+                  }
+                >
+                  <option value="">고르지 않음</option>
+                  {batches.map(b => (
+                    <option key={b.id} value={b.id}>
+                      배치 {b.id} · {b.orderCount}건 ·{" "}
+                      {new Date(b.exportedAt).toLocaleDateString("ko-KR")}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {importTarget !== null && (
+                <AdminPostalImport
+                  key={importTarget}
+                  outboundBatchId={importTarget}
+                  onApplied={() => void load()}
+                />
+              )}
+            </section>
+          )}
         </div>
       )}
     </AdminShell>

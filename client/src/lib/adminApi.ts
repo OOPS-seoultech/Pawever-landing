@@ -99,6 +99,14 @@ export type AdminOrderDetail = {
   /** 사람이 읽는 굿즈 이름. */
   goodsTypeLabel: string;
   petName: string;
+  /** 이 주문에 담긴 아이들. 예전 주문도 한 줄은 있다. */
+  pets?: {
+    index: number;
+    petName: string;
+    keyringAdded: boolean;
+    photoCount: number;
+    lowPhotoAcknowledged: boolean;
+  }[];
   pricing: {
     listPriceKrw: number;
     discountAmountKrw: number;
@@ -157,7 +165,12 @@ export type AdminAccount = {
   email: string;
   name: string;
   role: AdminRole;
-  status: "INVITED" | "ACTIVE" | "DISABLED";
+  /**
+   * PENDING_APPROVAL 은 비밀번호는 정했지만 아직 권한이 없는 상태다.
+   * 가입만으로 권한이 생기면 초대 링크가 한 번 새는 것으로 고객 정보가
+   * 통째로 열린다.
+   */
+  status: "INVITED" | "PENDING_APPROVAL" | "ACTIVE" | "DISABLED";
   lastLoginAt: string | null;
 };
 
@@ -539,6 +552,18 @@ export const reinviteAdminAccount = (accountId: number) =>
     `/api/admin/accounts/${accountId}/reinvite`,
     { method: "POST" }
   );
+
+/**
+ * 실무 권한을 준다. 전체 관리자만 할 수 있다.
+ *
+ * 맡길 일은 승인한 뒤 담당자 설정에서 정한다. 여기서 비워 보내면 아직
+ * 아무 제작 작업도 할 수 없는 상태로 열린다.
+ */
+export const approveAdminAccount = (accountId: number) =>
+  adminRequest<void>(`/api/admin/accounts/${accountId}/approve`, {
+    method: "POST",
+    body: JSON.stringify({ workRoles: [] }),
+  });
 
 export const disableAdminAccount = (accountId: number) =>
   adminRequest<void>(`/api/admin/accounts/${accountId}`, { method: "DELETE" });
