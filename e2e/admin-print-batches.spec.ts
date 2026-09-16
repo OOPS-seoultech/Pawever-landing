@@ -568,9 +568,11 @@ test("정산 설정은 명시적으로 켜고 유급 담당자를 지정하며 �
   await page.goto("/admin/accounts");
   await page.getByRole("button", { name: "제작 정산 설정·내역 열기" }).click();
   await expect(
-    page.getByLabel("검수 통과 시 정산 항목 생성")
+    page.getByLabel("발송 접수·직접 수령 포장 완료 시 정산 항목 생성")
   ).not.toBeChecked();
-  await page.getByLabel("검수 통과 시 정산 항목 생성").check();
+  await page
+    .getByLabel("발송 접수·직접 수령 포장 완료 시 정산 항목 생성")
+    .check();
   await page.getByRole("checkbox", { name: "제작 보조", exact: true }).check();
   await page.getByRole("button", { name: "정산 설정 저장" }).click();
   await expect(page.getByRole("alert")).toBeVisible();

@@ -52,7 +52,7 @@ export function AdminCompensation({ accounts }: { accounts: StaffAccount[] }) {
         );
         retry.current = null;
         setNotice(
-          "앞으로 검수를 통과하는 주문에 적용할 정산 설정을 저장했습니다."
+          "앞으로 포장이 끝나 실제 발송·수령 대기가 된 주문에 적용할 정산 설정을 저장했습니다."
         );
       } else await load();
     } catch (e) {
@@ -95,7 +95,8 @@ export function AdminCompensation({ accounts }: { accounts: StaffAccount[] }) {
           <fieldset disabled={pending} className="space-y-3">
             <legend className="text-sm font-semibold">제작 정산 설정</legend>
             <p className="text-sm">
-              정산 기능을 켜고 지정한 유급 담당자가 검수를 통과시킨 주문만 건당{" "}
+              정산 기능을 켜고 지정한 유급 담당자가 제작한 주문이 우체국에
+              접수되거나 직접 수령 포장을 마치면 건당{" "}
               {formatKrw(config.amountKrw)}를 한 번 기록합니다. 실제 지급은
               별도로 진행합니다.
             </p>
@@ -107,7 +108,7 @@ export function AdminCompensation({ accounts }: { accounts: StaffAccount[] }) {
                   setConfig({ ...config, enabled: e.target.checked })
                 }
               />
-              검수 통과 시 정산 항목 생성
+              발송 접수·직접 수령 포장 완료 시 정산 항목 생성
             </label>
             <p className="text-sm font-medium">유급 제작 담당자</p>
             {[
@@ -149,7 +150,8 @@ export function AdminCompensation({ accounts }: { accounts: StaffAccount[] }) {
               기록된 정산 항목 ({ledger.length}건)
             </h3>
             <p className="text-xs text-muted-foreground">
-              지급 완료 내역이 아닌 검수 통과에 따른 정산 대상 기록입니다.
+              지급 완료 내역이 아닌 실제 발송·수령 준비에 따른 정산 대상
+              기록입니다.
             </p>
             {ledger.map(r => (
               <p

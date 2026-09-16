@@ -16,6 +16,7 @@ async function session(page: Page, allowed = true) {
           permissions: allowed
             ? [
                 "PACK_AND_EXPORT_SHIPMENTS",
+                "COMPLETE_PICKUP",
                 "VIEW_ALL_ORDERS",
                 "VIEW_ORDER_BASIC",
               ]
@@ -38,6 +39,64 @@ const order = {
   shipmentStatus: "NOT_READY",
   blockingIssues: [],
 };
+
+const pickupOrder = {
+  orderNumber: "PE-PICKUP-1",
+  version: 7,
+  petName: "보리",
+  guardianName: "수령자",
+  productionStage: "PACKING",
+  shipmentStatus: "NOT_READY",
+  blockingIssues: [],
+};
+
+test("직접 수령 주문은 포장 완료 후 실제 수령 대기로 분리한다", async ({
+  page,
+}) => {
+  await session(page);
+  let completed = false;
+  await page.route("**/api/admin/shipments/**", route => {
+    const path = new URL(route.request().url()).pathname;
+    if (path.endsWith("/pickup-completions")) {
+      expect(route.request().postDataJSON()).toEqual({
+        orders: [{ orderNumber: "PE-PICKUP-1", version: 7 }],
+      });
+      expect(route.request().headers()["idempotency-key"]).toBeTruthy();
+      completed = true;
+      return route.fulfill({
+        json: {
+          success: true,
+          data: {
+            completed: 1,
+            orderNumbers: ["PE-PICKUP-1"],
+            settlements: { "PE-PICKUP-1": "RECORDED" },
+          },
+        },
+      });
+    }
+    return route.fulfill({
+      json: {
+        success: true,
+        data: path.endsWith("/pickup-candidates")
+          ? completed
+            ? []
+            : [pickupOrder]
+          : [],
+      },
+    });
+  });
+
+  await page.goto("/admin/shipments");
+  await expect(page.getByText("직접 수령 포장 대기 · 1건")).toBeVisible();
+  await page.getByRole("checkbox", { name: /PE-PICKUP-1/ }).check();
+  await page
+    .getByRole("button", { name: "선택 주문 직접 수령 포장 완료" })
+    .click();
+  await expect(page.getByRole("status")).toContainText(
+    "1건 포장 완료 · 실제 수령 대기"
+  );
+  await expect(page.getByText("직접 수령 포장 대기 · 0건")).toBeVisible();
+});
 
 test("포장 요청의 응답이 끊기면 같은 요청 식별자로 재시도한다", async ({
   page,
@@ -160,13 +219,9 @@ test("포장 완료 후 파일 받기가 실패해도 완료 배치에서 같은
   expect(exports).toBe(1);
   // 파일을 내보낸 뒤에는 그 묶음의 우체국 결과를 넣을 수 있다. 어느 묶음의
   // 결과인지 먼저 골라야 찾는 범위가 그 안으로 갇힌다.
-  await expect(
-    page.getByText("어느 발송 묶음의 결과인가요?")
-  ).toBeVisible();
+  await expect(page.getByText("어느 발송 묶음의 결과인가요?")).toBeVisible();
   await page.getByRole("combobox").selectOption("7");
-  await expect(
-    page.getByRole("button", { name: "읽어보기" })
-  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "읽어보기" })).toBeVisible();
 });
 
 test("주소 오류가 있는 주문은 이유를 표시하고 선택하지 못한다", async ({
