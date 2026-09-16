@@ -26,24 +26,22 @@ test.describe("09 FINAL 사진 등록 카드", () => {
     await page.goto("/goods-survey");
   });
 
-  test("세 장을 다 고르기 전에는 등록 버튼이 잠겨 있다", async ({ page }) => {
+  test("한 장도 고르지 않으면 등록 버튼이 잠겨 있다", async ({ page }) => {
+    // 사진 없이 넘어가면 만들 수 없는 주문이 결제까지 간다. 최소 장수는
+    // 한 장으로 낮췄지만 0장은 여전히 받지 않는다.
     const submit = page.locator('[data-cta-id="btn_A5"]');
     await expect(submit).toBeDisabled();
     await expect(page.locator(".gs-intake-count")).toHaveText("0/3");
-
-    // 두 장만 골라도 아직이다. 부분 제출을 허용하면 제작에 못 쓰는 주문이 들어온다.
-    for (const label of SLOTS.slice(0, 2)) {
-      await page.getByLabel(label).setInputFiles(photoFile(`${label}.jpg`));
-    }
-    await expect(page.locator(".gs-intake-count")).toHaveText("2/3");
-    await expect(submit).toBeDisabled();
   });
 
-  test("세 장을 채우면 주문 화면으로 넘어간다", async ({ page }) => {
-    for (const label of SLOTS) {
-      await page.getByLabel(label).setInputFiles(photoFile(`${label}.jpg`));
-    }
-    await expect(page.locator(".gs-intake-count")).toHaveText("3/3");
+  test("한 장만 골라도 주문 화면으로 넘어간다", async ({ page }) => {
+    // 세 장을 갖추지 못해 아예 신청하지 못하는 쪽보다 적더라도 받아
+    // 만들어 보는 쪽이 낫다. 사진이 적으면 주문 화면에서 결과가 달라질
+    // 수 있다고 알리고 확인을 받는다.
+    await page
+      .getByLabel(SLOTS[0])
+      .setInputFiles(photoFile(`${SLOTS[0]}.jpg`));
+    await expect(page.locator(".gs-intake-count")).toHaveText("1/3");
 
     const submit = page.locator('[data-cta-id="btn_A5"]');
     await expect(submit).toBeEnabled();
@@ -51,6 +49,20 @@ test.describe("09 FINAL 사진 등록 카드", () => {
 
     // 구매 버튼과 같은 곳으로 간다. 사진을 올렸다고 다른 길로 새면 안 된다.
     await expect(page).toHaveURL(/\/goods-survey\/survey\?direct=1$/);
+  });
+
+  test("칸을 더 열어 다섯 장까지 고를 수 있다", async ({ page }) => {
+    // 처음에는 세 칸만 보여 준다. 다섯 칸을 한꺼번에 펼치면 다 채워야
+    // 하는 것처럼 보인다.
+    const more = page.getByRole("button", { name: /사진 칸 추가/ });
+    await expect(more).toBeVisible();
+
+    await more.click();
+    await expect(page.locator(".gs-intake-count")).toHaveText("0/4");
+    await more.click();
+    await expect(page.locator(".gs-intake-count")).toHaveText("0/5");
+    // 한 마리에 다섯 장까지다. 더 열 칸이 없다.
+    await expect(more).toBeHidden();
   });
 
   test("허용하지 않는 형식은 이유를 말하고 되돌린다", async ({ page }) => {

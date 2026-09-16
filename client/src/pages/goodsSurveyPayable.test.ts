@@ -46,10 +46,16 @@ describe("낼 금액", () => {
       new URL("./GoodsSurveyForm.tsx", import.meta.url),
       "utf8"
     );
-    const block = form.slice(form.indexOf("<legend>키링</legend>") - 400);
+    // 키링은 아이마다 고르므로 아이 줄 컴포넌트가 그린다. 어느 경로에서
+    // 보여 줄지는 주문 화면이 정한다.
+    const petEditor = readFileSync(
+      new URL("./goodsSurveyPetEditor.tsx", import.meta.url),
+      "utf8"
+    );
 
-    expect(form).toContain("<legend>키링</legend>");
-    expect(block.slice(0, 400)).toContain('channel === "flea"');
+    expect(petEditor).toContain("<legend>키링</legend>");
+    expect(petEditor).toContain("{showKeyring && (");
+    expect(form).toContain('showKeyring={channel === "flea"}');
   });
 
   it("화면이 금액을 따로 더하지 않는다", () => {

@@ -245,9 +245,12 @@ test.describe("플리마켓 랜딩", () => {
     await expect(page).toHaveURL(/\/goods-survey\/survey\?direct=1$/);
   });
 
-  test("사진 등록 카드는 세 장을 다 채워야 열린다", async ({ page }) => {
-    // 근거: [5492:2347] 카드의 세는 칸이 "0/3", 버튼이 "사진 3장 등록하기"
-    // 디자인은 이 카드를 03 과 09 두 곳에 둔다.
+  test("사진 등록 카드는 한 장부터 열린다", async ({ page }) => {
+    // 근거: [5492:2347] 카드의 세는 칸이 "0/3". 디자인은 이 카드를 03 과
+    // 09 두 곳에 둔다.
+    //
+    // 최소 장수는 세 장에서 한 장으로 낮췄다. 세 장을 갖추지 못해 아예
+    // 신청하지 못하는 쪽보다 적더라도 받아 만들어 보는 쪽이 낫다는 판단이다.
     await page.goto("/flea");
 
     const cards = page.locator(".gs-intake");
@@ -259,15 +262,11 @@ test.describe("플리마켓 랜딩", () => {
     await expect(first.locator(".gs-intake-count")).toHaveText("0/3");
     await expect(first.locator(".gs-intake-submit")).toBeDisabled();
 
-    for (const label of [
-      "정면 또는 옆모습 사진 추가하기",
-      "몸 전체가 보이게 사진 추가하기",
-      "특징이 잘 보이게 사진 추가하기",
-    ]) {
-      await first.getByLabel(label).setInputFiles(photoFile(`${label}.jpg`));
-    }
-
-    await expect(first.locator(".gs-intake-count")).toHaveText("3/3");
+    // 한 장만 골라도 열린다.
+    await first
+      .getByLabel("정면 또는 옆모습 사진 추가하기")
+      .setInputFiles(photoFile("face.jpg"));
+    await expect(first.locator(".gs-intake-count")).toHaveText("1/3");
     await expect(first.locator(".gs-intake-submit")).toBeEnabled();
   });
 

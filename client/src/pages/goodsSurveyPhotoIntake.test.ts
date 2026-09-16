@@ -1,6 +1,9 @@
 import { readFileSync } from "node:fs";
 import { beforeEach, describe, expect, it } from "vitest";
-import { GOODS_PHOTO_MIN_COUNT } from "../lib/goodsSurveyApi";
+import {
+  GOODS_PHOTO_MAX_COUNT,
+  GOODS_PHOTO_MIN_COUNT,
+} from "../lib/goodsSurveyApi";
 import {
   clearGoodsSurveyPhotoHandoff,
   loadGoodsSurveyPhotoHandoff,
@@ -41,14 +44,17 @@ describe("09 FINAL은 사진 등록 카드로 끝난다", () => {
     expect(landing).toContain("추가해주세요.");
     expect(landing).toContain("사진을 누르면 앨범에서 바로 추가할 수 있어요.");
     expect(landing).toContain("사진은 주문 단계에서 최종 제출됩니다.");
-    // 디자인 문구는 "사진 3장 등록하기"다. 3은 칸 수에서 나오게 둔다 —
-    // 칸을 늘리고 문구를 못 고치면 버튼이 없는 장수를 말하게 된다.
-    expect(landing).toContain("사진 {INTAKE_SLOTS.length}장 등록하기");
-    // 칸 수와 주문 화면의 최소 장수는 같은 값이어야 한다. 랜딩은 세 칸을
-    // 다 채워야 열리는데 주문 화면은 한 장이면 열려 있었다.
-    expect(landing.match(/key: "(face|body|coat)"/g) ?? []).toHaveLength(
-      GOODS_PHOTO_MIN_COUNT
-    );
+    // 몇 장을 골랐는지 버튼이 말한다. 칸 수를 적어 두면 다 채우지 않은
+    // 사람에게 없는 장수를 말하게 된다.
+    expect(landing).toContain("장 등록하기");
+    expect(landing).toContain("${chosen}장 등록하기");
+    // 칸은 한 마리에 받는 최대 장수만큼 둔다. 처음에는 세 칸만 펼치고
+    // 나머지는 더 넣고 싶은 사람에게만 연다.
+    expect(
+      landing.match(/key: "(face|body|coat|extra1|extra2)"/g) ?? []
+    ).toHaveLength(GOODS_PHOTO_MAX_COUNT);
+    // 한 장만 있어도 넘어갈 수 있다.
+    expect(landing).toContain(`const MIN_PHOTOS = ${GOODS_PHOTO_MIN_COUNT}`);
   });
 
   it("이 자리에 내가 넣었던 구매 버튼은 없다", () => {
@@ -65,9 +71,10 @@ describe("09 FINAL은 사진 등록 카드로 끝난다", () => {
   });
 
   it("몇 장 골랐는지 세어 보여준다", () => {
-    // 디자인 변형이 0/3 과 3/3 두 가지다.
+    // 디자인 변형이 0/3 과 3/3 두 가지다. 펼친 칸 수로 센다 — 다섯 칸을
+    // 다 세면 세 칸만 보이는 화면이 0/5 라고 말하게 된다.
     expect(landing).toContain("gs-intake-count");
-    expect(landing).toContain("/{INTAKE_SLOTS.length}");
+    expect(landing).toContain("/{openSlots}");
   });
 
   it("굿즈가 닫혀 있으면 사진을 받지 않는다", () => {
@@ -89,16 +96,23 @@ describe("랜딩에서 고른 사진은 주문 단계에서 제출된다", () =>
   });
 
   it("주문 화면이 그 사진을 붙은 채로 연다", () => {
-    // 함수를 그대로 넘기는 지연 초기화다. 호출해서 넘기면 렌더마다 다시 읽는다.
-    expect(form).toContain("useState<File[]>(loadGoodsSurveyPhotoHandoff)");
+    // 첫 아이에게 붙인다. 지연 초기화 안에서 읽으므로 렌더마다 다시
+    // 읽지 않는다.
+    expect(form).toContain("useState<PetDraft[]>(() =>");
+    expect(form).toContain("photos: loadGoodsSurveyPhotoHandoff(),");
     // 제출까지 끝나면 들고 있을 이유가 없다.
     expect(form).toContain("clearGoodsSurveyPhotoHandoff()");
   });
 
   it("랜딩과 주문 화면이 같은 사진 규칙을 쓴다", () => {
+    // 주문 화면의 사진 칸은 아이 줄 컴포넌트가 그린다.
+    const petEditor = readFileSync(
+      new URL("./goodsSurveyPetEditor.tsx", import.meta.url),
+      "utf8"
+    );
     ["image/jpeg", "image/png", "image/webp"].forEach(type => {
       expect(landing).toContain(type);
-      expect(form).toContain(type);
+      expect(petEditor).toContain(type);
     });
     expect(landing).toContain("10 * 1024 * 1024");
     expect(form).toContain("10 * 1024 * 1024");

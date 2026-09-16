@@ -28,6 +28,7 @@ import {
   surveyStepOf,
 } from "@/lib/analytics/surveyStep";
 import {
+  GOODS_PET_MAX_COUNT,
   GOODS_PHOTO_MAX_COUNT,
   GOODS_PHOTO_MIN_COUNT,
   GOODS_SURVEY_CAPACITY,
@@ -90,6 +91,13 @@ import {
   goodsSurveyProductionContent,
   goodsSurveyStoryContent,
 } from "./goodsSurveyContent";
+import {
+  hasLowPhotoCount,
+  isPetReady,
+  LowPhotoWarningDialog,
+  PetEditor,
+  type PetDraft,
+} from "./goodsSurveyPetEditor";
 import "./GoodsSurveyForm.css";
 
 type SurveyStage =
@@ -158,7 +166,6 @@ type StoryConsent = {
 
 type ProductionFields = {
   goods: string;
-  petName: string;
   guardianName: string;
   phone: string;
   postalCode: string;
@@ -714,7 +721,27 @@ export default function GoodsSurveyForm() {
    * 현장에서 2,000원 추가하면 키링으로 만들어 주기로 했다. 기본은 꺼짐이다 —
    * 켜 두면 더 낼 뜻이 없는 사람에게 2,000원을 얹은 채로 동의를 받게 된다.
    */
-  const [keyringAdded, setKeyringAdded] = useState(false);
+  const [pets, setPets] = useState<PetDraft[]>(() => [
+    {
+      key: createClientId(),
+      petName: "",
+      // 랜딩의 사진 등록 카드에서 골라 온 사진이 있으면 첫 아이에게 붙인다.
+      photos: loadGoodsSurveyPhotoHandoff(),
+      keyringAdded: false,
+      lowPhotoAcknowledged: false,
+    },
+  ]);
+  const keyringCount = pets.filter(pet => pet.keyringAdded).length;
+  /**
+   * 사진이 적어 한 번 더 물어야 하는 아이.
+   *
+   * 확인은 낼 때 한 번만 묻는다. 고르는 도중마다 띄우면 사진을 더 고르려는
+   * 사람을 계속 막아 세운다.
+   */
+  const petsNeedingLowPhotoWarning = pets.filter(
+    pet => hasLowPhotoCount(pet) && !pet.lowPhotoAcknowledged
+  );
+  const [lowPhotoWarningOpen, setLowPhotoWarningOpen] = useState(false);
   /**
    * 동의 문구에 적을 금액.
    *
@@ -725,7 +752,8 @@ export default function GoodsSurveyForm() {
     directPurchase,
     channel,
     deliveryMethod: pickup ? "pickup" : "shipping",
-    keyringAdded,
+    petCount: pets.length,
+    keyringAdded: keyringCount,
   });
   const restoredDraft = useMemo(() => {
     const draft = loadGoodsSurveyDraft();
@@ -765,24 +793,18 @@ export default function GoodsSurveyForm() {
   const [production, setProduction] = useState<ProductionFields>({
     // 랜딩에서 고르지 않았으면 비워 둔다. 제작 단계에서 직접 고르게 한다.
     goods: PRODUCTION_GOODS_ID,
-    petName: "",
     guardianName: "",
     phone: "",
     postalCode: "",
     address: "",
     addressDetail: "",
   });
-  // 랜딩 09 FINAL 의 사진 등록 카드에서 골라 온 사진이 있으면 붙은 채로 연다.
-  // 없으면 빈 배열이라, 설문을 거쳐 들어온 사람에게는 달라지는 것이 없다.
-  const [photos, setPhotos] = useState<File[]>(loadGoodsSurveyPhotoHandoff);
   // 사진 공개 동의는 사연 공개 동의와 별개다. 사연에 동의했다고 해서 사진까지
   // 공개해도 된다는 뜻은 아니다.
   const [photoPublishConsent, setPhotoPublishConsent] = useState(false);
   // 광고성 정보 수신 동의. 반드시 선택이고, 기본값은 꺼짐이다. 미리 켜 두면
   // 동의를 받은 것이 아니라 동의하지 않을 기회를 뺏은 것이 된다.
   const [marketingConsent, setMarketingConsent] = useState(false);
-  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
-  const photoInputRef = useRef<HTMLInputElement>(null);
   const [privacyConsent, setPrivacyConsent] = useState(false);
   const [shippingConsent, setShippingConsent] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
@@ -1464,7 +1486,47 @@ export default function GoodsSurveyForm() {
    * 갤러리 앱에 따라 한 번에 여러 장을 고르기 어렵다. 한 장씩 고르는 사람이
    * 있는데 새로 고른 것으로 갈아치우면, 그 사람은 세 장을 영영 못 채운다.
    */
-  const addPhotos = (picked: File[]) => {
+  const updatePet = (index: number, next: PetDraft) =>
+    setPets(previous =>
+      previous.map((pet, position) => (position === index ? next : pet))
+    );
+
+  const addPet = () => {
+    if (pets.length >= GOODS_PET_MAX_COUNT) {
+      setApiError(`한 번에 ${GOODS_PET_MAX_COUNT}마리까지 신청할 수 있어요.`);
+      return;
+    }
+    setApiError("");
+    setPets(previous => [
+      ...previous,
+      {
+        key: createClientId(),
+        petName: "",
+        photos: [],
+        keyringAdded: false,
+        lowPhotoAcknowledged: false,
+      },
+    ]);
+  };
+
+  const removePet = (index: number) => {
+    setApiError("");
+    setPets(previous => previous.filter((_, position) => position !== index));
+  };
+
+  const removePetPhoto = (index: number, position: number) => {
+    setApiError("");
+    const pet = pets[index];
+    updatePet(index, {
+      ...pet,
+      photos: pet.photos.filter((_, at) => at !== position),
+      // 사진 묶음이 바뀌면 확인을 다시 받는다. 확인한 적 없는 묶음이
+      // 예전 확인값을 타고 넘어가면 안 된다.
+      lowPhotoAcknowledged: false,
+    });
+  };
+
+  const addPhotos = (index: number, picked: File[]) => {
     const tooBig = picked.find(file => file.size > 10 * 1024 * 1024);
     if (tooBig) {
       // 이미 고른 것은 건드리지 않는다. 실수 한 번에 처음부터 고르게 만들면
@@ -1484,7 +1546,8 @@ export default function GoodsSurveyForm() {
       return;
     }
 
-    const merged = [...photos];
+    const pet = pets[index];
+    const merged = [...pet.photos];
     let dropped = 0;
     for (const file of picked) {
       // 같은 파일을 두 번 골라도 한 장으로 센다. 두 장으로 세면 다섯 칸이
@@ -1496,28 +1559,18 @@ export default function GoodsSurveyForm() {
       }
       merged.push(file);
     }
-    setPhotos(merged);
+    updatePet(index, {
+      ...pet,
+      photos: merged,
+      lowPhotoAcknowledged: false,
+    });
     // 조용히 버리면 사람은 올린 줄 안다.
     setApiError(
       dropped > 0
-        ? `사진은 ${GOODS_PHOTO_MAX_COUNT}장까지 올릴 수 있어요. ${dropped}장은 담지 않았어요.`
+        ? `사진은 아이마다 ${GOODS_PHOTO_MAX_COUNT}장까지 올릴 수 있어요. ${dropped}장은 담지 않았어요.`
         : ""
     );
   };
-
-  const removePhoto = (index: number) => {
-    setPhotos(previous => previous.filter((_, position) => position !== index));
-    setApiError("");
-    // 같은 파일을 다시 고를 수 있도록 input 값을 비운다.
-    if (photoInputRef.current) photoInputRef.current.value = "";
-  };
-
-  // 첨부한 사진을 그대로 보여준다. 미리보기 URL은 사진이 바뀌면 바로 회수한다.
-  useEffect(() => {
-    const urls = photos.map(file => URL.createObjectURL(file));
-    setPhotoPreviews(urls);
-    return () => urls.forEach(url => URL.revokeObjectURL(url));
-  }, [photos]);
 
   // 사연 페이지의 조건부 섹션은 T1이 아니라 Q1로 판단한다.
   // T1은 단일선택이라 "지금도 함께 살고 이별 경험도 있다"를 표현하지 못한다.
@@ -1535,15 +1588,14 @@ export default function GoodsSurveyForm() {
     production.phone.trim().length > 0 &&
     !PHONE_PATTERN.test(production.phone.trim());
 
-  const photoCountReady =
-    photos.length >= GOODS_PHOTO_MIN_COUNT &&
-    photos.length <= GOODS_PHOTO_MAX_COUNT;
+  // 아이마다 이름과 사진이 갖춰져야 한다. 사진이 적어도 낼 수 있고, 적을 때는
+  // 낼 때 한 번 더 묻는다.
+  const petsReady = pets.length > 0 && pets.every(isPetReady);
 
   const productionReady =
-    photoCountReady &&
+    petsReady &&
     Boolean(
       production.goods &&
-        production.petName.trim() &&
         production.guardianName.trim() &&
         PHONE_PATTERN.test(production.phone.trim()) &&
         // 현장에서 받아가면 주소를 묻지 않는다. 받는 사람이 그 자리에 온다.
@@ -1643,31 +1695,68 @@ export default function GoodsSurveyForm() {
     }
   };
 
+  /**
+   * 낼 때 한 번 더 묻는다.
+   *
+   * 사진이 적은 아이가 있으면 먼저 확인을 받는다. 고르는 도중마다 묻지
+   * 않는 이유는, 더 고르려는 사람을 계속 막아 세우기 때문이다.
+   */
   const finishReview = async () => {
+    if (!draftSession || !productionReady || apiBusy) return;
+    if (petsNeedingLowPhotoWarning.length > 0) {
+      setLowPhotoWarningOpen(true);
+      return;
+    }
+    await submitApplicationWith(pets);
+  };
+
+  /** 확인을 받은 뒤 이어서 낸다. 확인한 사실은 서버에도 함께 보낸다. */
+  const acknowledgeLowPhotosAndSubmit = () => {
+    const acknowledged = pets.map(pet =>
+      hasLowPhotoCount(pet) ? { ...pet, lowPhotoAcknowledged: true } : pet
+    );
+    setPets(acknowledged);
+    setLowPhotoWarningOpen(false);
+    void submitApplicationWith(acknowledged);
+  };
+
+  const submitApplicationWith = async (submitted: PetDraft[]) => {
     if (!draftSession || !productionReady || apiBusy) return;
     setApiBusy(true);
     setApiError("");
     try {
-      const photoIds = await Promise.all(
-        photos.map(file => {
-          const key = getFileKey(file);
-          let clientFileId = fileClientIds.current.get(key);
-          if (!clientFileId) {
-            clientFileId = createClientId();
-            fileClientIds.current.set(key, clientFileId);
-          }
-          // 고르는 자리에서 이미 걸렀다. 여기까지 온 것은 형식이 있다.
-          return uploadSurveyPhoto(
-            draftSession,
-            file,
-            clientFileId,
-            photoContentType(file) ?? "image/jpeg"
-          );
+      const uploadPhoto = (file: File) => {
+        const key = getFileKey(file);
+        let clientFileId = fileClientIds.current.get(key);
+        if (!clientFileId) {
+          clientFileId = createClientId();
+          fileClientIds.current.set(key, clientFileId);
+        }
+        // 고르는 자리에서 이미 걸렀다. 여기까지 온 것은 형식이 있다.
+        return uploadSurveyPhoto(
+          draftSession,
+          file,
+          clientFileId,
+          photoContentType(file) ?? "image/jpeg"
+        );
+      };
+      // 아이마다 자기 사진을 들고 간다. 한 장을 두 아이가 나눠 쓰면 서버가
+      // 거절한다 — 어느 아이를 보고 만든 사진인지 사라지기 때문이다.
+      const petPayloads = await Promise.all(
+        submitted.map(async pet => {
+          const photoIds = await Promise.all(pet.photos.map(uploadPhoto));
+          return {
+            petName: pet.petName,
+            photoIds,
+            // 사진 공개는 사진 단계에서 따로 물어본 답을 쓴다. 사연 공개
+            // 동의를 끌어다 쓰면, 글에 동의한 사람의 사진까지 묻지도 않고
+            // 공개된다.
+            publicPhotoIds: photoPublishConsent ? photoIds : [],
+            keyringAdded: pet.keyringAdded,
+            lowPhotoAcknowledged: pet.lowPhotoAcknowledged,
+          };
         })
       );
-      // 사진 공개는 사진 단계에서 따로 물어본 답을 쓴다. 사연 공개 동의를
-      // 여기에 끌어다 쓰면, 글에 동의한 사람의 사진까지 묻지도 않고 공개된다.
-      const publicPhotoIds = photoPublishConsent ? photoIds : [];
 
       const tracking = createSubmissionTrackingContext();
       const application = await submitSurveyApplication(
@@ -1677,20 +1766,17 @@ export default function GoodsSurveyForm() {
           goodsType: production.goods,
           // 한 종만 팔아 직접 제안을 받지 않는다. 1차 기록에는 값이 남아 있다.
           customGoods: "",
-          petName: production.petName,
           guardianName: production.guardianName,
           phone: production.phone,
           deliveryMethod: pickup ? "pickup" : "shipping",
-          // 금액은 서버가 다시 계산한다. 여기서 참이라고 보내도 낼 돈은
-          // 서버가 정하므로, 화면이 보낸 금액을 믿는 자리가 생기지 않는다.
-          keyringAdded,
           // 현장 수령이면 적어 두었던 주소도 보내지 않는다. 쓰지 않을 주소를
           // 남기면 지킬 것만 늘어난다.
           postalCode: pickup ? "" : production.postalCode,
           address: pickup ? "" : production.address,
           addressDetail: pickup ? "" : production.addressDetail,
-          photoIds,
-          publicPhotoIds,
+          // 금액과 정원은 마리 수만큼 매겨진다. 화면이 보낸 금액은 쓰지
+          // 않고 서버가 다시 계산한다.
+          pets: petPayloads,
           conversionEventId: tracking.conversionEventId,
           tracking,
           privacyAgreed: privacyConsent,
@@ -1725,7 +1811,10 @@ export default function GoodsSurveyForm() {
           "application_complete",
           {
             goods_type: goodsTypeForTracking,
-            photo_count: photos.length,
+            photo_count: submitted.reduce(
+              (total, pet) => total + pet.photos.length,
+              0
+            ),
             story_included: Boolean(story.scene.trim()),
             furthest_step: stepVisits.current.furthest,
           },
@@ -1756,7 +1845,17 @@ export default function GoodsSurveyForm() {
       analysis: null,
       publish: null,
     });
-    setPhotos([]);
+    // 새 신청은 아이 한 줄부터 다시 시작한다.
+    setPets([
+      {
+        key: createClientId(),
+        petName: "",
+        photos: [],
+        keyringAdded: false,
+        lowPhotoAcknowledged: false,
+      },
+    ]);
+    setLowPhotoWarningOpen(false);
     setPhotoPublishConsent(false);
     setPrivacyConsent(false);
     setShippingConsent(false);
@@ -2265,65 +2364,43 @@ export default function GoodsSurveyForm() {
               </section>
 
               <section className="gsf-form-section">
-                <h2>2. 반려견 사진</h2>
-                <label className="gsf-upload">
-                  <Upload aria-hidden="true" />
-                  <strong>사진 선택하기</strong>
-                  <span>
-                    JPG·PNG·WEBP, 장당 10MB 이하·{GOODS_PHOTO_MIN_COUNT}~
-                    {GOODS_PHOTO_MAX_COUNT}장 · 나눠서 골라도 됩니다
-                  </span>
-                  {/* accept 를 image/* 로 넓히지 말 것. 좁게 적어 두면
-                      iOS 사진 보관함이 HEIC 를 JPEG 로 바꿔서 넘겨준다.
-                      넓히면 원본 HEIC 가 그대로 와서 오히려 더 많이 막힌다. */}
-                  <input
-                    ref={photoInputRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    multiple
-                    onChange={event => {
-                      addPhotos(Array.from(event.target.files ?? []));
-                      // 같은 파일을 다시 고를 수 있어야 한다. 지우고 다시
-                      // 넣는 사람이 있다.
-                      event.target.value = "";
-                    }}
-                  />
-                </label>
-                {photos.length > 0 && (
-                  <ul className="gsf-photo-preview">
-                    {photos.map((file, index) => (
-                      <li key={getFileKey(file)}>
-                        <div className="gsf-photo-thumb">
-                          {photoPreviews[index] && (
-                            <img src={photoPreviews[index]} alt="" />
-                          )}
-                          <button
-                            type="button"
-                            className="gsf-photo-remove"
-                            onClick={() => removePhoto(index)}
-                            aria-label={`${file.name} 첨부 취소`}
-                          >
-                            <X aria-hidden="true" />
-                          </button>
-                        </div>
-                        <span className="gsf-file-name">
-                          <Check aria-hidden="true" />
-                          {file.name}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {photos.length > 0 && !photoCountReady && (
-                  <p className="gsf-field-error" role="alert">
-                    사진 {GOODS_PHOTO_MIN_COUNT}장부터 신청할 수 있어요.{" "}
-                    {GOODS_PHOTO_MIN_COUNT - photos.length}장 더 골라주세요.
-                  </p>
-                )}
+                <h2>2. 우리 아이</h2>
                 <p className="gsf-field-help">
-                  밝은 곳에서 얼굴 정면과 귀가 가리지 않은 사진이 좋아요. 전신
-                  피규어는 몸의 무늬와 자세가 보이는 사진도 함께 올려주세요.
+                  아이마다 이름과 사진을 따로 받아요. 여러 마리를 신청하면 마리
+                  수만큼 제작비가 붙고, 배송은 한 번에 보내드려요.
                 </p>
+                {pets.map((pet, index) => (
+                  <PetEditor
+                    key={pet.key}
+                    pet={pet}
+                    index={index}
+                    total={pets.length}
+                    showKeyring={channel === "flea"}
+                    onChange={next => updatePet(index, next)}
+                    onRemove={pets.length > 1 ? () => removePet(index) : null}
+                    onPickPhotos={files => addPhotos(index, files)}
+                    onRemovePhoto={position => removePetPhoto(index, position)}
+                    fileKeyOf={getFileKey}
+                  />
+                ))}
+                {pets.length < GOODS_PET_MAX_COUNT && (
+                  <button
+                    type="button"
+                    className="gsf-pet-add"
+                    onClick={addPet}
+                  >
+                    + 아이 추가 (최대 {GOODS_PET_MAX_COUNT}마리)
+                  </button>
+                )}
+                {lowPhotoWarningOpen && (
+                  <LowPhotoWarningDialog
+                    petNames={petsNeedingLowPhotoWarning.map(
+                      pet => pet.petName
+                    )}
+                    onAddMore={() => setLowPhotoWarningOpen(false)}
+                    onProceed={acknowledgeLowPhotosAndSubmit}
+                  />
+                )}
                 <div className="gsf-consent-card">
                   <label>
                     <input
@@ -2385,33 +2462,9 @@ export default function GoodsSurveyForm() {
                   </fieldset>
                 )}
 
-                {/* 부자재는 수령 방법 옆에 둔다. 둘 다 "무엇을 어떻게 받을지"라
-                    한자리에서 정하는 편이 낫고, 값이 달라지는 것도 둘뿐이다. */}
-                {/* 수령 방법과 같은 모양이지만 클래스는 따로 둔다. 같은
-                    이름을 쓰면 "수령 방법 칸"을 가리키는 자리마다 둘이
-                    잡힌다. */}
-                {channel === "flea" && (
-                  <fieldset className="gsf-keyring">
-                    <legend>키링</legend>
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={keyringAdded}
-                        onChange={event => setKeyringAdded(event.target.checked)}
-                      />
-                      <span>
-                        <strong>키링으로 만들기</strong>
-                        <small>
-                          고리를 달아 드려요 · {wonText(GOODS_PRICE.keyring)} 추가
-                        </small>
-                      </span>
-                    </label>
-                  </fieldset>
-                )}
 
                 {(
                   [
-                    ["petName", "아이 이름", "반려견 이름"],
                     ["guardianName", "보호자 이름", "받는 분 이름"],
                     ["phone", "연락처", "010-0000-0000"],
                     // 받는 사람이 그 자리에 오면 주소를 묻지 않는다.
@@ -2495,8 +2548,13 @@ export default function GoodsSurveyForm() {
                         동의한 금액과 청구되는 금액이 어긋난다. */}
                     제작비{" "}
                     {wonText(applicablePriceKrw(directPurchase, channel))}
-                    {keyringAdded ? (
-                      <> + 키링 {wonText(GOODS_PRICE.keyring)}</>
+                    {pets.length > 1 ? <> × {pets.length}마리</> : null}
+                    {keyringCount > 0 ? (
+                      <>
+                        {" "}
+                        + 키링 {wonText(GOODS_PRICE.keyring)}
+                        {keyringCount > 1 ? ` × ${keyringCount}` : ""}
+                      </>
                     ) : null}
                     {pickup ? (
                       <> · 방문수령(배송비 없음)</>

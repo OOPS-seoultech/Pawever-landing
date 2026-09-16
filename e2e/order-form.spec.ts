@@ -127,17 +127,13 @@ test.describe("설문을 건너뛴 주문", () => {
     ).toBeDisabled();
   });
 
-  test("사진이 한 장뿐이면 신청이 잠긴 채로 있다", async ({ page }) => {
-    // 근거: [카톡 나혜님] "랜딩페이지에서 사진 1개 등록해도 제출 버튼이
-    //       활성화되잖아요. 사진 3개 이상 등록해야 제출 버튼 활성화되도록
-    //       변경해주세요. 즉, 사진 3개 이상만 제출 가능하도록 (3-5개)"
-    // 근거: [피그마 0uW99BqaTJKUVlowzQswli / 8-2 Rending Page]
-    //       06 PROCESS 5472:1607 "사진 3장", FAQ 5472:1830 "얼굴, 전신,
-    //       털색과 무늬가 잘 보이는 사진 3장을 준비해 주세요",
-    //       사진 등록 카드 5492:2347 의 세는 칸이 "0/3".
+  test("사진이 없으면 잠기고 한 장부터 열린다", async ({ page }) => {
+    // 최소 장수를 세 장에서 한 장으로 낮췄다. 세 장을 갖추지 못해 아예
+    // 신청하지 못하는 쪽보다 적더라도 받아 만들어 보는 쪽이 낫다는 판단이고,
+    // 적게 낸 사람에게는 낼 때 결과가 달라질 수 있다고 알린 뒤 확인을 받는다.
     //
-    // 랜딩의 등록 카드는 이미 세 칸을 다 채워야 열린다. 잠기지 않은 것은
-    // 주문 화면이다. 한 장으로 접수되면 만들 수 없는 주문이 결제까지 간다.
+    // 0장은 여전히 받지 않는다. 사진 없이 접수되면 만들 수 없는 주문이
+    // 결제까지 간다.
     await page.goto(DIRECT);
     await fillShipping(page);
     await consent(page, "개인정보 수집·이용에 동의합니다").check();
@@ -148,17 +144,11 @@ test.describe("설문을 건너뛴 주문", () => {
 
     // 한 장씩 더해 간다. 고른 것은 뒤에 쌓이므로 같은 목록을 다시 보내지
     // 않는다 — 그렇게 쓰면 어느 장이 몇 번째로 들어갔는지가 시험마다 달라진다.
+    // 사진을 고르기 전에는 잠겨 있다.
+    await expect(submit).toBeDisabled();
+
     await upload.setInputFiles(photoFile("1.jpg"));
     await expect(page.locator(".gsf-file-name")).toHaveCount(1);
-    await expect(submit).toBeDisabled();
-
-    // 두 장도 아직이다. 얼굴·전신·털무늬 세 종이 제작의 최소 구성이다.
-    await upload.setInputFiles(photoFile("2.jpg"));
-    await expect(page.locator(".gsf-file-name")).toHaveCount(2);
-    await expect(submit).toBeDisabled();
-
-    await upload.setInputFiles(photoFile("3.jpg"));
-    await expect(page.locator(".gsf-file-name")).toHaveCount(3);
     await expect(submit).toBeEnabled();
   });
 
