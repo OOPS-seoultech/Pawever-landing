@@ -189,7 +189,7 @@ export default function AccountDeletion() {
                   </li>
                   <li className="flex gap-2">
                     <span className="text-accent">•</span>
-                    <span>굿즈 배송 정보·사진: 배송 완료 후 90일</span>
+                    <span>굿즈 배송 정보·사진: 배송 완료 후 3개월</span>
                   </li>
                 </ul>
               </div>

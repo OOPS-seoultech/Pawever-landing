@@ -28,7 +28,7 @@ const COLLECTION_ROWS = [
     category: "제품",
     items: "배송 정보·굿즈 사진",
     purpose: "제작·발송·문의 대응",
-    retention: "배송 완료 후 90일",
+    retention: "배송 완료 후 3개월",
   },
   {
     category: "선택",
@@ -290,7 +290,7 @@ export default function PrivacyPolicy() {
             <SectionHeading>제5조 (보유 및 파기)</SectionHeading>
             <div className="space-y-4 text-foreground/80">
               <p>
-                앱 정보는 탈퇴 시, 제품 배송 정보·사진은 배송 완료 후 90일, 익명
+                앱 정보는 탈퇴 시, 제품 배송 정보·사진은 배송 완료 후 3개월, 익명
                 설문·사연은 수집 후 2년 보관합니다. 접속 로그는 14일 보관합니다.
               </p>
             </div>
