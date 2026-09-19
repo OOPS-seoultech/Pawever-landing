@@ -445,7 +445,7 @@ export function AdminOrderPanel({
           <Section title="현장 수령">
             <p className="mb-3 text-sm text-muted-foreground">
               현장에서 직접 건넸으면 눌러 주세요. 송장 없이 수령 완료로
-              넘어가고, 이때부터 사진 보유 기간 90일을 셉니다.
+              넘어가고, 이때부터 사진 보유 기간 3개월을 셉니다.
             </p>
             <Button
               size="sm"
@@ -470,7 +470,7 @@ export function AdminOrderPanel({
         ) ? (
           <Section title="송장 등록">
             <p className="mb-3 text-sm text-muted-foreground">
-              등록하면 발송 완료로 넘어가고, 이때부터 사진 보유 기간 90일을
+              등록하면 발송 완료로 넘어가고, 이때부터 사진 보유 기간 3개월을
               셉니다. 송장을 고쳐 다시 등록해도 그 날짜는 밀리지 않습니다.
             </p>
             <div className="space-y-2">
