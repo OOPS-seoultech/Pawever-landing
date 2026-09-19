@@ -33,6 +33,7 @@ type PayoutBatch = {
 };
 type Summary = {
   isOwner: boolean;
+  payoutAvailable: boolean;
   settlements: Entry[];
   totalsKrw: Partial<Record<Entry["paymentStatus"], number>>;
   payoutBatches: PayoutBatch[];
@@ -49,10 +50,34 @@ export function AdminCompensation({ accounts }: { accounts: StaffAccount[] }) {
   const busy = useRef(false);
   const retry = useRef<{ body: string; key: string } | null>(null);
   const load = async () => {
-    const [c, s] = await Promise.all([
-      adminRequest<Config>("/api/admin/production-compensation"),
-      adminRequest<Summary>("/api/admin/compensation/summary"),
-    ]);
+    const c = await adminRequest<Config>("/api/admin/production-compensation");
+    // 백엔드가 순차 배포되는 동안에는 기존 적립 목록을 보여 준다. 지급 버튼은
+    // 새 요약 계약을 받을 때만 나타나므로, 구 서버에 쓰기 요청을 보내지 않는다.
+    const s = await adminRequest<Omit<Summary, "payoutAvailable">>("/api/admin/compensation/summary")
+      .then(view => {
+        if (!Array.isArray(view.settlements) || !Array.isArray(view.payoutBatches))
+          throw new Error("지급 요약 응답이 아직 준비되지 않았습니다.");
+        return { ...view, payoutAvailable: true };
+      })
+      .catch(
+      async () => {
+        const settlements = await adminRequest<Entry[]>("/api/admin/production-settlements");
+        return {
+          isOwner: true,
+          payoutAvailable: false,
+          settlements: settlements.map(row => ({
+            ...row,
+            workerId: row.workerId ?? 0,
+            paymentStatus: row.paymentStatus ?? "UNPAID",
+          })),
+          totalsKrw: settlements.reduce<Summary["totalsKrw"]>(
+            (totals, row) => ({ ...totals, UNPAID: (totals.UNPAID ?? 0) + row.amountKrw }),
+            {}
+          ),
+          payoutBatches: [],
+        };
+      }
+    );
     setConfig(c);
     setSummary(s);
     setSelectedIds(ids =>
@@ -267,7 +292,7 @@ export function AdminCompensation({ accounts }: { accounts: StaffAccount[] }) {
                 </span>
               </label>
             ))}
-            <fieldset disabled={pending} className="space-y-2 rounded border p-3">
+            {summary?.payoutAvailable && <fieldset disabled={pending} className="space-y-2 rounded border p-3">
               <legend className="px-1 text-sm font-semibold">선택 항목 지급 준비</legend>
               <p className="text-xs text-muted-foreground">
                 한 번에 한 담당자만 선택할 수 있습니다. 선택 합계는 이후 변경되지 않습니다.
@@ -285,8 +310,8 @@ export function AdminCompensation({ accounts }: { accounts: StaffAccount[] }) {
               <Button disabled={pending || !selectedIds.length} onClick={() => void preparePayout()}>
                 선택 항목 지급 준비
               </Button>
-            </fieldset>
-            {summary?.payoutBatches.map(batch => (
+            </fieldset>}
+            {summary?.payoutAvailable && summary.payoutBatches.map(batch => (
               <div key={batch.id} className="space-y-2 rounded border p-3 text-sm">
                 <p>
                   {batch.beneficiaryName} · 세전 {formatKrw(batch.grossKrw)} · 공제 {formatKrw(batch.deductionKrw)} · 실지급 {formatKrw(batch.netKrw)} · {batch.status === "PAID" ? "지급 완료" : "지급 준비"}
