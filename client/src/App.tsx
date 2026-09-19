@@ -26,6 +26,8 @@ import AdminFilaments from "./pages/AdminFilaments";
 import AdminPrintBatches from "./pages/AdminPrintBatches";
 import AdminShipments from "./pages/AdminShipments";
 import AdminMyCompensation from "./pages/AdminMyCompensation";
+import AdminCompletedOrders from "./pages/AdminCompletedOrders";
+import AdminAsAssets from "./pages/AdminAsAssets";
 import { AdminSessionProvider } from "./components/AdminSession";
 import { useEffect } from "react";
 import { initializeAnalytics } from "./lib/analytics/analytics";
@@ -62,6 +64,8 @@ function Router() {
       <Route path="/admin/print-batches" component={AdminPrintBatches} />
       <Route path="/admin/shipments" component={AdminShipments} />
       <Route path="/admin/compensation" component={AdminMyCompensation} />
+      <Route path="/admin/completed-orders" component={AdminCompletedOrders} />
+      <Route path="/admin/as-assets" component={AdminAsAssets} />
       <Route path="/admin/workflow">{() => <AdminMyWork all />}</Route>
       <Route path="/admin/orders/:orderNumber" component={AdminOrderDetail} />
       <Route path="/admin/orders" component={AdminOrders} />

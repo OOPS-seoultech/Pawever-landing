@@ -113,6 +113,9 @@ export function AdminShell({ title, role, children, backTo }: Props) {
             <Link href="/admin/compensation">내 정산</Link>
           </>
         )}
+        {staff?.role === "PRODUCTION" && (
+          <Link href="/admin/as-assets">AS 열람</Link>
+        )}
         {staff?.permissions.includes("MANAGE_PRINT_BATCH") && (
           <Link href="/admin/print-batches">플레이트·출력 대기</Link>
         )}
@@ -124,6 +127,7 @@ export function AdminShell({ title, role, children, backTo }: Props) {
           <>
             <Link href="/admin/workflow">입금·제작 관리</Link>
             <Link href="/admin/orders">전체 주문·배송</Link>
+            <Link href="/admin/completed-orders">완료 주문·AS</Link>
           </>
         )}
       </nav>
