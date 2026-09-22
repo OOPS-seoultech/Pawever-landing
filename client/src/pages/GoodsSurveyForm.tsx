@@ -1777,6 +1777,9 @@ export default function GoodsSurveyForm() {
           // 금액과 정원은 마리 수만큼 매겨진다. 화면이 보낸 금액은 쓰지
           // 않고 서버가 다시 계산한다.
           pets: petPayloads,
+          // 아이마다 고른 키링은 pets 가 들고 간다. 이 값은 서버에 남아 있는
+          // 낱개 항목 자리를 채우는 몫이라, 빼면 서버가 요청을 읽지 못한다.
+          keyringAdded: keyringCount > 0,
           conversionEventId: tracking.conversionEventId,
           tracking,
           privacyAgreed: privacyConsent,
