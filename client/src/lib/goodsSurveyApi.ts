@@ -150,6 +150,15 @@ export type ApplicationPayload = {
   addressDetail: string;
   /** 한 신청에 담은 아이들. 금액과 정원은 이 수만큼 매겨진다. */
   pets: ApplicationPet[];
+  /**
+   * 서버가 예전 화면을 위해 남겨 둔 낱개 키링 값.
+   *
+   * pets 가 있으면 서버는 이 값을 쓰지 않는다. 그래도 반드시 실어 보낸다 -
+   * 서버 쪽이 원시 boolean 이라 빠지면 요청을 읽는 단계에서 통째로 거절당하고,
+   * 화면에는 "잘못된 입력값입니다"만 남는다. 2026-09-16 에 이 항목을 pets 로
+   * 옮기면서 빠뜨려, 엿새 동안 들어온 주문이 모두 이렇게 막혔다.
+   */
+  keyringAdded: boolean;
   conversionEventId: string;
   tracking: SurveyTrackingPayload;
   privacyAgreed: boolean;
