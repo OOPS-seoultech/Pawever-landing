@@ -10,12 +10,12 @@ import type { AdminRole, GoodsOrderStatus } from "@/lib/adminApi";
  */
 
 export const STATUS_LABELS: Record<GoodsOrderStatus, string> = {
-  PAYMENT_PENDING: "결제 대기",
-  PAYMENT_COMPLETED: "결제 완료",
+  PAYMENT_PENDING: "입금 대기",
+  PAYMENT_COMPLETED: "입금 확인 완료",
   IN_PRODUCTION: "제작 중",
   SHIPPED: "발송 완료",
   PICKED_UP: "수령 완료",
-  PAYMENT_EXPIRED: "결제 만료",
+  PAYMENT_EXPIRED: "입금 기한 만료",
   PAYMENT_FAILED: "결제 실패",
   CANCELED: "주문 취소",
   CANCEL_FAILED: "취소 처리 실패",
@@ -194,17 +194,17 @@ export const ADMIN_ORDER_VIEWS: readonly {
   label: string;
   statuses: GoodsOrderStatus[];
 }[] = [
-  { key: "PAYMENT_CHECK", label: "입금 확인", statuses: ["PAYMENT_PENDING"] },
+  { key: "PAYMENT_CHECK", label: "입금 대기", statuses: ["PAYMENT_PENDING"] },
   {
     key: "PRODUCTION_QUEUE",
     label: "제작 대기",
     statuses: ["PAYMENT_COMPLETED", "LEGACY_FREE"],
   },
   { key: "IN_PRODUCTION", label: "제작 중", statuses: ["IN_PRODUCTION"] },
-  { key: "DONE", label: "완료", statuses: ["SHIPPED", "PICKED_UP"] },
+  { key: "DONE", label: "발송·수령 완료", statuses: ["SHIPPED", "PICKED_UP"] },
   {
     key: "PROBLEM",
-    label: "문제",
+    label: "취소·만료·실패",
     statuses: [
       "PAYMENT_EXPIRED",
       "PAYMENT_FAILED",

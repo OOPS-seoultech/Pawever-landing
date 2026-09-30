@@ -16,6 +16,7 @@ export function AdminWorkSettings() {
   const { staff } = useStaffSession();
   const [accounts, setAccounts] = useState<StaffAccount[]>([]);
   const [defaults, setDefaults] = useState<Defaults | null>(null);
+  const [savedDefaults, setSavedDefaults] = useState<Defaults | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
@@ -29,7 +30,11 @@ export function AdminWorkSettings() {
   const canAccounts = Boolean(staff?.permissions.includes("MANAGE_ACCOUNTS"));
   const load = useCallback(async () => {
     setAccounts(await getStaffAccounts());
-    if (canSettings) setDefaults(await getDefaults());
+    if (canSettings) {
+      const value = await getDefaults();
+      setDefaults(value);
+      setSavedDefaults(value);
+    }
   }, [canSettings]);
   useEffect(() => {
     if (canAccounts) void load().catch(e => setError(e.message));
@@ -97,6 +102,7 @@ export function AdminWorkSettings() {
               .filter(
                 a =>
                   a.id !== staff?.id &&
+                  a.status === "ACTIVE" &&
                   (staff?.role === "OWNER" || a.role !== "OWNER")
               )
               .map(a => (
@@ -145,6 +151,7 @@ export function AdminWorkSettings() {
                 ["MODELING", "모델링 결과물 등록"],
                 ["DESIGN_QC", "모델 검수·색상·플레이트"],
                 ["PRINT_FINISHING", "출력·후가공"],
+                ["PACKING_SHIPPING", "포장·배송"],
               ].map(([r, label]) => (
                 <label className="flex items-center gap-2 text-sm" key={r}>
                   <input
@@ -236,14 +243,18 @@ export function AdminWorkSettings() {
                 a => a.status === "ACTIVE" && a.workRoles.includes(workRole)
               ) && (
                 <span className="mt-1 block text-amber-800">
-                  선택 가능한 직원이 없습니다. 위에서 활성 계정에 해당 작업
-                  역할을 지정해 주세요.
+                  선택 가능한 직원이 없습니다. 직원의 가입과 역할 지정 승인을
+                  먼저 완료해 주세요. 사용 중인 계정은 위에서 작업 역할을 변경할
+                  수 있습니다.
                 </span>
               )}
             </label>
           ))}
           <Button
             size="sm"
+            disabled={
+              JSON.stringify(defaults) === JSON.stringify(savedDefaults)
+            }
             onClick={() =>
               void run(
                 () =>
@@ -260,8 +271,8 @@ export function AdminWorkSettings() {
             기본 담당자 저장
           </Button>
           <p className="text-sm text-muted-foreground">
-            포장·배송은 현재 해당 권한을 가진 계정이 포장·준등기 화면에서
-            처리하며, 별도의 자동 배정 설정은 없습니다.
+            포장·배송 역할의 직원은 포장·준등기 화면에서 포장 대기 주문을 함께
+            처리합니다. 별도의 자동 배정 설정은 없습니다.
           </p>
         </fieldset>
       )}

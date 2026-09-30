@@ -242,10 +242,11 @@ export default function AdminCompletedOrders() {
           ))}
           {!orders.length && (
             <p className="text-sm text-muted-foreground">
-              아직 완료 주문이 없습니다.
+              아직 완료 주문이 없습니다. 완료 주문이 생기면 해당 주문에서 AS를
+              접수할 수 있습니다.
             </p>
           )}
-          {owner && (
+          {owner && orders.length > 0 && (
             <label className="block max-w-xl text-sm">
               새 AS 사유
               <input
@@ -261,6 +262,11 @@ export default function AdminCompletedOrders() {
         {owner && (
           <section className="space-y-3 border-t pt-4">
             <h2 className="text-sm font-semibold">AS 사건·48시간 권한</h2>
+            {!cases.length && (
+              <p className="text-sm text-muted-foreground">
+                등록된 AS가 없습니다.
+              </p>
+            )}
             <div className="flex flex-wrap gap-2">
               {cases.map(item => (
                 <Button

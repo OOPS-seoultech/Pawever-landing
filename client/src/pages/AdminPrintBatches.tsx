@@ -575,7 +575,9 @@ export default function AdminPrintBatches() {
                 </section>
               ) : (
                 <p className="rounded border bg-background p-4 text-sm text-muted-foreground">
-                  플레이트를 선택하거나 새로 구성하세요.
+                  {designer
+                    ? "플레이트를 선택하거나 새로 구성하세요."
+                    : "등록된 플레이트를 선택해 주세요. 새 플레이트는 모델 검수·색상·플레이트 역할의 직원이 색상 지정 완료 후 구성합니다."}
                 </p>
               )}
             </div>
