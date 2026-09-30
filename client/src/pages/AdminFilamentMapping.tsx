@@ -147,7 +147,10 @@ export function AdminFilamentMapping({
                     .map(f => (
                       <option key={f.id} value={f.id}>
                         {f.spoolId} · {f.colorName} · {f.material} · {f.finish}{" "}
-                        · {f.remainingGrams}g
+                        ·{" "}
+                        {f.remainingGrams == null
+                          ? "잔량 미측정"
+                          : `${f.remainingGrams}g`}
                       </option>
                     ))}
                 </select>

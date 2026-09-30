@@ -54,9 +54,16 @@ type Props = {
   children: ReactNode;
   /** 목록으로 돌아가는 자리. 상세 화면에서만 쓴다. */
   backTo?: string;
+  splitWorkspace?: boolean;
 };
 
-export function AdminShell({ title, role, children, backTo }: Props) {
+export function AdminShell({
+  title,
+  role,
+  children,
+  backTo,
+  splitWorkspace = false,
+}: Props) {
   const { staff, error } = useStaffSession();
   const [, setLocation] = useLocation();
   useNoIndex();
@@ -67,8 +74,10 @@ export function AdminShell({ title, role, children, backTo }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <header className="border-b bg-background">
+    <div
+      className={`min-h-screen bg-muted/30 ${splitWorkspace ? "lg:flex lg:h-dvh lg:min-h-0 lg:flex-col lg:overflow-hidden" : ""}`}
+    >
+      <header className="shrink-0 border-b bg-background">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3">
           {backTo ? (
             <Link
@@ -102,7 +111,7 @@ export function AdminShell({ title, role, children, backTo }: Props) {
       </header>
       <nav
         aria-label="관리 메뉴"
-        className="mx-auto flex max-w-6xl flex-wrap gap-4 border-b px-4 py-3 text-sm"
+        className="mx-auto flex w-full max-w-6xl shrink-0 flex-wrap gap-4 border-b px-4 py-3 text-sm"
       >
         {staff?.permissions.includes("VIEW_FILAMENT") && (
           <Link href="/admin/filaments">필라멘트</Link>
@@ -131,7 +140,9 @@ export function AdminShell({ title, role, children, backTo }: Props) {
           </>
         )}
       </nav>
-      <main className="mx-auto max-w-6xl px-4 py-6">
+      <main
+        className={`mx-auto w-full max-w-6xl px-4 py-6 ${splitWorkspace ? "lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:overflow-hidden" : ""}`}
+      >
         {error ? <AdminError message={error} /> : children}
       </main>
     </div>

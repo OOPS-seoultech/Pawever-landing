@@ -366,7 +366,7 @@ export function AdminWorkflowPanel({
                   amount: Number(amount),
                   memo,
                 }),
-              "입금을 확인하고 모델링 작업을 만들었습니다."
+              "입금 대조 결과를 반영했습니다. 아래 결제 상태와 확인 사항을 확인해 주세요."
             );
           }}
         >
@@ -377,19 +377,29 @@ export function AdminWorkflowPanel({
             <p className="text-sm">신청 보호자: {row.guardianName}</p>
           )}
           <label className="block text-sm">
-            실제 입금액
+            실제 입금액 (필수)
             <Input
               type="number"
               min="0"
               step="1"
               required
+              placeholder="은행 내역에서 확인한 금액"
               value={amount}
               disabled={pending}
               onChange={e => setAmount(e.target.value)}
             />
           </label>
+          <p className="text-sm text-muted-foreground" aria-live="polite">
+            {amount === ""
+              ? "실제 입금액을 입력하면 확인 버튼이 활성화됩니다."
+              : row.expectedAmount == null
+                ? "주문 금액을 확인할 수 없습니다. 새로고침 후 확인해 주세요."
+                : Number(amount) === row.expectedAmount
+                  ? "주문 금액과 일치합니다. 입금자도 대조한 뒤 확인해 주세요."
+                  : "주문 금액과 다릅니다. 확인하면 불일치를 기록하며, 입금 완료로 처리하지 않습니다."}
+          </p>
           <label className="block text-sm">
-            확인 메모
+            확인 메모 (선택)
             <Input
               maxLength={300}
               value={memo}
@@ -398,8 +408,15 @@ export function AdminWorkflowPanel({
               placeholder="입금자명 등 대조한 내용"
             />
           </label>
-          <Button disabled={pending || amount === ""} type="submit">
-            입금 확인
+          <Button
+            disabled={pending || amount === "" || row.expectedAmount == null}
+            type="submit"
+          >
+            {amount !== "" &&
+            row.expectedAmount != null &&
+            Number(amount) !== row.expectedAmount
+              ? "입금 불일치 기록"
+              : "입금 확인"}
           </Button>
         </form>
       )}
@@ -410,17 +427,45 @@ export function AdminWorkflowPanel({
             void run(
               () =>
                 command(`${prefix}/workflow/enroll`, { version: row.version }),
-              "모델링 작업을 만들었습니다."
+              "결과물 등록 작업을 생성했습니다. 기본 담당자가 설정돼 있으면 자동 배정되며, 미배정이면 아래에서 기본 담당자 설정을 확인해 주세요."
             )
           }
         >
-          모델링 작업 배정
+          결과물 등록 작업 생성
         </Button>
       )}
       {can("ASSIGN_TASK") && (
         <div className="flex flex-wrap gap-2 border-t pt-4">
+          {!row.assignee && (
+            <Button
+              disabled={pending}
+              onClick={() =>
+                void run(
+                  () =>
+                    command(`${prefix}/workflow/assign`, {
+                      version: row.version,
+                      useDefault: true,
+                      reason: "기본 담당자 적용",
+                    }),
+                  "기본 담당자에게 배정했습니다."
+                )
+              }
+            >
+              기본 담당자에게 배정
+            </Button>
+          )}
+          {has("MANAGE_ACCOUNTS") && has("MANAGE_OPERATION_SETTINGS") && (
+            <Button
+              variant="outline"
+              onClick={() => navigate("/admin/accounts#work-defaults")}
+            >
+              기본 담당자 설정
+            </Button>
+          )}
           <label className="w-full text-sm">
-            담당자 변경
+            {row.assignee
+              ? "예외 처리: 담당자 변경"
+              : "예외 처리: 담당자 직접 지정"}
             <select
               className="mt-1 block w-full rounded border bg-background p-2"
               value={target}

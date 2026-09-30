@@ -53,7 +53,10 @@ export function AdminWorkSettings() {
   };
   const target = accounts.find(a => a.id === Number(selected));
   return (
-    <section className="mb-6 space-y-4 rounded-lg border bg-background p-4">
+    <section
+      id="work-defaults"
+      className="mb-6 space-y-4 rounded-lg border bg-background p-4"
+    >
       <h2 className="font-semibold">작업 역할·기본 담당자</h2>
       {error && (
         <p role="alert" className="text-sm text-destructive">
@@ -66,8 +69,10 @@ export function AdminWorkSettings() {
         </p>
       )}
       <p className="text-sm text-muted-foreground">
-        초대한 담당자가 가입한 뒤 작업 역할을 지정하고, 새 작업을 받을 기본
-        담당자로 선택해 주세요. 기존 작업은 주문에서 별도로 재배정합니다.
+        처음 한 번 계정의 작업 역할과 기본 담당자를 지정하면, 새 작업이 생성될
+        때 자동 배정됩니다. 한 사람이 여러 역할을 맡아도 됩니다. 설정 변경은
+        기존 작업을 옮기지 않습니다. 기존 미배정 작업은 입금·제작 관리에서
+        선택해 기본 담당자에게 배정할 수 있습니다.
       </p>
       <fieldset disabled={busy} className="space-y-3">
         <legend className="text-sm font-medium">작업 역할 지정</legend>
@@ -137,8 +142,8 @@ export function AdminWorkSettings() {
             </label>
             <div className="flex flex-wrap gap-4">
               {[
-                ["MODELING", "모델링"],
-                ["DESIGN_QC", "모델 검수"],
+                ["MODELING", "모델링 결과물 등록"],
+                ["DESIGN_QC", "모델 검수·색상·플레이트"],
                 ["PRINT_FINISHING", "출력·후가공"],
               ].map(([r, label]) => (
                 <label className="flex items-center gap-2 text-sm" key={r}>
@@ -191,9 +196,17 @@ export function AdminWorkSettings() {
           <legend className="pt-3 text-sm font-medium">기본 담당자</legend>
           {(
             [
-              ["modeling", "MODELING", "모델링 기본 담당자"],
-              ["review", "DESIGN_QC", "검수 기본 담당자"],
-              ["printing", "PRINT_FINISHING", "출력 기본 담당자"],
+              ["modeling", "MODELING", "입금 확인 후 → 결과물 등록 담당자"],
+              [
+                "review",
+                "DESIGN_QC",
+                "결과물 등록 완료 후 → 모델 검수·색상 담당자",
+              ],
+              [
+                "printing",
+                "PRINT_FINISHING",
+                "출력 작업 생성 시 → 출력·후가공 담당자",
+              ],
             ] as const
           ).map(([field, workRole, label]) => (
             <label className="block text-sm" key={field}>
@@ -208,7 +221,7 @@ export function AdminWorkSettings() {
                   })
                 }
               >
-                <option value="">미지정 (관리자가 건별 배정)</option>
+                <option value="">미설정 — 새 작업이 미배정으로 남습니다</option>
                 {accounts
                   .filter(
                     a => a.status === "ACTIVE" && a.workRoles.includes(workRole)
@@ -219,6 +232,14 @@ export function AdminWorkSettings() {
                     </option>
                   ))}
               </select>
+              {!accounts.some(
+                a => a.status === "ACTIVE" && a.workRoles.includes(workRole)
+              ) && (
+                <span className="mt-1 block text-amber-800">
+                  선택 가능한 직원이 없습니다. 위에서 활성 계정에 해당 작업
+                  역할을 지정해 주세요.
+                </span>
+              )}
             </label>
           ))}
           <Button
@@ -238,6 +259,10 @@ export function AdminWorkSettings() {
           >
             기본 담당자 저장
           </Button>
+          <p className="text-sm text-muted-foreground">
+            포장·배송은 현재 해당 권한을 가진 계정이 포장·준등기 화면에서
+            처리하며, 별도의 자동 배정 설정은 없습니다.
+          </p>
         </fieldset>
       )}
       {canSettings && <AdminCompensation accounts={accounts} />}
