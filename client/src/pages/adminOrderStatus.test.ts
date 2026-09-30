@@ -20,6 +20,20 @@ import {
 import type { GoodsOrderStatus } from "@/lib/adminApi";
 
 describe("관리자 주문 상태 규칙", () => {
+  it("상태와 처리 버튼을 혼동하지 않도록 목록 이름을 구분한다", () => {
+    expect(
+      ADMIN_ORDER_VIEWS.find(view => view.key === "PAYMENT_CHECK")?.label
+    ).toBe("입금 대기");
+    expect(ADMIN_ORDER_VIEWS.find(view => view.key === "DONE")?.label).toBe(
+      "발송·수령 완료"
+    );
+    expect(ADMIN_ORDER_VIEWS.find(view => view.key === "PROBLEM")?.label).toBe(
+      "취소·만료·실패"
+    );
+    expect(STATUS_LABELS.PAYMENT_PENDING).toBe("입금 대기");
+    expect(STATUS_LABELS.PAYMENT_COMPLETED).toBe("입금 확인 완료");
+    expect(STATUS_LABELS.PAYMENT_EXPIRED).toBe("입금 기한 만료");
+  });
   it("발송 완료는 손으로 고르지 못한다", () => {
     // 송장을 등록해야 넘어간다. 여기에 두면 고객이 조회할 번호 없이
     // 발송된 주문이 생긴다.
@@ -141,7 +155,7 @@ describe("관리자 주문 상태 규칙", () => {
       "CANCEL_FAILED",
       "LEGACY_FREE",
     ];
-    statuses.forEach((status) => {
+    statuses.forEach(status => {
       expect(STATUS_LABELS[status]).toBeTruthy();
     });
   });
@@ -179,7 +193,9 @@ describe("현장 수령", () => {
   // 없어서, 따로 끝낼 길이 없으면 플리마켓 70건이 제작 중에 영원히 남거나
   // 가짜 송장을 넣게 된다.
   it("현장 수령 주문은 결제가 확인된 뒤 관리자가 수령 완료로 끝낸다", () => {
-    expect(canCompletePickup("ADMIN", "PAYMENT_COMPLETED", "PICKUP")).toBe(true);
+    expect(canCompletePickup("ADMIN", "PAYMENT_COMPLETED", "PICKUP")).toBe(
+      true
+    );
     expect(canCompletePickup("ADMIN", "IN_PRODUCTION", "PICKUP")).toBe(true);
   });
 
@@ -196,14 +212,18 @@ describe("현장 수령", () => {
   });
 
   it("제작팀은 수령 완료를 찍을 수 없다", () => {
-    expect(canCompletePickup("PRODUCTION", "IN_PRODUCTION", "PICKUP")).toBe(false);
+    expect(canCompletePickup("PRODUCTION", "IN_PRODUCTION", "PICKUP")).toBe(
+      false
+    );
   });
 
   it("현장 수령 주문에는 송장 등록이 열리지 않는다", () => {
     // 두 길이 함께 열려 있으면 송장 칸에 "현장수령" 같은 값을 넣어 끝내는
     // 사람이 생기고, 이력에 가짜 송장이 남는다.
     expect(canRegisterTracking("ADMIN", "IN_PRODUCTION", "PICKUP")).toBe(false);
-    expect(canRegisterTracking("ADMIN", "IN_PRODUCTION", "SHIPPING")).toBe(true);
+    expect(canRegisterTracking("ADMIN", "IN_PRODUCTION", "SHIPPING")).toBe(
+      true
+    );
     // 방법을 모르면 지금까지처럼 택배로 본다. 옛 주문은 전부 택배 건이다.
     expect(canRegisterTracking("ADMIN", "IN_PRODUCTION")).toBe(true);
   });
@@ -216,7 +236,9 @@ describe("현장 수령", () => {
 
   it("수령 완료는 손으로 고르지 못한다", () => {
     // 발송 완료와 같다. 현장 수령 버튼을 거쳐야 파기 시계가 함께 켜진다.
-    expect(settableStatusesFor("ADMIN", "IN_PRODUCTION")).not.toContain("PICKED_UP");
+    expect(settableStatusesFor("ADMIN", "IN_PRODUCTION")).not.toContain(
+      "PICKED_UP"
+    );
   });
 });
 
@@ -233,15 +255,21 @@ describe("목록에서 바로 하는 처리", () => {
   it("묶어서 할 일은 줄에 붙이지 않는다", () => {
     // 제작은 모아서 한다. 줄마다 버튼을 두면 화면은 그대로 보이고
     // 100건이면 100번 누르는 길이 그대로 열려 있다. 체크 칸으로만 다룬다.
-    expect(primaryRowAction("ADMIN", "PAYMENT_COMPLETED", "SHIPPING")).toBeNull();
+    expect(
+      primaryRowAction("ADMIN", "PAYMENT_COMPLETED", "SHIPPING")
+    ).toBeNull();
     expect(primaryRowAction("ADMIN", "PAYMENT_COMPLETED", "PICKUP")).toBeNull();
     expect(primaryRowAction("ADMIN", "LEGACY_FREE", "SHIPPING")).toBeNull();
-    expect(primaryRowAction("PRODUCTION", "PAYMENT_COMPLETED", "SHIPPING")).toBeNull();
+    expect(
+      primaryRowAction("PRODUCTION", "PAYMENT_COMPLETED", "SHIPPING")
+    ).toBeNull();
   });
 
   it("결제 완료에는 송장 등록을 먼저 붙이지 않는다", () => {
     // 만들기도 전에 송장을 받으면 순서가 뒤집힌다.
-    expect(primaryRowAction("ADMIN", "PAYMENT_COMPLETED", "SHIPPING")?.kind).toBeUndefined();
+    expect(
+      primaryRowAction("ADMIN", "PAYMENT_COMPLETED", "SHIPPING")?.kind
+    ).toBeUndefined();
   });
 
   it("제작 중 현장 수령 건에는 수령 완료가 붙는다", () => {
@@ -260,9 +288,15 @@ describe("목록에서 바로 하는 처리", () => {
   it("제작팀에게는 줄 버튼이 붙지 않는다", () => {
     // 입금 확인도 수령 완료도 송장도 관리자 일이다. 제작 시작은 체크 칸으로
     // 하므로 제작팀 줄에는 남는 것이 없다.
-    expect(primaryRowAction("PRODUCTION", "PAYMENT_COMPLETED", "PICKUP")).toBeNull();
-    expect(primaryRowAction("PRODUCTION", "PAYMENT_PENDING", "PICKUP")).toBeNull();
-    expect(primaryRowAction("PRODUCTION", "IN_PRODUCTION", "PICKUP")).toBeNull();
+    expect(
+      primaryRowAction("PRODUCTION", "PAYMENT_COMPLETED", "PICKUP")
+    ).toBeNull();
+    expect(
+      primaryRowAction("PRODUCTION", "PAYMENT_PENDING", "PICKUP")
+    ).toBeNull();
+    expect(
+      primaryRowAction("PRODUCTION", "IN_PRODUCTION", "PICKUP")
+    ).toBeNull();
   });
 
   it("끝난 주문에는 아무것도 붙지 않는다", () => {
@@ -286,9 +320,13 @@ describe("목록에서 바로 하는 처리", () => {
   it("한 번 더 묻는 것은 되돌릴 수 없는 것뿐이다", () => {
     // 입금 확인은 잘못 눌러도 되돌릴 수 있다. 매번 물으면 70건을 처리하는
     // 동안 70번 더 누른다.
-    expect(primaryRowAction("ADMIN", "PAYMENT_PENDING", "PICKUP")?.confirm).toBe(false);
+    expect(
+      primaryRowAction("ADMIN", "PAYMENT_PENDING", "PICKUP")?.confirm
+    ).toBe(false);
     // 수령 완료는 파기 시계를 켜고 되돌릴 수 없다.
-    expect(primaryRowAction("ADMIN", "IN_PRODUCTION", "PICKUP")?.confirm).toBe(true);
+    expect(primaryRowAction("ADMIN", "IN_PRODUCTION", "PICKUP")?.confirm).toBe(
+      true
+    );
   });
 });
 
@@ -319,7 +357,7 @@ describe("일 단위 뷰", () => {
   // 상태 아홉 개를 칩으로 늘어놓으면 기본이 "전체"가 되어, 8월의 100건이
   // 오늘의 세 건을 덮는다.
   it("서버와 같은 다섯 뷰를 같은 순서로 든다", () => {
-    expect(ADMIN_ORDER_VIEWS.map((view) => view.key)).toEqual([
+    expect(ADMIN_ORDER_VIEWS.map(view => view.key)).toEqual([
       "PAYMENT_CHECK",
       "PRODUCTION_QUEUE",
       "IN_PRODUCTION",
@@ -338,7 +376,9 @@ describe("일 단위 뷰", () => {
 
   it("모든 상태가 어느 뷰에는 들어간다", () => {
     // 빠진 상태가 있으면 그 주문은 화면 어디에서도 보이지 않는다.
-    const covered = ADMIN_ORDER_VIEWS.flatMap((view) => statusesForView(view.key));
+    const covered = ADMIN_ORDER_VIEWS.flatMap(view =>
+      statusesForView(view.key)
+    );
     for (const status of FILTERABLE_STATUSES) {
       expect(covered, status).toContain(status);
     }
@@ -346,7 +386,7 @@ describe("일 단위 뷰", () => {
 
   it("탭마다 그 화면에서 할 일이 적혀 있다", () => {
     // 탭 이름만으로는 무엇을 하는 자리인지 알기 어렵다.
-    expect(ADMIN_ORDER_VIEWS.every((view) => view.label.length > 0)).toBe(true);
+    expect(ADMIN_ORDER_VIEWS.every(view => view.label.length > 0)).toBe(true);
     expect(ADMIN_ORDER_VIEWS[1].label).toBe("제작 대기");
   });
 });
@@ -364,7 +404,7 @@ describe("사진 자리", () => {
 
     expect(rows).toHaveLength(5);
     expect(rows[0].label).toBe("사진 1");
-    expect(rows.slice(1).map((row) => row.label)).toEqual([
+    expect(rows.slice(1).map(row => row.label)).toEqual([
       "미기입",
       "미기입",
       "미기입",
@@ -377,13 +417,13 @@ describe("사진 자리", () => {
     const rows = photoSlotRows([{ slot: 1, filled: true }]);
 
     expect(rows).toHaveLength(5);
-    expect(rows.filter((row) => row.filled)).toHaveLength(1);
+    expect(rows.filter(row => row.filled)).toHaveLength(1);
     expect(rows[4].label).toBe("미기입");
   });
 
   it("값이 아예 없어도 화면을 깨지 않는다", () => {
     expect(photoSlotRows(undefined)).toHaveLength(5);
-    expect(photoSlotRows(undefined).every((row) => !row.filled)).toBe(true);
+    expect(photoSlotRows(undefined).every(row => !row.filled)).toBe(true);
   });
 });
 

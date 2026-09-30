@@ -369,7 +369,12 @@ export default function AdminOrders() {
   ].filter(Boolean).length;
 
   return (
-    <AdminShell title="굿즈 주문" role={role}>
+    <AdminShell title="전체 주문·배송" role={role}>
+      <p className="mb-3 text-sm text-muted-foreground">
+        탭 숫자는 검색·필터와 무관한 주문 상태별 전체 건수이며, 목록 건수는 현재
+        검색·필터를 적용한 결과입니다. 세부 제작 단계와 담당 작업은 입금·제작
+        관리에서 확인해 주세요. 두 화면은 집계 기준이 다릅니다.
+      </p>
       {/* 일 단위로 나눈 탭. 상태 칩을 늘어놓으면 기본이 "전체"가 되어
           8월의 100건이 오늘의 세 건을 덮는다. 숫자는 필터와 무관한 전체다 —
           탭은 "무엇이 남았나"이지 "지금 목록이 몇 건인가"가 아니다. */}

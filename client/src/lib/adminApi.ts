@@ -161,6 +161,7 @@ export type AdminPhotoDownload = {
 };
 
 export type AdminAccount = {
+  workRoles?: string[];
   id: number;
   email: string;
   name: string;
@@ -554,15 +555,12 @@ export const reinviteAdminAccount = (accountId: number) =>
   );
 
 /**
- * 실무 권한을 준다. 전체 관리자만 할 수 있다.
- *
- * 맡길 일은 승인한 뒤 담당자 설정에서 정한다. 여기서 비워 보내면 아직
- * 아무 제작 작업도 할 수 없는 상태로 열린다.
+ * 소유자가 작업 역할을 지정하면서 가입을 승인한다.
  */
-export const approveAdminAccount = (accountId: number) =>
+export const approveAdminAccount = (accountId: number, workRoles: string[]) =>
   adminRequest<void>(`/api/admin/accounts/${accountId}/approve`, {
     method: "POST",
-    body: JSON.stringify({ workRoles: [] }),
+    body: JSON.stringify({ workRoles }),
   });
 
 export const disableAdminAccount = (accountId: number) =>

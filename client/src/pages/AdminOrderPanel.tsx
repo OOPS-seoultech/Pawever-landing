@@ -19,6 +19,7 @@ import {
   type GoodsOrderStatus,
 } from "@/lib/adminApi";
 import { formatDateTime, formatKrw } from "@/lib/adminFormat";
+import { accessActionLabel } from "@/lib/adminHistory";
 import { AdminWorkflowPanel } from "./AdminWorkflowPanel";
 import {
   canCancel,
@@ -632,7 +633,7 @@ export function AdminOrderPanel({
             <ul className="space-y-1 text-sm">
               {order.accessLogs.map((log, index) => (
                 <li key={index} className="flex items-center gap-2">
-                  <span>{log.action}</span>
+                  <span>{accessActionLabel(log.action)}</span>
                   <span className="ml-auto text-xs text-muted-foreground">
                     담당자 #{log.adminAccountId} ·{" "}
                     {formatDateTime(log.accessedAt)}

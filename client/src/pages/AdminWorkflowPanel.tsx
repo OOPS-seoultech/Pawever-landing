@@ -48,7 +48,7 @@ export function AdminWorkflowPanel({
   const [accounts, setAccounts] = useState<StaffAccount[]>([]);
   const [photos, setPhotos] = useState<AdminPhotoDownload["photos"]>([]);
   const [events, setEvents] = useState<
-    { action: string; createdAt: string; actorId: number }[]
+    { action: string; createdAt: string; actorId: number | null }[]
   >([]);
   const permissions = staff?.permissions ?? [];
   const has = (permission: string) => permissions.includes(permission);
@@ -742,6 +742,8 @@ export function AdminWorkflowPanel({
                   PAYMENT_MISMATCH: "입금액 불일치",
                 } as Record<string, string>
               )[e.action] ?? e.action}
+              {" · "}
+              {e.actorId == null ? "담당자 정보 없음" : `담당자 #${e.actorId}`}
             </li>
           ))}
         </ol>

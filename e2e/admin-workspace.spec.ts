@@ -41,6 +41,14 @@ test("목록은 독립 스크롤되고 선택한 미배정 작업만 기본 배�
         permissions: ["VIEW_ALL_ORDERS", "VIEW_ORDER_BASIC", "ASSIGN_WORK"],
       };
     else if (path.endsWith("/workflow/orders")) data = rows;
+    else if (path.endsWith("/timeline"))
+      data = [
+        {
+          action: "ASSIGN_TASK",
+          actorId: 7,
+          createdAt: "2026-09-30T00:00:00Z",
+        },
+      ];
     else if (path.endsWith("/workflow/assign")) {
       const number = path.split("/")[4];
       const body = route.request().postDataJSON();
@@ -66,6 +74,8 @@ test("목록은 독립 스크롤되고 선택한 미배정 작업만 기본 배�
   ).toBeInViewport();
   expect(await list.evaluate(element => element.scrollTop)).toBeGreaterThan(0);
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
+  await page.getByText("작업 이력 (1)", { exact: true }).click();
+  await expect(page.getByText(/담당자 #7/)).toBeVisible();
   await page
     .getByRole("checkbox", {
       name: "PE-WORK-29 기본 담당자 배정 대상으로 선택",

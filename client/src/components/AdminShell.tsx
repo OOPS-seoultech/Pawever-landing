@@ -57,6 +57,30 @@ type Props = {
   splitWorkspace?: boolean;
 };
 
+function AdminNavLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: ReactNode;
+}) {
+  const [location] = useLocation();
+  const active = location === href;
+  return (
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className={
+        active
+          ? "font-semibold text-primary underline underline-offset-8"
+          : "hover:text-primary"
+      }
+    >
+      {children}
+    </Link>
+  );
+}
+
 export function AdminShell({
   title,
   role,
@@ -114,30 +138,39 @@ export function AdminShell({
         className="mx-auto flex w-full max-w-6xl shrink-0 flex-wrap gap-4 border-b px-4 py-3 text-sm"
       >
         {staff?.permissions.includes("VIEW_FILAMENT") && (
-          <Link href="/admin/filaments">필라멘트</Link>
+          <AdminNavLink href="/admin/filaments">필라멘트</AdminNavLink>
         )}
         {staff?.permissions.includes("VIEW_ORDER_BASIC") && (
           <>
-            <Link href="/admin/my-work">내 작업</Link>
-            <Link href="/admin/compensation">내 정산</Link>
+            <AdminNavLink href="/admin/my-work">내 작업</AdminNavLink>
+            <AdminNavLink href="/admin/compensation">
+              {staff?.role === "OWNER" ? "작업자 정산" : "내 정산"}
+            </AdminNavLink>
           </>
         )}
         {staff?.role === "PRODUCTION" && (
-          <Link href="/admin/as-assets">AS 열람</Link>
+          <AdminNavLink href="/admin/as-assets">AS 열람</AdminNavLink>
         )}
         {staff?.permissions.includes("MANAGE_PRINT_BATCH") && (
-          <Link href="/admin/print-batches">플레이트·출력 대기</Link>
+          <AdminNavLink href="/admin/print-batches">
+            플레이트·출력 대기
+          </AdminNavLink>
         )}
         {(staff?.permissions.includes("PACK_AND_EXPORT_SHIPMENTS") ||
           staff?.permissions.includes("COMPLETE_PICKUP")) && (
-          <Link href="/admin/shipments">포장·준등기</Link>
+          <AdminNavLink href="/admin/shipments">포장·준등기</AdminNavLink>
         )}
         {staff?.permissions.includes("VIEW_ALL_ORDERS") && (
           <>
-            <Link href="/admin/workflow">입금·제작 관리</Link>
-            <Link href="/admin/orders">전체 주문·배송</Link>
-            <Link href="/admin/completed-orders">완료 주문·AS</Link>
+            <AdminNavLink href="/admin/workflow">입금·제작 관리</AdminNavLink>
+            <AdminNavLink href="/admin/orders">전체 주문·배송</AdminNavLink>
+            <AdminNavLink href="/admin/completed-orders">
+              완료 주문·AS
+            </AdminNavLink>
           </>
+        )}
+        {staff?.permissions.includes("MANAGE_ACCOUNTS") && (
+          <AdminNavLink href="/admin/accounts">담당자 설정</AdminNavLink>
         )}
       </nav>
       <main
