@@ -59,20 +59,68 @@ test("실제 스풀을 등록하고 잔량과 사용 여부를 수정한다", as
   await page
     .getByRole("button", { name: "필라멘트 등록", exact: true })
     .click();
-  await page.getByLabel("실제 스풀 ID").fill("F-001");
-  await page.getByLabel("색상명", { exact: true }).fill("크림");
-  await page.getByLabel("재질", { exact: true }).fill("PLA");
-  await page.getByLabel("마감", { exact: true }).fill("무광");
+  await page
+    .getByText("추가 정보 (선택) · 제조사, 구매 정보, 기존 관리번호", {
+      exact: true,
+    })
+    .click();
+  await page.getByLabel("기존 관리번호").fill("F-001");
+  await page.getByLabel("제품 색상명 (필수)", { exact: true }).fill("크림");
+  await page
+    .getByRole("combobox", { name: "재질 (필수)", exact: true })
+    .selectOption("PLA");
+  await page
+    .getByRole("combobox", { name: "마감 (필수)", exact: true })
+    .selectOption("무광");
   await page.getByLabel("잔량(g)").fill("800");
   await page.getByRole("button", { name: "저장", exact: true }).click();
   await expect(page.getByRole("status")).toContainText("저장했습니다");
   await page.getByRole("button", { name: "F-001 수정" }).click();
-  await expect(page.getByLabel("실제 스풀 ID")).toBeDisabled();
+  await expect(
+    page.getByText("관리번호: F-001 · 등록 후 변경할 수 없습니다.", {
+      exact: true,
+    })
+  ).toBeVisible();
+  await expect(page.getByLabel("기존 관리번호")).toHaveCount(0);
   await page.getByLabel("잔량(g)").fill("600");
-  await page.getByLabel("사용 가능").uncheck();
+  await page.getByLabel("신규 제작에 선택 가능").uncheck();
   await page.getByRole("button", { name: "저장", exact: true }).click();
   await expect(page.getByText("사용 중지", { exact: true })).toBeVisible();
   expect(item.remainingGrams).toBe(600);
+});
+
+test("관리번호 자동 발급과 미측정 잔량으로 등록한다", async ({ page }) => {
+  await session(page, true);
+  let saved = false;
+  await page.route("**/api/admin/filaments**", async route => {
+    if (route.request().method() === "GET")
+      return route.fulfill({ json: { success: true, data: [] } });
+    const body = route.request().postDataJSON();
+    expect(body.spoolId).toBe("");
+    expect(body.remainingGrams).toBeNull();
+    expect(body.colorCategory).toBe("BEIGE");
+    saved = true;
+    return route.fulfill({
+      json: { success: true, data: { ...spool, ...body, spoolId: "F-002" } },
+    });
+  });
+  await page.goto("/admin/filaments");
+  await page
+    .getByRole("button", { name: "필라멘트 등록", exact: true })
+    .click();
+  await page.getByLabel("제품 색상명 (필수)").fill("크림");
+  await page
+    .getByRole("combobox", { name: "색상 분류 (선택)", exact: true })
+    .selectOption("BEIGE");
+  await page
+    .getByRole("combobox", { name: "재질 (필수)", exact: true })
+    .selectOption("PLA");
+  await page
+    .getByRole("combobox", { name: "마감 (필수)", exact: true })
+    .selectOption("무광");
+  await page.getByRole("button", { name: "저장", exact: true }).click();
+  await expect(page.getByRole("status")).toContainText("F-002");
+  expect(saved).toBe(true);
 });
 
 test("부위별 실제 필라멘트를 저장하고 재시도 후 플레이트 준비로 넘긴다", async ({

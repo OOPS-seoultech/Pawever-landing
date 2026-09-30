@@ -78,7 +78,8 @@ export type Filament = {
   manufacturer: string;
   source: string;
   priceKrw: number | null;
-  remainingGrams: number;
+  remainingGrams: number | null;
+  colorCategory?: string | null;
   active: boolean;
 };
 export type FilamentMapping = {
@@ -120,15 +121,15 @@ export const reviewChecks: Record<string, string> = {
 };
 export const stageLabels: Record<string, string> = {
   BLOCKED: "작업 배정 전",
-  MODELING_QUEUE: "모델링 대기",
-  MODELING: "모델링 중",
+  MODELING_QUEUE: "모델링 결과물 대기",
+  MODELING: "모델링 결과물 등록 중",
   MODEL_REVIEW: "모델 검수 대기",
   COLOR_MAPPING: "색상 작업 대기",
   PLATE_PREPARATION: "플레이트 준비",
   PRINT_QUEUE: "출력 대기",
   PRINTING: "출력 중",
   POST_PROCESSING: "후가공 대기",
-  QC: "품질 검수 대기",
+  QC: "출력물 검수 대기",
   PACKING: "포장 대기",
   COMPLETE: "제작 완료",
 };

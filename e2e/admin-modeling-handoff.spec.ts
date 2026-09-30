@@ -51,53 +51,148 @@ async function login(page: Page, role: string, permissions: string[]) {
   );
 }
 
-test("검수 담당자는 넘어온 고객 사진과 모델 파일을 열람한다", async ({ page }) => {
-  await login(page, "PRODUCTION", ["VIEW_ORDER_BASIC", "VIEW_CUSTOMER_PHOTOS", "VIEW_PRODUCTION_FILES", "DOWNLOAD_PRODUCTION_FILES", "REVIEW_MODEL"]);
-  const row = { ...initial(), productionStage: "MODEL_REVIEW", taskId: 12, assignee: { id: 2, name: "검수 담당자" }, allowedActions: [], artifacts: [{ id: "file-review", kind: "PRINT_MODEL", fileName: "choco.stl", size: 1024 }] };
+test("검수 담당자는 넘어온 고객 사진과 모델 파일을 열람한다", async ({
+  page,
+}) => {
+  await login(page, "PRODUCTION", [
+    "VIEW_ORDER_BASIC",
+    "VIEW_CUSTOMER_PHOTOS",
+    "VIEW_PRODUCTION_FILES",
+    "DOWNLOAD_PRODUCTION_FILES",
+    "REVIEW_MODEL",
+  ]);
+  const row = {
+    ...initial(),
+    productionStage: "MODEL_REVIEW",
+    taskId: 12,
+    assignee: { id: 2, name: "검수 담당자" },
+    allowedActions: [],
+    artifacts: [
+      {
+        id: "file-review",
+        kind: "PRINT_MODEL",
+        fileName: "choco.stl",
+        size: 1024,
+      },
+    ],
+  };
   let downloads = 0;
   await page.route("**/api/**", async route => {
     const path = new URL(route.request().url()).pathname;
     if (path.endsWith("/me")) return route.fallback();
-    if (path.endsWith("/my-tasks")) return route.fulfill({ json: { success: true, data: [row] } });
-    if (path.endsWith("/workflow")) return route.fulfill({ json: { success: true, data: row } });
-    if (path.endsWith("/timeline")) return route.fulfill({ json: { success: true, data: [] } });
-    if (path.endsWith("/photo-links")) return route.fulfill({ json: { success: true, data: { photos: [{ slot: 1, url: "https://files.example.test/photo.png", expiresAt: "2099-01-01" }] } } });
-    if (path.endsWith("/download-link")) { downloads++; return route.fulfill({ json: { success: true, data: { url: "https://files.example.test/choco.stl" } } }); }
+    if (path.endsWith("/my-tasks"))
+      return route.fulfill({ json: { success: true, data: [row] } });
+    if (path.endsWith("/workflow"))
+      return route.fulfill({ json: { success: true, data: row } });
+    if (path.endsWith("/timeline"))
+      return route.fulfill({ json: { success: true, data: [] } });
+    if (path.endsWith("/photo-links"))
+      return route.fulfill({
+        json: {
+          success: true,
+          data: {
+            photos: [
+              {
+                slot: 1,
+                url: "https://files.example.test/photo.png",
+                expiresAt: "2099-01-01",
+              },
+            ],
+          },
+        },
+      });
+    if (path.endsWith("/download-link")) {
+      downloads++;
+      return route.fulfill({
+        json: {
+          success: true,
+          data: { url: "https://files.example.test/choco.stl" },
+        },
+      });
+    }
     return route.fulfill({ status: 404 });
   });
-  await page.route("https://files.example.test/**", route => route.fulfill({ body: "test file" }));
+  await page.route("https://files.example.test/**", route =>
+    route.fulfill({ body: "test file" })
+  );
   await page.goto("/admin/my-work");
   await page.getByRole("button", { name: /PE-TEST001/ }).click();
-  await expect(page.getByRole("img", { name: "고객 사진 1" })).toHaveAttribute("src", "https://files.example.test/photo.png");
+  await expect(page.getByRole("img", { name: "고객 사진 1" })).toHaveAttribute(
+    "src",
+    "https://files.example.test/photo.png"
+  );
   await expect(page.getByText("choco.stl", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "모델링 완료", exact: true })).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "담당자", exact: true })).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "모델링 완료", exact: true })
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("link", { name: "담당자", exact: true })
+  ).toHaveCount(0);
   await page.getByRole("button", { name: "열기", exact: true }).click();
   await expect.poll(() => downloads).toBe(1);
 });
 
 test("담당자 관리에서 작업 역할과 기본 배정을 저장한다", async ({ page }) => {
-  await login(page, "OWNER", ["MANAGE_ACCOUNTS", "MANAGE_OPERATION_SETTINGS", "VIEW_ALL_ORDERS", "VIEW_ORDER_BASIC"]);
-  let staff = { id: 3, name: "모델링 담당자", role: "PRODUCTION", status: "ACTIVE", workRoles: [] as string[], version: 0 };
-  let settings = { modeling: null as number | null, review: null as number | null, version: 0 };
+  await login(page, "OWNER", [
+    "MANAGE_ACCOUNTS",
+    "MANAGE_OPERATION_SETTINGS",
+    "VIEW_ALL_ORDERS",
+    "VIEW_ORDER_BASIC",
+  ]);
+  let staff = {
+    id: 3,
+    name: "모델링 담당자",
+    role: "PRODUCTION",
+    status: "ACTIVE",
+    workRoles: [] as string[],
+    version: 0,
+  };
+  let settings = {
+    modeling: null as number | null,
+    review: null as number | null,
+    version: 0,
+  };
   await page.route("**/api/**", async route => {
     const path = new URL(route.request().url()).pathname;
     if (path.endsWith("/me")) return route.fallback();
-    if (path === "/api/admin/accounts") return route.fulfill({ json: { success: true, data: [] } });
-    if (path.endsWith("/staff")) return route.fulfill({ json: { success: true, data: [staff] } });
-    if (path.endsWith("/roles")) { const body = route.request().postDataJSON(); expect(body.reason).toBe("모델링 업무 배정"); expect(body.version).toBe(0); staff = { ...staff, workRoles: body.workRoles, version: 1 }; return route.fulfill({ json: { success: true, data: staff } }); }
-    if (path.endsWith("/default-assignees")) { if (route.request().method() === "PATCH") settings = { ...route.request().postDataJSON(), version: 1 }; return route.fulfill({ json: { success: true, data: settings } }); }
+    if (path === "/api/admin/accounts")
+      return route.fulfill({ json: { success: true, data: [] } });
+    if (path.endsWith("/staff"))
+      return route.fulfill({ json: { success: true, data: [staff] } });
+    if (path.endsWith("/roles")) {
+      const body = route.request().postDataJSON();
+      expect(body.reason).toBe("모델링 업무 배정");
+      expect(body.version).toBe(0);
+      staff = { ...staff, workRoles: body.workRoles, version: 1 };
+      return route.fulfill({ json: { success: true, data: staff } });
+    }
+    if (path.endsWith("/default-assignees")) {
+      if (route.request().method() === "PATCH")
+        settings = { ...route.request().postDataJSON(), version: 1 };
+      return route.fulfill({ json: { success: true, data: settings } });
+    }
     return route.fulfill({ status: 404 });
   });
   await page.goto("/admin/accounts");
-  await page.getByRole("combobox", { name: "계정", exact: true }).selectOption("3");
-  await page.getByLabel("모델링", { exact: true }).check();
+  await page
+    .getByRole("combobox", { name: "계정", exact: true })
+    .selectOption("3");
+  await page.getByLabel("모델링 결과물 등록", { exact: true }).check();
   await page.getByLabel("변경 사유").fill("모델링 업무 배정");
   await page.getByRole("button", { name: "작업 역할 저장" }).click();
-  await expect(page.getByRole("status")).toContainText("작업 역할을 저장했습니다.");
-  await page.getByRole("combobox", { name: "모델링 기본 담당자", exact: true }).selectOption("3");
+  await expect(page.getByRole("status")).toContainText(
+    "작업 역할을 저장했습니다."
+  );
+  await page
+    .getByRole("combobox", {
+      name: "입금 확인 후 → 결과물 등록 담당자",
+      exact: true,
+    })
+    .selectOption("3");
   await page.getByRole("button", { name: "기본 담당자 저장" }).click();
-  await expect(page.getByRole("status")).toContainText("기본 담당자를 저장했습니다.");
+  await expect(page.getByRole("status")).toContainText(
+    "기본 담당자를 저장했습니다."
+  );
   expect(settings.modeling).toBe(3);
 });
 
@@ -195,13 +290,11 @@ test("모델러가 시작하고 필수 파일을 등록하면 검수 인계 결�
     ["모델 원본", "model.blend", "application/octet-stream"],
     ["출력 파일", "model.stl", "application/octet-stream"],
   ]) {
-    await page
-      .getByLabel(`${label} 파일 선택`, { exact: true })
-      .setInputFiles({
-        name,
-        mimeType: mime,
-        buffer: Buffer.from("test-model-file"),
-      });
+    await page.getByLabel(`${label} 파일 선택`, { exact: true }).setInputFiles({
+      name,
+      mimeType: mime,
+      buffer: Buffer.from("test-model-file"),
+    });
     await expect(page.getByText(name, { exact: true })).toBeVisible();
   }
   await page.getByRole("button", { name: "모델링 완료", exact: true }).click();
@@ -261,9 +354,13 @@ test("입금 금액 불일치와 동시 수정 오류는 다음 행동을 안내
   await page.goto("/admin/workflow");
   await page.getByRole("button", { name: /PE-TEST001/ }).click();
   await page.getByLabel("실제 입금액").fill("1");
-  await page.getByRole("button", { name: "입금 확인", exact: true }).click();
+  await page
+    .getByRole("button", { name: "입금 불일치 기록", exact: true })
+    .click();
   await expect(
-    page.getByText("입금액이 주문 금액과 다릅니다.", { exact: true })
+    page
+      .getByLabel("작업 상세")
+      .getByText("입금액이 주문 금액과 다릅니다.", { exact: true })
   ).toBeVisible();
   await page.getByLabel("실제 입금액").fill("18900");
   await page.getByRole("button", { name: "입금 확인", exact: true }).click();
