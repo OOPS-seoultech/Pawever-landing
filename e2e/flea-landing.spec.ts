@@ -264,7 +264,7 @@ test.describe("콩콩마켓 랜딩", () => {
       await page.goto("/flea");
       await page.locator(`[data-cta-id="${ctaId}"]`).click();
       await expect(page).toHaveURL(
-        /\/goods-survey\/survey\?direct=1&channel=flea$/
+        /\/goods-survey\/order\?channel=flea$/
       );
     }
   });
@@ -277,7 +277,7 @@ test.describe("콩콩마켓 랜딩", () => {
     await page.goto("/flea");
     await page.locator('[data-cta-id="btn_F4"]').click();
 
-    await expect(page).toHaveURL(/\/goods-survey\/survey\?direct=1$/);
+    await expect(page).toHaveURL(/\/goods-survey\/order$/);
   });
 
   test("사진 등록 카드는 한 장부터 열린다", async ({ page }) => {
@@ -330,13 +330,13 @@ test.describe("콩콩마켓 랜딩", () => {
     );
   });
 
-  test("상시 랜딩은 그대로다", async ({ page }) => {
+  test("상시 랜딩은 별도 온라인 판매가를 표시한다", async ({ page }) => {
     // 플리마켓 화면을 새로 만들면서 기존 랜딩을 건드리지 않았다는 확인이다.
     // 같은 자리에서 두 값이 보이면 어느 쪽이 참인지 알 수 없다.
     await page.goto("/goods-survey");
 
     await expect(page.locator(".gs-topbar span")).toHaveText(
-      "2차 참여자 모집중"
+      "우리 아이 맞춤 피규어"
     );
     await expect(page.locator("body")).not.toContainText(FLEA_PRICE);
   });

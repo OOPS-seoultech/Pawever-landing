@@ -173,8 +173,7 @@ const faqs = [
     question: "설문하면 무엇이 달라지나요?",
     // 고침: 이 화면은 설문을 거치지 않는다. 원문은 상시 판매가만 말해서,
     // 방금 현장가를 보고 들어온 사람이 자기 값이 아닌 수를 읽게 된다.
-    answer:
-      `삼육대 콩콩마켓 현장가 ${wonText(GOODS_PRICE.flea)}은 설문과 상관없이 적용됩니다. 온라인 상시 판매에서는 설문을 마치면 ${wonText(GOODS_PRICE.member)}에 구매할 수 있습니다.`,
+    answer: `삼육대 콩콩마켓 현장가 ${wonText(GOODS_PRICE.flea)}은 설문과 상관없이 적용됩니다. 온라인 상시 판매에서는 ${wonText(GOODS_PRICE.presale)}에 구매할 수 있습니다.`,
   },
   {
     question: "사진은 어떤 걸 보내야 하나요?",
@@ -271,8 +270,8 @@ export default function FleaLanding() {
     });
     setLocation(
       channel === "flea"
-        ? "/goods-survey/survey?direct=1&channel=flea"
-        : "/goods-survey/survey?direct=1"
+        ? "/goods-survey/order?channel=flea"
+        : "/goods-survey/order"
     );
   };
 
@@ -602,7 +601,10 @@ export default function FleaLanding() {
             <span>삼육대 콩콩마켓 전용 {FLEA_DISCOUNT_PERCENT}% 할인가</span>
             <strong>{wonText(FLEA_PRICE)}</strong>
             <small>선착순 70개 한정수량</small>
-            {buyCta("figure", `콩콩마켓 맞이 ${FLEA_DISCOUNT_PERCENT}% 저렴하게`)}
+            {buyCta(
+              "figure",
+              `콩콩마켓 맞이 ${FLEA_DISCOUNT_PERCENT}% 저렴하게`
+            )}
           </article>
         </section>
 

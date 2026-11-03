@@ -10,7 +10,7 @@ import { GOODS_PRICE, payableKrw } from "./goodsSurveyContent";
  * 깎고, 부자재를 더하고, 배송비를 더한다.
  */
 describe("낼 금액", () => {
-  const flea = { directPurchase: true, channel: "flea" } as const;
+  const flea = { channel: "flea" } as const;
 
   it("현장 수령에 키링을 안 붙이면 제작비 그대로다", () => {
     expect(

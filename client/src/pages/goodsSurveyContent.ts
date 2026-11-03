@@ -1,13 +1,7 @@
-/**
- * 11차 회의록에서 정한 2차 판매 가격.
- *
- * 랜딩과 설문 완료 화면이 같은 금액을 말해야 한다. 파일마다 숫자를 적어 두면
- * 한 곳만 고치고 나머지를 놓쳐, 화면에 따라 다른 값이 보인다.
- */
+/** 랜딩·주문 동의 금액은 서버의 통로별 가격과 같아야 한다. */
 export const GOODS_PRICE = {
-  list: 34_900,
-  presale: 29_900,
-  member: 23_900,
+  list: 29_900,
+  presale: 25_900,
   /* 과기대 플리마켓 현장 한정가. 서버의 flea-discount-krw 를 뺀 값과 같다
      (29,900 − 11,000 = 18,900). 어긋나면 동의 문구에 적은 금액과 청구되는
      금액이 달라진다. */
@@ -30,28 +24,11 @@ export const GOODS_PRICE = {
  * 소수 한 자리로 적는다 — 디자인이 "60.2%"처럼 한 자리를 쓴다.
  */
 export const fleaDiscountPercentText = () =>
-  (
-    ((GOODS_PRICE.presale - GOODS_PRICE.flea) / GOODS_PRICE.presale) *
-    100
-  ).toFixed(1);
+  (((GOODS_PRICE.list - GOODS_PRICE.flea) / GOODS_PRICE.list) * 100).toFixed(1);
 
-/** 설문 참여자에게 깎아 주는 금액. 서버의 survey-discount-krw 와 같다. */
-export const GOODS_SURVEY_DISCOUNT = GOODS_PRICE.presale - GOODS_PRICE.member;
-
-/**
- * 이 사람이 낼 금액.
- *
- * 설문을 거치지 않고 바로 신청하면 정가다. 동의 문구에 이 값을 적으므로,
- * 서버가 매기는 금액과 어긋나면 동의한 금액과 청구되는 금액이 달라진다.
- */
-export const applicablePriceKrw = (
-  directPurchase: boolean,
-  channel: "online" | "flea" = "online"
-) => {
-  // 플리마켓은 설문을 거칠 길이 없는 자리라 누가 오든 같은 값이다.
-  if (channel === "flea") return GOODS_PRICE.flea;
-  return directPurchase ? GOODS_PRICE.presale : GOODS_PRICE.member;
-};
+/** 판매 통로별 제작비. 서버가 같은 금액을 계산한다. */
+export const applicablePriceKrw = (channel: "online" | "flea" = "online") =>
+  channel === "flea" ? GOODS_PRICE.flea : GOODS_PRICE.presale;
 
 /**
  * 이 사람이 실제로 낼 금액.
@@ -64,7 +41,6 @@ export const applicablePriceKrw = (
  * 더하고, 배송비를 더한다.
  */
 export const payableKrw = (input: {
-  directPurchase: boolean;
   channel: "online" | "flea";
   deliveryMethod: "shipping" | "pickup";
   /**
@@ -90,7 +66,7 @@ export const payableKrw = (input: {
         ? 1
         : 0;
   return (
-    applicablePriceKrw(input.directPurchase, input.channel) * petCount +
+    applicablePriceKrw(input.channel) * petCount +
     GOODS_PRICE.keyring * keyringCount +
     // 한 상자에 담아 한 번 부친다. 몇 마리든 배송비는 한 번이다.
     shippingFeeKrw(input.deliveryMethod)
@@ -133,132 +109,8 @@ export const formatPhoneNumber = (value: string) => {
 
 export const wonText = (value: number) => `${value.toLocaleString("ko-KR")}원`;
 
-export const goodsSurveyIntroContent = {
-  title: "오늘을 더 기억하기 위한 반려견 돌봄 경험 조사",
-  introduction: [
-    "저희는 오늘을 더 잘 기억하는 서비스를 만들고 있어요.",
-    "그래서 아이와의 일상과 돌봄 경험을 질문드려요.",
-    '여러분의 답이 "언제, 어떤 도움이 필요한지" 파악하는 데 큰 도움이 돼요.',
-    "설문 후반부엔 노화·아픔에 관한 질문도 조금 있어요.",
-    "답하기 어려우면 건너뛰어도 괜찮습니다 :)",
-  ],
-  responseCriteria: [
-    "반려견이 여러 마리라면 현재 가장 많이 돌보고 있는 아이 한 마리를 떠올려 주세요.",
-    "이별 경험을 중심으로 답하고 싶다면 가장 최근에 이별한 아이 한 마리를 기준으로 응답해 주세요.",
-    "이후 문항의 ‘아이’는 이 한 마리를 뜻합니다.",
-  ],
-  expectedTime: "예상 시간: 10~15분, 최대 20분 이내",
-  audience:
-    "대상: 현재 반려견을 양육 중이거나 반려견과 이별한 경험이 있는 만 18세 이상 반려인",
-} as const;
-
-export const goodsSurveyClosingContent = {
-  title: "아이와의 시간을 떠올리며 답해 주셔서 감사합니다.",
-  paragraphs: [
-    "미리 알아두는 게 편한 분도, 오늘에 집중하고 싶은 분도 계십니다. 저희는 각자의 속도를 존중하며 필요한 순간에 곁에 있으려 합니다.",
-    "오늘 한 번 더 바라보고, 한 번 더 함께 걷고, 한 장 더 남기는 것. 그렇게 아이와의 시간을 후회 없이 채우도록 돕는 일. 저희의 바람입니다.",
-  ],
-  storyTitle: "체크만으로는 모두 담지 못한 이야기가 있나요?",
-  // 굿즈는 1차로 마감됐다. 줄 수 없는 것을 사연의 대가로 약속하지 않는다.
-  storyDescription:
-    "아이와의 시간이 전과 다르게 보이기 시작한 어느 날을 남겨 주세요. 작성하지 않아도 설문 참여에 불이익은 없습니다.",
-  storyButton: "사연 남기기",
-  skipButton: "설문만 제출하기",
-} as const;
-
-export const goodsSurveyStoryContent = {
-  title: "그날부터, 아이가 조금 다르게 보이기 시작했어요.",
-  introduction: [
-    "아이와의 시간이 소중하다고 느낀 순간, 그 뒤 달라진 작은 습관, 그리고 오늘을 후회 없이 보내기 위한 마음속 약속을 들려주세요.",
-    "흰 털 한 가닥, 전보다 느려진 걸음, 사진 앱 속 어린 날의 얼굴처럼 아주 작은 장면도 좋습니다. 지금 함께 사는 이야기도, 이미 떠나간 이야기도 괜찮아요. 모든 질문에 답하지 않아도 됩니다.",
-  ],
-  sections: {
-    basicInfo: "최소 기본 정보",
-    commonStories: "모두에게 묻는 이야기 질문",
-    currentGuardian: "현재 함께 사는 반려인에게만 보이는 질문",
-    departedGuardian: "이별 경험자에게만 보이는 질문",
-    closing: "마무리 질문",
-    consents: "공개·연락 동의",
-  },
-  fields: {
-    status: "T1. 지금 아이와 함께 살고 있나요?",
-    age: "T2. 아이의 현재 나이 또는 이별 당시 나이는 몇 살인가요?",
-    condition: "T3. 당시 아이의 상태는 어땠나요?",
-    scene: {
-      label: "이야기 1. 행복 속에서 문득 스친 생각",
-      prompt:
-        "아이와 정말 행복한 순간에, “이 시간을 영원히 함께할 순 없겠구나”라는 생각이 문득 든 적이 있나요? 그때 어디에 있었고 아이는 뭘 하고 있었나요? 표정, 걸음, 소리, 냄새, 날씨, 누군가의 말처럼 기억나는 작은 단서부터 이야기를 들려주세요.",
-      recommended: "권장 300~1,000자",
-      maxLength: 1000,
-    },
-    changedDay: {
-      label: "이야기 2. 그 장면 뒤 나도 모르게 달라진 하루",
-      prompt:
-        "그날 이후, 하루 중에 아주 조금이라도 달라진 게 있었나요? 잠든 아이를 한 번 더 바라본 일, 사진을 더 찍은 일, 산책길을 바꾼 일, 병원이나 검색창을 열어본 일처럼 실제 행동을 들려주세요.",
-      recommended: "권장 200~700자",
-      maxLength: 700,
-    },
-    startedNow: {
-      label: "이야기 3. 지금을 후회 없이 보내려 시작한 것",
-      prompt:
-        "아이와 함께 있는 지금, 더 자주 하고 싶은 일이나 미루지 않기로 한 일이 있나요? 오래 기억하려고 남기고 있는 것도 좋습니다.",
-      recommended: "권장 200~700자",
-      maxLength: 700,
-    },
-    unsaidSearch: {
-      label: "이야기 4. 썼다가 지운 말, 끝내 묻지 못한 말",
-      prompt:
-        "알고 싶었지만 알게 될까 두려워 검색하지 못한 것, 병원이나 가족에게 차마 묻지 못한 말이 있었나요? 정확한 문장이 아니어도 괜찮습니다.",
-      recommended: "권장 100~500자",
-      maxLength: 500,
-    },
-    neededHelp: {
-      label: "이야기 5. 그때 누군가 조용히 알려주었으면 했던 것",
-      prompt:
-        "그때 정말 필요했던 정보나 도움이 있었나요? 어떤 사람 또는 서비스가, 어떤 순간에, 어떤 말로 다가왔다면 부담 없이 받을 수 있었을지도 들려주세요.",
-      recommended: "권장 200~700자",
-      maxLength: 700,
-    },
-    postponed: {
-      label: "이야기 6-A. 아직은 미뤄두고 싶은 것",
-      prompt:
-        "언젠가는 알아야 한다고 느끼면서도 “지금은 아직”이라며 미뤄둔 것이 있나요? 그 정보를 어떤 말과 타이밍으로 건넨다면, 외면하지 않고 잠시 머물러볼 수 있을까요?",
-      recommended: "권장 200~700자",
-      maxLength: 700,
-    },
-    wishKnownEarlier: {
-      label: "이야기 6-B. 지나고 나서야 알았더라면 싶은 것",
-      prompt:
-        "당시엔 너무 이르거나 불길하다 여겼지만, 지나고 보니 미리 알았더라면 아이와 나 모두 조금 덜 힘들었겠다 싶은 것이 있나요? 언제, 누구에게서, 어떤 말로 전해졌다면 좋았을지 함께 들려주세요.",
-      recommended: "권장 200~800자",
-      maxLength: 800,
-    },
-    finalHelp: {
-      label: "이야기 7-B. 마지막 무렵 가장 필요했던 도움",
-      prompt:
-        "마지막 시간이 가까워졌을 때 가장 필요했던 도움은 무엇이었나요? 반대로 선의였지만 힘이 되지 않았던 말이나 서비스가 있었다면 함께 들려주셔도 좋습니다.",
-      recommended: "권장 200~800자",
-      maxLength: 800,
-    },
-    oneLine: {
-      label: "이야기 8. 오늘의 아이에게 남기는 한 문장",
-      prompt:
-        "지금 곁에 있는 아이에게, 또는 마음속에 남아 있는 아이에게 오늘 한 문장만 건넨다면 무엇인가요?",
-      recommended: "100자 이내",
-      maxLength: 100,
-    },
-  },
-  consents: {
-    analysis: "익명 연구·서비스 개선 분석 동의",
-    // 사연 글에 대한 동의다. 사진은 제작 단계에서 따로 묻는다
-    // (goodsSurveyProductionContent.photoPublishConsent).
-    publish: "익명으로 SNS에 공유해도 괜찮을까요?",
-    note: "SNS 공유를 수락해주신 분들의 사연 중에서만 소개하며, 모든 사연이 공유되지는 않습니다.",
-  },
-} as const;
-
 export const goodsSurveyProductionContent = {
-  title: "굿즈 제작 정보를 알려주세요.",
+  title: "우리 아이 피규어를 주문해 주세요.",
   lead: "수작업 3D 굿즈 특성상 5일에서 최대 3주까지 시간이 소요될 수 있어요. 제공하신 정보는 굿즈 배송 완료일로부터 3개월 뒤 모두 삭제됩니다.",
   phoneFormatError: "휴대폰 번호를 끝까지 입력해 주세요 (예: 010-1234-5678)",
   safety:

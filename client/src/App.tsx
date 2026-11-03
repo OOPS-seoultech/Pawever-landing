@@ -51,7 +51,7 @@ function Router() {
       <Route path="/privacy" component={PrivacyPolicy} />
       <Route path="/account-deletion" component={AccountDeletion} />
       <Route path="/contact" component={Contact} />
-      <Route path="/goods-survey/survey" component={GoodsSurveyForm} />
+      <Route path="/goods-survey/order" component={GoodsSurveyForm} />
       <Route path="/goods-survey" component={GoodsSurvey} />
       {/* 삼육대 콩콩마켓 전용. 현장 QR 로만 들어온다. */}
       <Route path="/flea" component={FleaLanding} />
