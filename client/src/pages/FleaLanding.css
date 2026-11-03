@@ -97,6 +97,10 @@
   text-decoration: line-through;
 }
 
+.flea-hero .gs-hero-arrow {
+  mix-blend-mode: multiply;
+}
+
 .flea-price-card {
   margin-top: 25px;
   padding: 24px;
