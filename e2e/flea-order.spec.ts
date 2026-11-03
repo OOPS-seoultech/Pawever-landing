@@ -79,7 +79,7 @@ test.describe("플리마켓 주문", () => {
 
     await expect(page.locator(".gsf-delivery")).toBeVisible();
     await expect(
-      page.locator('.gsf-delivery label:has-text("삼육대에서 받아가기") input')
+      page.locator('.gsf-delivery label:has-text("서울과학기술대학교 상상관에서 받아가기") input')
     ).toBeChecked();
 
     await expect(consent(page)).toContainText("제작비 18,900원");
