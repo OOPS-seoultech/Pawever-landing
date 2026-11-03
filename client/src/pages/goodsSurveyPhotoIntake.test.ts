@@ -99,7 +99,7 @@ describe("랜딩에서 고른 사진은 주문 단계에서 제출된다", () =>
     // 첫 아이에게 붙인다. 지연 초기화 안에서 읽으므로 렌더마다 다시
     // 읽지 않는다.
     expect(form).toContain("useState<PetDraft[]>(() =>");
-    expect(form).toContain("photos: loadGoodsSurveyPhotoHandoff(),");
+    expect(form).toContain("photos: loadGoodsSurveyPhotoHandoff()");
     // 제출까지 끝나면 들고 있을 이유가 없다.
     expect(form).toContain("clearGoodsSurveyPhotoHandoff()");
   });

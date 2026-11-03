@@ -223,9 +223,9 @@ test.describe("플리마켓 주문", () => {
     // 플리마켓을 붙이면서 기존 길을 건드리지 않았다는 확인이다.
     await page.goto(ONLINE);
 
-    await expect(page.locator(".gsf-delivery")).toHaveCount(0);
+    await expect(page.locator(".gsf-delivery")).toBeVisible();
     await expect(page.getByPlaceholder("우편번호")).toBeVisible();
-    await expect(consent(page)).toContainText("제작비 29,900원");
-    await expect(consent(page)).toContainText("32,900원");
+    await expect(consent(page)).toContainText("제작비 25,900원");
+    await expect(consent(page)).toContainText("28,900원");
   });
 });

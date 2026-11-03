@@ -20,7 +20,7 @@ const NAV_ITEMS = [
   { href: "/roadmap", label: "향후 방향" },
   { href: "/contact", label: "문의" },
   { href: "/goods-survey", label: "맞춤 굿즈" },
-  { href: "/goods-survey/survey", label: "설문 참여" },
+  { href: "/goods-survey/survey?direct=1", label: "피규어 주문" },
 ];
 
 export default function SiteHeader() {

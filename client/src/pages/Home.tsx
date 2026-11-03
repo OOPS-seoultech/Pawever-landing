@@ -4,32 +4,11 @@ import { getSurveyCampaign } from "@/lib/goodsSurveyApi";
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
 
-/**
- * 포에버 홈.
- *
- * 6~11세 반려견의 일상·건강 변화를 쌓아 병원 상담 준비까지 잇는 흐름을 보여준다.
- * 방문자가 앱·굿즈·설문 중 지금 필요한 길을 고르게 하는 것이 이 화면의 일이다.
- *
- * 피그마 8. Website / Identify and Connect Home Component > PawEverHome
- * (5200:1448) 기준이다.
- *
- * 값은 get_design_context 가 준 CSS 다. 예전에는 좌표만 받아서 글자 크기를
- * "피그마 텍스트 폭 ÷ 브라우저 실측 폭"으로 역산했고, 그래서 36→35, 23→19,
- * 34→32 처럼 크기가 조금씩 어긋나 있었다. 버튼 높이·모서리·굵기처럼
- * 좌표에 잡히지 않는 것은 아예 다른 값이었다.
- */
-
 /** 굿즈 줄에 깔리는 강조 배경. 앱 버튼도 같은 색을 쓴다. */
 const HIGHLIGHT_BG = "#FFF9F3";
 /** 히어로 보조 버튼과 향후 방향 버튼 배경. */
 const SOFT_BUTTON_BG = "#FFF0E0";
-/**
- * 설문 버튼 배경.
- *
- * --primary(#FF9F43)와 다른 주황이다. 굿즈 버튼이 --primary 라서 나란히 두면
- * 설문 쪽이 아주 조금 밝다. 피그마가 그렇게 나눠 두었다.
- */
-const SURVEY_BUTTON_BG = "#FFA94E";
+
 /** 히어로 눈썹 글자. 흰색이 아니라 살구빛이 도는 흰색이다. */
 const HERO_EYEBROW = "#FFF0E0";
 /** 히어로 본문과 실적 설명. 순백보다 한 단계 낮다. */
@@ -39,7 +18,6 @@ const HERO_BODY = "#F6F6F6";
 const BUTTON =
   "inline-flex h-[50px] items-center justify-center rounded-[12px] px-6 text-base font-semibold transition-colors";
 
-/** 설문을 건너뛰고 곧장 주문으로 — 대표님 요청 3번의 첫 갈래다. */
 const DIRECT_PURCHASE = "/goods-survey/survey?direct=1";
 /** 굿즈를 팔지 않는 동안 신청 버튼이 대신 가는 곳. */
 const GOODS_LANDING = "/goods-survey";
@@ -79,18 +57,6 @@ const HIGHLIGHTS = [
   },
 ];
 
-/**
- * 세 가지 길.
- *
- * 카드 세 장이 아니라 가로 줄 세 개다. 왼쪽에 갈래 이름, 가운데 설명,
- * 오른쪽에 버튼이 선다.
- *
- * proof: 그 길이 어디까지 왔는지. 앱은 비워 둔다 — 피그마도 비워 두었고,
- * 없는 수를 지어내지 않는다.
- *
- * variant: 굿즈와 설문만 주황 버튼이다. 앱은 조용한 버튼으로 둔다. 셋 다
- * 같은 무게로 두면 지금 밀어야 할 길이 묻힌다.
- */
 const ENTRY_POINTS = [
   {
     category: "기록과 케어",
@@ -115,25 +81,10 @@ const ENTRY_POINTS = [
     action: "굿즈 얼리버드 신청하기",
     // 일곱 버튼 중 이것만 글자에 밑줄이 있다. 확대해 보기 전에는 안 보였다.
     underlined: true,
-    // 설문을 건너뛰고 곧장 신청으로 간다 — 대표님 요청 3번의 첫 갈래다.
-    // 이 길은 29,900원이고 설문을 거치는 길은 23,900원이다. 바로 아래
     // '보기 →' 가 랜딩으로 가는 길을 따로 열어 둔다.
     href: DIRECT_PURCHASE,
     variant: "primary" as const,
     highlighted: true,
-  },
-  {
-    category: "함께 만드는 다음 서비스",
-    title: "반려인 설문",
-    body: "15분 설문으로 지금 필요한 케어와 서비스에 대한 경험을 들려주세요.",
-    proof: "반려인 731명 조사 완료",
-    proofNote: "(2026. 08. 12 기준)",
-    secondary: null,
-    action: "15분 설문 참여하기",
-    underlined: false,
-    href: "/goods-survey/survey",
-    variant: "survey" as const,
-    highlighted: false,
   },
 ];
 
@@ -183,13 +134,6 @@ export default function Home() {
     };
   }, []);
 
-  /**
-   * 신청 버튼이 갈 곳.
-   *
-   * 닫혀 있으면 랜딩으로 보낸다. 랜딩은 닫힌 상태를 설명할 줄 알고
-   * ("2차 오픈 시 신청할 수 있어요") 설문으로 가는 길도 함께 열어 둔다.
-   * 주문 화면에는 그 말을 할 자리가 없다.
-   */
   const buyHref = (href: string) =>
     href === DIRECT_PURCHASE && !goodsOpen ? GOODS_LANDING : href;
 
@@ -237,11 +181,11 @@ export default function Home() {
                   나에게 맞는 서비스 찾기
                 </Link>
                 <Link
-                  href="/goods-survey/survey"
+                  href="/goods-survey"
                   className={`${BUTTON} text-xl text-foreground hover:brightness-95`}
                   style={{ backgroundColor: SOFT_BUTTON_BG }}
                 >
-                  15분 설문으로 의견 남기기
+                  우리 아이 피규어 알아보기
                 </Link>
               </div>
             </div>
@@ -293,11 +237,11 @@ export default function Home() {
           </div>
         </section>
 
-        {/* 시작하는 세 가지 방법 */}
+        {/* 시작하는 두 가지 방법 */}
         <section className="bg-card">
           <div className="mx-auto w-full max-w-[1248px] px-6 py-[94px]">
             <Eyebrow>지금 필요한 길을 선택하세요.</Eyebrow>
-            <SectionTitle>포에버를 시작하는 세 가지 방법</SectionTitle>
+            <SectionTitle>포에버를 시작하는 두 가지 방법</SectionTitle>
 
             <ul className="pt-10">
               {ENTRY_POINTS.map(entry => (
@@ -364,11 +308,7 @@ export default function Home() {
                       ].join(" ")}
                       style={{
                         backgroundColor:
-                          entry.variant === "quiet"
-                            ? HIGHLIGHT_BG
-                            : entry.variant === "survey"
-                              ? SURVEY_BUTTON_BG
-                              : undefined,
+                          entry.variant === "quiet" ? HIGHLIGHT_BG : undefined,
                       }}
                       data-variant={entry.variant}
                     >
@@ -386,7 +326,9 @@ export default function Home() {
           <div className="mx-auto flex w-full max-w-[1248px] flex-col gap-8 px-6 py-16 lg:flex-row lg:items-center lg:justify-between lg:py-[82px]">
             <div className="max-w-[753px]">
               <Eyebrow>건강한 오늘에서 필요한 다음 케어까지</Eyebrow>
-              <SectionTitle>기록을 바탕으로 아이와의 접점을 늘려요.</SectionTitle>
+              <SectionTitle>
+                기록을 바탕으로 아이와의 접점을 늘려요.
+              </SectionTitle>
               <p className="max-w-[720px] pt-[18px] text-[17px] leading-[28.9px] text-muted-foreground">
                 일상 기록과 병원 상담 준비에서 시작해 건강관리, 보험, 상담,
                 노령기 돌봄 등 생애주기에 필요한 연결을 단계적으로 확장합니다.
@@ -422,7 +364,7 @@ export default function Home() {
                 </h2>
               </div>
               <p className="pt-[18px] text-[17px] leading-[28.9px] text-muted-foreground">
-                앱, 맞춤 굿즈, 설문, 제휴에 관한 문의를 남겨 주세요.
+                앱, 맞춤 굿즈, 제휴에 관한 문의를 남겨 주세요.
               </p>
             </div>
             <Link
@@ -453,10 +395,10 @@ export default function Home() {
             굿즈 얼리버드 신청하기
           </Link>
           <Link
-            href="/goods-survey/survey"
+            href="/goods-survey"
             className="rounded-[10px] border border-border bg-card px-6 py-2.5 text-center font-medium shadow-sm transition-colors hover:bg-accent/10"
           >
-            15분 설문으로 포에버의 다음 서비스를 함께 만들어 주세요
+            사진으로 만드는 우리 아이 피규어를 만나보세요
           </Link>
         </div>
       </div>

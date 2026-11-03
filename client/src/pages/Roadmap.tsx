@@ -139,15 +139,14 @@ export default function Roadmap() {
               여러분의 경험으로부터 시작됩니다
             </h2>
             <p className="mx-auto max-w-[672px] pt-4 text-base leading-[26px] text-muted-foreground">
-              15분 설문으로 지금 필요한 케어와 포에버의 다음 방향에 의견을 더해
-              주세요.
+              지금 필요한 케어와 포에버의 다음 방향에 관한 의견을 문의로 남겨 주세요.
             </p>
             <div className="flex flex-wrap justify-center gap-4 pt-7">
               <Link
-                href="/goods-survey/survey"
+                href="/goods-survey"
                 className="inline-flex h-10 items-center rounded-[12px] bg-primary px-6 text-sm font-medium text-primary-foreground shadow-[1px_2px_2px_rgba(173,138,105,0.16)] transition-colors hover:bg-primary/90"
               >
-                15분 설문 참여하기
+                맞춤 피규어 살펴보기
               </Link>
               <Link
                 href="/contact"

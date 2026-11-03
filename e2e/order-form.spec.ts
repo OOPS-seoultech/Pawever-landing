@@ -56,9 +56,9 @@ test.describe("설문을 건너뛴 주문", () => {
     await page.goto(DIRECT);
 
     const label = page.locator('label:has-text("결제하는 데 동의합니다")');
-    await expect(label).toContainText("제작비 29,900원");
+    await expect(label).toContainText("제작비 25,900원");
     await expect(label).toContainText("배송비 3,000원");
-    await expect(label).toContainText("32,900원");
+    await expect(label).toContainText("28,900원");
   });
 
   test("들어오자마자 초안을 만들고 직행이라고 서버에 알린다", async ({
@@ -106,13 +106,13 @@ test.describe("설문을 건너뛴 주문", () => {
     await expect(page.locator(".gsf-preparing")).toHaveCount(0);
   });
 
-  test("설문으로 들어오면 안내는 그대로다", async ({ page }) => {
+  test("기본 주소로 들어와도 바로 주문한다", async ({ page }) => {
     // 직행만 건너뛴다. 설문에 답하러 온 사람은 무엇을 받는지 알고 시작해야
     // 한다.
     await page.goto("/goods-survey/survey");
 
-    await expect(page.locator(".gsf-intro")).toBeVisible();
-    await expect(page.locator(".gsf-header-time")).toHaveText("약 15분");
+    await expect(page.getByText("마지막 단계")).toBeVisible();
+    await expect(page.locator(".gsf-intro, .gsf-header-time")).toHaveCount(0);
   });
 
   test("사진이 없으면 다 채워도 신청이 잠긴 채로 있다", async ({ page }) => {
@@ -283,12 +283,12 @@ test.describe("설문을 건너뛴 주문", () => {
     expect(sizes.link).toBeLessThan(sizes.consent);
   });
 
-  test("상시 주문은 상시 랜딩으로 돌아가고 설문 길도 남는다", async ({
+  test("상시 주문 완료 뒤에는 상시 랜딩으로 돌아간다", async ({
     page,
   }) => {
     // 플리마켓 맥락을 붙이면서 기존 길을 좁히지 않았다는 확인이다. 설문을
     // 거쳐 온 사람에게는 다시 답할 길이 있어야 한다.
-    await mockSubmit(page, { shippingFeeKrw: 3000, paymentAmountKrw: 32900 });
+    await mockSubmit(page, { shippingFeeKrw: 3000, listPriceKrw: 29900, discountAmountKrw: 4000, paymentAmountKrw: 28900 });
     await page.goto(DIRECT);
     await fillShipping(page);
     await page
@@ -302,7 +302,7 @@ test.describe("설문을 건너뛴 주문", () => {
     await consent(page, "결제하는 데 동의합니다").check();
     await page.getByRole("button", { name: /신청 완료하기/ }).click();
 
-    await expect(page.getByText("새 응답 작성하기")).toBeVisible();
+    await expect(page.getByText("새 응답 작성하기")).toHaveCount(0);
     await page.getByRole("button", { name: "랜딩페이지로 돌아가기" }).click();
     await expect(page).toHaveURL(/\/goods-survey$/);
   });

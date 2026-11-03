@@ -1420,3 +1420,29 @@
   color: rgba(43, 35, 32, 0.66);
   cursor: pointer;
 }
+
+.gs-customer-review-heading {
+  margin: 24px 0 14px;
+  font-size: 20px;
+  font-weight: 800;
+}
+.gs-customer-reviews {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.gs-customer-reviews img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 9 / 16;
+  object-fit: cover;
+  border-radius: 12px;
+}
+.gs-product-card > s,
+.gs-buy-card > s {
+  display: block;
+  color: var(--gs-body);
+  font-size: 16px;
+  margin: 8px 0;
+}
