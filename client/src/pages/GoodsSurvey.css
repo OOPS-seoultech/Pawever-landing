@@ -1203,6 +1203,40 @@
   font-size: 20px;
   font-weight: 800;
 }
+
+.gs-figure-compare {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) 24px minmax(0, 4fr);
+  align-items: center;
+  gap: 8px;
+  margin-top: 22px;
+}
+
+.gs-delivery-gallery {
+  margin: 0;
+}
+
+.gs-delivery-gallery > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 10px;
+}
+
+.gs-delivery-gallery img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+}
+
+.gs-delivery-gallery figcaption {
+  margin-top: 10px;
+  color: var(--gs-muted);
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+}
 .gs-customer-reviews {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

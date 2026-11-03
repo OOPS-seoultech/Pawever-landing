@@ -6,6 +6,7 @@ import { usePageEngagement, useScrollDepth } from "@/lib/analytics/react";
 import { getSurveyCampaign, type SurveyCampaign } from "@/lib/goodsSurveyApi";
 import { saveGoodsSurveyPhotoHandoff } from "@/lib/goodsSurveyPhotoHandoff";
 import { PhotoIntakeCard, PrimaryCta } from "./goodsSurveyIntake";
+import { GoodsDeliveryGallery } from "./goodsDeliveryGallery";
 import { GOODS_PRICE, wonText } from "./goodsSurveyContent";
 import "./GoodsSurvey.css";
 const PRICE = GOODS_PRICE;
@@ -49,6 +50,36 @@ const FIGURES: Record<string, FigureSlot> = {
     alt: "반려견의 특징을 정리한 맞춤 피규어 네 방향 모습",
     w: 388,
     h: 388,
+  },
+  figureReal: {
+    src: "flea-figure-real.webp",
+    alt: "실제 반려견 모습을 참고해 만든 비교 이미지",
+    w: 290,
+    h: 386,
+  },
+  figureHand: {
+    src: "flea-hand.webp",
+    alt: "손 위에 올려둔 완성 피규어 넷",
+    w: 656,
+    h: 412,
+  },
+  proof: {
+    src: "flea-proof-overlay.webp",
+    alt: "책상 위 사진 곁에 놓인 작은 반려견 피규어",
+    w: 752,
+    h: 564,
+  },
+  modeling: {
+    src: "flea-modeling.webp",
+    alt: "모니터 위에서 반려견 3D 모델을 다듬는 작업 화면",
+    w: 732,
+    h: 438,
+  },
+  printing: {
+    src: "flea-printing.webp",
+    alt: "피규어를 제작하는 3D 출력기",
+    w: 732,
+    h: 400,
   },
   stepFace: {
     src: "flea-step-photo-1.webp",
@@ -142,7 +173,7 @@ const processSteps = [
     number: "03",
     title: "3D 제작",
     caption: "모델링부터 출력까지 여러 작업 장면",
-    figures: [FIGURES.stepPrint],
+    figures: [FIGURES.stepPrint, FIGURES.modeling, FIGURES.printing],
   },
   {
     number: "04",
@@ -377,8 +408,22 @@ export default function GoodsSurvey() {
             사진 속 특징을 최대한 찾아 3D 형태로 옮깁니다.
           </p>
 
+          <div className="gs-figure-compare">
+            <LandingFigure slot={FIGURES.figureReal} />
+            <img
+              src={`${ASSET_BASE}/flea-figure-arrow.webp`}
+              alt=""
+              width="29"
+              height="29"
+              decoding="async"
+            />
+            <LandingFigure slot={FIGURES.figureCompare} />
+          </div>
+          <p className="gs-note">
+            * 반려견 비교 이미지 일부는 AI 대체 이미지입니다.
+          </p>
           <LandingFigure
-            slot={FIGURES.figureCompare}
+            slot={FIGURES.figureHand}
             className="gs-figure--wide"
           />
 
@@ -401,7 +446,7 @@ export default function GoodsSurvey() {
             {[1, 2, 3, 4].map(number => (
               <img
                 key={number}
-                src={`${ASSET_BASE}/customer-review-${number}.jpg`}
+                src={`${ASSET_BASE}/customer-review-${number}.webp`}
                 alt={`실제 고객 후기 ${number}: 반려동물과 맞춤 피규어 사진`}
                 width="600"
                 height="1067"
@@ -410,6 +455,7 @@ export default function GoodsSurvey() {
               />
             ))}
           </div>
+          <LandingFigure slot={FIGURES.proof} className="gs-figure--wide" />
           <p className="gs-note">
             ※ 사진의 화질·각도와 3D 출력 특성에 따라 실제 반려동물과 색상 및
             형태에 일부 차이가 있을 수 있습니다.
@@ -432,7 +478,7 @@ export default function GoodsSurvey() {
                 <p>{caption}</p>
                 <div
                   className={`gs-step-figures${
-                    figures.length > 1 ? " is-triple" : ""
+                    number === "01" ? " is-triple" : ""
                   }`}
                 >
                   {figures.map(slot => (
@@ -461,6 +507,7 @@ export default function GoodsSurvey() {
           </div>
 
           <LandingFigure slot={FIGURES.limited} className="gs-figure--wide" />
+          <GoodsDeliveryGallery />
         </section>
 
         <section className="gs-section gs-purchase" id="offer">
