@@ -72,8 +72,11 @@ test.describe("콩콩마켓 랜딩", () => {
     const spacing = await page.evaluate(() => {
       const ticket = document.querySelector(".flea-ticket")!;
       const hand = document.querySelector(".flea-hand")!;
+      const proof = document.querySelector(".flea-proof h2")!;
       return {
         ticketShadow: getComputedStyle(ticket).boxShadow,
+        proofLines: proof.getBoundingClientRect().height /
+          parseFloat(getComputedStyle(proof).lineHeight),
         ticketGap: ticket.nextElementSibling!.getBoundingClientRect().top -
           ticket.getBoundingClientRect().bottom,
         handAbove: hand.getBoundingClientRect().top -
@@ -84,6 +87,7 @@ test.describe("콩콩마켓 랜딩", () => {
     });
 
     expect(spacing.ticketShadow).toBe("none");
+    expect(spacing.proofLines).toBeCloseTo(2, 1);
     expect(spacing.ticketGap).toBeGreaterThanOrEqual(20);
     expect(spacing.handBelow).toBeCloseTo(30, 0);
     expect(spacing.handAbove).toBeCloseTo(spacing.handBelow * 3, 0);
