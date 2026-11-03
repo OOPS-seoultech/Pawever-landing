@@ -301,19 +301,6 @@
 }
 
 /* 설문은 '더 싼 길'로만 안내한다. 구매 버튼보다 눈에 덜 띄어야 위계가 산다. */
-.gs-hero-sub {
-  margin-top: 12px;
-  padding: 14px 16px;
-  border-radius: 14px;
-  background: var(--gs-orange-soft);
-  text-align: center;
-}
-
-.gs-hero-sub > span {
-  display: block;
-  color: #866a54;
-  font-size: 12px;
-}
 
 /* 구매 버튼에서 아래 카드로 눈을 내려 준다. */
 .gs-hero-arrow {
@@ -324,21 +311,6 @@
 }
 
 /* 이 한 줄만 주황 밑줄이다. 구매가 옆에서 유일하게 눈에 걸리는 자리다. */
-.gs-hero-sub-price {
-  display: block;
-  margin: 4px 0 3px;
-  color: #ed7d1a;
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -0.025em;
-  text-decoration: underline;
-  text-underline-position: from-font;
-}
-
-.gs-hero-sub > small {
-  color: #7d7065;
-  font-size: 12px;
-}
 
 /* 구간 배경은 흰색과 #fffaf4 가 번갈아 간다. 디자인이 그 리듬으로 구간을
    나누므로 한 칸만 어긋나도 경계가 사라진다. */
@@ -1201,208 +1173,13 @@
 
 /* ── 잠깐! 왜 더 싼가 ───────────────────────────────────────
    구매 갈림길 뒤에서 설문을 설득한다(코멘트 #24의 노란 손 표시). */
-.gs-wait {
-  background: #fff2e4;
-  text-align: center;
-}
-
-.gs-wait-hand {
-  margin: 0 0 20px;
-  font-size: 96px;
-  line-height: 1.1;
-}
 
 /* 잠깐!·제목·이유를 묶는 카드(5423:1750). */
-.gs-wait-card {
-  margin-bottom: 20px;
-  padding: 28px 24px;
-  border: 2px solid #ff9636;
-  border-radius: 22px;
-  background: #ffffff;
-  box-shadow: 0 12px 15px rgba(242, 125, 26, 0.1);
-}
-
-.gs-wait-card > span {
-  display: block;
-  color: #ed7d1a;
-  font-size: 17px;
-  font-weight: 900;
-  line-height: 24px;
-}
-
-.gs-wait-card h2 {
-  margin: 14px 0 0;
-  color: #292725;
-  font-size: 28px;
-  font-weight: 800;
-  line-height: 1.35;
-  letter-spacing: -0.04em;
-}
-
-.gs-wait-card > p {
-  margin: 20px 0 0;
-  color: #5f5a55;
-  font-size: 15px;
-  line-height: 24px;
-  text-align: left;
-}
 
 /* 코멘트 #10: 29,900원에서 23,900원으로 깎이는 걸 크고 직관적으로. */
-.gs-wait-drop {
-  margin-bottom: 20px;
-  padding: 22px;
-  border: 1px solid #ffd4aa;
-  border-radius: 20px;
-  background: #ffffff;
-  text-align: left;
-}
-
-.gs-wait-drop > span {
-  display: block;
-  color: #796857;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 18px;
-}
-
-.gs-wait-drop > strong {
-  display: block;
-  margin: 7px 0;
-  font-size: 25px;
-  font-weight: 700;
-  line-height: 32px;
-  letter-spacing: -0.035em;
-}
-
-.gs-wait-drop s {
-  color: #5e5e5e;
-}
-
-.gs-wait-drop em {
-  color: #ed7d1a;
-  font-style: normal;
-}
-
-.gs-wait-drop > small {
-  display: block;
-  color: #89827b;
-  font-size: 12px;
-  line-height: 18px;
-}
 
 /* ── CTA 안내 모달 ─────────────────────────────────────────────
    15분을 들이기 전에 무엇을 받는지 한 번 보여준다(회의록 5). */
-.gs-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 16px;
-  background: rgba(37, 33, 31, 0.55);
-}
-
-.gs-modal {
-  position: relative;
-  width: 100%;
-  max-width: 398px;
-  max-height: 88vh;
-  overflow-y: auto;
-  padding: 26px 20px 20px;
-  border-radius: 22px;
-  background: var(--gs-cream);
-  text-align: center;
-}
-
-.gs-modal-close {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 32px;
-  height: 32px;
-  display: grid;
-  place-items: center;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--gs-muted);
-  cursor: pointer;
-}
-
-.gs-modal-close svg {
-  width: 18px;
-  height: 18px;
-}
-
-.gs-modal h2 {
-  margin: 0 0 12px;
-  font-size: 19px;
-  font-weight: 900;
-  line-height: 1.4;
-}
-
-.gs-modal > p {
-  margin: 0 0 16px;
-  color: var(--gs-muted);
-  font-size: 13px;
-}
-
-.gs-modal-price {
-  margin-bottom: 12px;
-  padding: 15px;
-  border: 1px solid var(--gs-orange);
-  border-radius: 14px;
-  background: #ffffff;
-}
-
-.gs-modal-price > span {
-  color: var(--gs-muted);
-  font-size: 12px;
-}
-
-.gs-modal-price p {
-  margin: 6px 0;
-}
-
-.gs-modal-price s {
-  color: var(--gs-muted);
-  font-size: 13px;
-}
-
-.gs-modal-price small {
-  display: block;
-  margin-top: 3px;
-  color: var(--gs-muted);
-  font-size: 11px;
-}
-
-.gs-modal-price strong {
-  display: block;
-  color: var(--gs-orange-dark);
-  font-size: 22px;
-  font-weight: 900;
-}
-
-.gs-modal-terms {
-  margin: 0 0 14px;
-  color: var(--gs-muted);
-  font-size: 11.5px;
-}
-
-.gs-modal-secondary {
-  width: 100%;
-  margin-top: 9px;
-  padding: 12px;
-  border: 0;
-  border-radius: 11px;
-  background: transparent;
-  color: var(--gs-muted);
-  font-size: 13px;
-  font-weight: 700;
-  text-decoration: underline;
-  cursor: pointer;
-}
 
 /* 사진 칸을 더 여는 버튼. 처음에는 세 칸만 보여 주고, 더 넣고 싶은
    사람에게만 칸을 연다. 다섯 칸을 한꺼번에 펼치면 다 채워야 하는 것처럼
