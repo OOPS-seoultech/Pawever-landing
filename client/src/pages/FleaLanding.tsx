@@ -5,6 +5,7 @@ import { usePageEngagement, useScrollDepth } from "@/lib/analytics/react";
 import { getSurveyCampaign, type SurveyCampaign } from "@/lib/goodsSurveyApi";
 import { saveGoodsSurveyPhotoHandoff } from "@/lib/goodsSurveyPhotoHandoff";
 import { PhotoIntakeCard, PrimaryCta } from "./goodsSurveyIntake";
+import { GoodsDeliveryGallery } from "./goodsDeliveryGallery";
 import {
   fleaDiscountPercentText,
   GOODS_PRICE,
@@ -737,6 +738,7 @@ export default function FleaLanding() {
             height="223"
             decoding="async"
           />
+          <GoodsDeliveryGallery />
         </section>
 
         {/* 08 — 두 갈래. 현장가가 위, 정가가 아래다(5472:1742). */}
