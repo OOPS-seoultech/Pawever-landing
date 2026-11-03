@@ -187,7 +187,6 @@
   height: auto;
   margin: 60px auto 0;
   transform: rotate(-7.49deg);
-  box-shadow: 0 7px 8.4px rgba(0, 0, 0, 0.25);
 }
 
 .flea-punch {
@@ -200,8 +199,8 @@
   text-align: center;
 }
 
-.flea-punch--sm {
-  margin-top: 18px;
+.flea-why-now .flea-punch--sm {
+  margin-top: 40px;
   font-size: 20px;
   line-height: 30px;
   letter-spacing: -0.6px;
@@ -249,8 +248,8 @@
   border-radius: 20px;
 }
 
-.flea-hand {
-  margin: 70px 0 30px;
+.flea-real-price .flea-hand {
+  margin: 90px 0 30px;
   font-size: 96px;
   line-height: 1;
   text-align: center;
