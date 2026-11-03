@@ -610,9 +610,9 @@ export default function FleaLanding() {
         <section className="gs-section flea-proof">
           <span className="gs-kicker">05 PROOF</span>
           <h2>
-            1차 모집 선착순 100명,
+            1차 모집 선착순 100명 하루만에 마감
             <br />
-            하루 만에 마감됐습니다.
+            과기대 플리마켓 3일 동안 50건 마감
           </h2>
           <p className="gs-copy">
             100개의 피규어를 직접 제작하며 소중한 모습을 담기 위해 사진 선택,

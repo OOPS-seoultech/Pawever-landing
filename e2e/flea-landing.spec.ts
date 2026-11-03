@@ -47,7 +47,7 @@ test.describe("콩콩마켓 랜딩", () => {
 
     await expect(page).toHaveTitle("삼육대 콩콩마켓 전용가 | Pawever");
     await expect(page.locator("body")).not.toContainText(
-      /서울과학기술대학교|과기대|플리마켓|대동제/
+      /서울과학기술대학교|대동제/
     );
     await expect(page.locator(".flea-price-card")).toContainText(
       "삼육대학교 콩콩마켓 전용가"
@@ -63,6 +63,37 @@ test.describe("콩콩마켓 랜딩", () => {
 
     await expect(page.locator(".gs-limit-card")).toContainText("2차 준비 수량");
     await expect(page.locator(".gs-limit-card")).toContainText("70개");
+  });
+
+  test("티켓과 손의 간격을 확보하고 두 모집 실적을 적는다", async ({ page }) => {
+    await page.goto("/flea");
+    await expect(page.locator(".flea-ticket")).toHaveJSProperty("complete", true);
+
+    const spacing = await page.evaluate(() => {
+      const ticket = document.querySelector(".flea-ticket")!;
+      const hand = document.querySelector(".flea-hand")!;
+      const proof = document.querySelector(".flea-proof h2")!;
+      return {
+        ticketShadow: getComputedStyle(ticket).boxShadow,
+        proofLines: proof.getBoundingClientRect().height /
+          parseFloat(getComputedStyle(proof).lineHeight),
+        ticketGap: ticket.nextElementSibling!.getBoundingClientRect().top -
+          ticket.getBoundingClientRect().bottom,
+        handAbove: hand.getBoundingClientRect().top -
+          hand.previousElementSibling!.getBoundingClientRect().bottom,
+        handBelow: hand.nextElementSibling!.getBoundingClientRect().top -
+          hand.getBoundingClientRect().bottom,
+      };
+    });
+
+    expect(spacing.ticketShadow).toBe("none");
+    expect(spacing.proofLines).toBeCloseTo(2, 1);
+    expect(spacing.ticketGap).toBeGreaterThanOrEqual(20);
+    expect(spacing.handBelow).toBeCloseTo(30, 0);
+    expect(spacing.handAbove).toBeCloseTo(spacing.handBelow * 3, 0);
+    expect(await page.locator(".flea-proof h2").innerText()).toBe(
+      "1차 모집 선착순 100명 하루만에 마감\n과기대 플리마켓 3일 동안 50건 마감"
+    );
   });
 
   test("디자인이 적어 둔 치수대로 그린다", async ({ page }) => {
