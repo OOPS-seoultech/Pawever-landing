@@ -6,7 +6,7 @@ test("모든 판매 CTA는 25900원 주문으로 바로 연결된다", async ({ 
   for (const id of ["btn_A1", "btn_A2", "btn_B"]) {
     await page.goto("/goods-survey");
     await page.locator(`[data-cta-id="${id}"]`).click();
-    await expect(page).toHaveURL(/\/goods-survey\/survey\?direct=1$/);
+    await expect(page).toHaveURL(/\/goods-survey\/order$/);
     await expect(page.getByText("마지막 단계")).toBeVisible();
     await expect(
       page.locator('label:has-text("결제하는 데 동의합니다")')

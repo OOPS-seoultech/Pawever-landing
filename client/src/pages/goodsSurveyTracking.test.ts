@@ -10,7 +10,7 @@ const eventOf = (
   eventId: "evt-1",
   name,
   occurredAt: "2026-07-29T00:00:00.000Z",
-  path: "/goods-survey/survey",
+  path: "/goods-survey/order",
   visitId: "visit-1",
   attribution: {
     visitId: "visit-1",
@@ -50,11 +50,11 @@ describe("GA4 전송 방식", () => {
   it("이탈 이벤트만 beacon으로 보내 언로드 중에도 전송을 끝낸다", () => {
     const abandon = buildGoogleAnalyticsParams(
       eventOf("survey_abandon", { step_number: 11 }),
-      "https://www.pawever.kr/goods-survey/survey"
+      "https://www.pawever.kr/goods-survey/order"
     );
     const normal = buildGoogleAnalyticsParams(
       eventOf("survey_step_view", { step_number: 11 }),
-      "https://www.pawever.kr/goods-survey/survey"
+      "https://www.pawever.kr/goods-survey/order"
     );
 
     expect(abandon.transport_type).toBe("beacon");

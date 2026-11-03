@@ -8,7 +8,7 @@ import {
 } from "./fixtures/api";
 
 /**
- * 플리마켓 랜딩에서 넘어온 주문(/goods-survey/survey?direct=1&channel=flea).
+ * 플리마켓 랜딩에서 넘어온 주문(/goods-survey/order?channel=flea).
  *
  * 화면과 서버가 같은 값을 봐야 한다. 랜딩이 현장가를 적어 두고 주문 화면이
  * 정가로 열리면, 사람은 동의한 적 없는 금액을 청구받는다.
@@ -21,8 +21,8 @@ import {
  * 피그마는 아직 11,900 이다.
  */
 
-const FLEA = "/goods-survey/survey?direct=1&channel=flea";
-const ONLINE = "/goods-survey/survey?direct=1";
+const FLEA = "/goods-survey/order?channel=flea";
+const ONLINE = "/goods-survey/order";
 
 const consent = (page: import("@playwright/test").Page) =>
   page.locator('label:has-text("결제하는 데 동의합니다")');

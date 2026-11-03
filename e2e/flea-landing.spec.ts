@@ -264,7 +264,7 @@ test.describe("콩콩마켓 랜딩", () => {
       await page.goto("/flea");
       await page.locator(`[data-cta-id="${ctaId}"]`).click();
       await expect(page).toHaveURL(
-        /\/goods-survey\/survey\?direct=1&channel=flea$/
+        /\/goods-survey\/order\?channel=flea$/
       );
     }
   });
@@ -277,7 +277,7 @@ test.describe("콩콩마켓 랜딩", () => {
     await page.goto("/flea");
     await page.locator('[data-cta-id="btn_F4"]').click();
 
-    await expect(page).toHaveURL(/\/goods-survey\/survey\?direct=1$/);
+    await expect(page).toHaveURL(/\/goods-survey\/order$/);
   });
 
   test("사진 등록 카드는 한 장부터 열린다", async ({ page }) => {

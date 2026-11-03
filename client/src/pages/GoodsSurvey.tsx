@@ -183,7 +183,7 @@ export default function GoodsSurvey() {
       cta_id: CTA_IDS[placement],
       cta_placement: `${placement}_direct_purchase`,
     });
-    setLocation("/goods-survey/survey?direct=1");
+    setLocation("/goods-survey/order");
   };
 
   useEffect(() => {

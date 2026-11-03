@@ -67,7 +67,7 @@ test.describe("분석 도구로 개인정보가 새지 않는다", () => {
       await page.getByLabel(label).setInputFiles(photoFile(`${label}.jpg`));
     }
     await page.locator('[data-cta-id="btn_A5"]').click();
-    await expect(page).toHaveURL(/\?direct=1$/);
+    await expect(page).toHaveURL(/\/goods-survey\/order$/);
 
     await page.getByPlaceholder("반려견 이름").fill(PII.petName);
     await page.getByPlaceholder("받는 분 이름").fill(PII.guardianName);
@@ -96,7 +96,7 @@ test.describe("분석 도구로 개인정보가 새지 않는다", () => {
   test("주소창에도 개인정보가 남지 않는다", async ({ page }) => {
     // page_location 은 전체 URL 을 그대로 실어 보낸다. 값이 한 번이라도
     // 쿼리스트링에 실리면 그대로 구글로 간다.
-    await page.goto("/goods-survey/survey?direct=1");
+    await page.goto("/goods-survey/order");
     await page.getByPlaceholder("받는 분 이름").fill(PII.guardianName);
     await page.getByPlaceholder("010-0000-0000").fill(PII.phone);
     await page.waitForTimeout(300);
@@ -116,7 +116,7 @@ test.describe("분석 도구로 개인정보가 새지 않는다", () => {
   test("금지된 이름의 칸은 아예 실리지 않는다", async ({ page }) => {
     // 키 이름으로 거르는 방어가 실제 화면에서도 살아 있는지 본다.
     // 단위 테스트는 함수만 보는데, 여기서는 실제로 쌓인 이벤트를 본다.
-    await page.goto("/goods-survey/survey?direct=1");
+    await page.goto("/goods-survey/order");
     await page.waitForTimeout(500);
 
     const keys = new Set(

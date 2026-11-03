@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { mockCampaign, mockDraft, mockSubmit, photoFile } from "./fixtures/api";
 
 /**
- * 주문 화면(/goods-survey/survey)에서 결제 직전까지.
+ * 주문 화면(/goods-survey/order)에서 결제 직전까지.
  *
  * 결제 단계는 일부러 비워 둔다. 8/31 현재 승인된 결제 수단이 없다 —
  *
@@ -22,7 +22,7 @@ import { mockCampaign, mockDraft, mockSubmit, photoFile } from "./fixtures/api";
  * 여기에 못 박으면 테스트가 틀린 화면을 지키게 된다.
  */
 
-const DIRECT = "/goods-survey/survey?direct=1";
+const DIRECT = "/goods-survey/order";
 
 const SLOTS = [
   "정면 또는 옆모습 사진 추가하기",
@@ -109,7 +109,7 @@ test.describe("설문을 건너뛴 주문", () => {
   test("기본 주소로 들어와도 바로 주문한다", async ({ page }) => {
     // 직행만 건너뛴다. 설문에 답하러 온 사람은 무엇을 받는지 알고 시작해야
     // 한다.
-    await page.goto("/goods-survey/survey");
+    await page.goto("/goods-survey/order");
 
     await expect(page.getByText("마지막 단계")).toBeVisible();
     await expect(page.locator(".gsf-intro, .gsf-header-time")).toHaveCount(0);
@@ -237,7 +237,7 @@ test.describe("설문을 건너뛴 주문", () => {
       await page.getByLabel(label).setInputFiles(photoFile(`${label}.jpg`));
     }
     await page.locator('[data-cta-id="btn_A5"]').click();
-    await expect(page).toHaveURL(/\?direct=1$/);
+    await expect(page).toHaveURL(/\/goods-survey\/order$/);
 
     await expect(page.locator(".gsf-file-name")).toHaveCount(3);
 

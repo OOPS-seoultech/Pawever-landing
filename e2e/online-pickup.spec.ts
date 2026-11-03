@@ -16,7 +16,7 @@ test("온라인 방문 수령은 주소 없이 25900원에 신청하고 기존 �
     if (request.method() === "POST" && request.url().endsWith("/application"))
       submitted = request.postDataJSON();
   });
-  await page.goto("/goods-survey/survey?direct=1");
+  await page.goto("/goods-survey/order");
   await page
     .getByRole("radio", {
       name: "서울과학기술대학교 상상관에서 받아가기 배송비 없음",

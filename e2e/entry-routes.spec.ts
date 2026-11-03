@@ -31,7 +31,7 @@ test.describe("웹사이트 홈에서 굿즈로 들어가는 세 갈래", () => 
     await expect(cta).toHaveCount(2);
 
     await cta.last().click();
-    await expect(page).toHaveURL(/\/goods-survey\/survey\?direct=1$/);
+    await expect(page).toHaveURL(/\/goods-survey\/order$/);
   });
 
   test("굿즈 랜딩 — 보기 링크는 랜딩에 남는다", async ({ page }) => {
@@ -63,7 +63,7 @@ test.describe("굿즈에서 웹사이트로 나가는 길", () => {
     // 있어서, href 만 고치면 주소는 홈인데 눌리는 곳은 랜딩이 된다.
     await mockCampaign(page, { goodsOpen: true });
     await mockDraft(page);
-    await page.goto("/goods-survey/survey");
+    await page.goto("/goods-survey/order");
     await page.locator("a.gsf-brand").click();
     await expect(page).toHaveURL(/localhost:\d+\/$/);
   });
@@ -73,7 +73,7 @@ test.describe("굿즈에서 웹사이트로 나가는 길", () => {
     // 랜딩으로 돌아가는 게 맞다. 이것까지 홈으로 보내면 길을 잃는다.
     await mockCampaign(page, { goodsOpen: true });
     await mockDraft(page);
-    await page.goto("/goods-survey/survey");
+    await page.goto("/goods-survey/order");
     await page.locator(".gsf-header .gsf-icon-button").click();
     await expect(page).toHaveURL(/\/goods-survey$/);
   });

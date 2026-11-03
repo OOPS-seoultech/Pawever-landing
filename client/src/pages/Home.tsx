@@ -18,7 +18,7 @@ const HERO_BODY = "#F6F6F6";
 const BUTTON =
   "inline-flex h-[50px] items-center justify-center rounded-[12px] px-6 text-base font-semibold transition-colors";
 
-const DIRECT_PURCHASE = "/goods-survey/survey?direct=1";
+const DIRECT_PURCHASE = "/goods-survey/order";
 /** 굿즈를 팔지 않는 동안 신청 버튼이 대신 가는 곳. */
 const GOODS_LANDING = "/goods-survey";
 
