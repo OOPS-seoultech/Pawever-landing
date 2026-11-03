@@ -20,8 +20,8 @@ export default function AdminLogin() {
       void getStaff()
         .then(staff =>
           setLocation(
-            staff.permissions.includes("VIEW_ALL_ORDERS")
-              ? "/admin/workflow"
+            staff.permissions.includes("VIEW_ORDER_BASIC")
+              ? "/admin/operations"
               : "/admin/my-work",
             { replace: true }
           )
@@ -47,8 +47,8 @@ export default function AdminLogin() {
       await adminSignIn(email.trim(), password);
       const staff = await getStaff();
       setLocation(
-        staff.permissions.includes("VIEW_ALL_ORDERS")
-          ? "/admin/workflow"
+        staff.permissions.includes("VIEW_ORDER_BASIC")
+          ? "/admin/operations"
           : "/admin/my-work",
         { replace: true }
       );
