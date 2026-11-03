@@ -31,7 +31,7 @@ test.describe("웹사이트 홈에서 굿즈로 들어가는 세 갈래", () => 
     await expect(cta).toHaveCount(2);
 
     await cta.last().click();
-    await expect(page).toHaveURL(/\/goods-survey\/survey\?direct=1$/);
+    await expect(page).toHaveURL(/\/goods-survey\/order$/);
   });
 
   test("굿즈 랜딩 — 보기 링크는 랜딩에 남는다", async ({ page }) => {
@@ -41,10 +41,10 @@ test.describe("웹사이트 홈에서 굿즈로 들어가는 세 갈래", () => 
     await expect(page).toHaveURL(/\/goods-survey$/);
   });
 
-  test("바로 설문 — 설문 줄은 설문으로 곧장 간다", async ({ page }) => {
+  test("홈의 구매 안내는 판매 페이지로 간다", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("link", { name: "15분 설문으로 의견 남기기" }).click();
-    await expect(page).toHaveURL(/\/goods-survey\/survey$/);
+    await page.getByRole("link", { name: "우리 아이 피규어 알아보기" }).click();
+    await expect(page).toHaveURL(/\/goods-survey$/);
   });
 });
 
@@ -63,7 +63,7 @@ test.describe("굿즈에서 웹사이트로 나가는 길", () => {
     // 있어서, href 만 고치면 주소는 홈인데 눌리는 곳은 랜딩이 된다.
     await mockCampaign(page, { goodsOpen: true });
     await mockDraft(page);
-    await page.goto("/goods-survey/survey");
+    await page.goto("/goods-survey/order");
     await page.locator("a.gsf-brand").click();
     await expect(page).toHaveURL(/localhost:\d+\/$/);
   });
@@ -73,8 +73,8 @@ test.describe("굿즈에서 웹사이트로 나가는 길", () => {
     // 랜딩으로 돌아가는 게 맞다. 이것까지 홈으로 보내면 길을 잃는다.
     await mockCampaign(page, { goodsOpen: true });
     await mockDraft(page);
-    await page.goto("/goods-survey/survey");
-    await page.getByRole("button", { name: "랜딩페이지로 돌아가기" }).click();
+    await page.goto("/goods-survey/order");
+    await page.locator(".gsf-header .gsf-icon-button").click();
     await expect(page).toHaveURL(/\/goods-survey$/);
   });
 });
@@ -112,11 +112,11 @@ test.describe("굿즈가 닫혀 있을 때 홈 진입", () => {
     }
   });
 
-  test("설문 갈래는 닫히지 않는다", async ({ page }) => {
+  test("판매 안내는 마감 상태에서도 볼 수 있다", async ({ page }) => {
     // 굿즈가 닫혀도 설문은 따로 열려 있다. 같이 막으면 그때 할 수 있는
     // 유일한 일까지 사라진다.
-    await page.getByRole("link", { name: "15분 설문으로 의견 남기기" }).click();
-    await expect(page).toHaveURL(/\/goods-survey\/survey$/);
+    await page.getByRole("link", { name: "우리 아이 피규어 알아보기" }).click();
+    await expect(page).toHaveURL(/\/goods-survey$/);
   });
 
   test("캠페인을 못 읽으면 팔지 않는 쪽으로 넘어진다", async ({ page }) => {

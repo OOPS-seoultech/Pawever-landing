@@ -61,7 +61,7 @@ export type SurveyCompletion = {
 /**
  * 굿즈를 파는 통로.
  *
- * 통로마다 값과 정원이 다르다. 온라인은 정가 29,900원에 100자리, 플리마켓은
+ * 통로마다 값과 정원이 다르다. 온라인은 판매가 25,900원이고, 플리마켓은
  * 현장 한정가로 70자리다. 화면이 어느 쪽을 보는지는 주소로 갈린다.
  * 값은 GOODS_PRICE.flea 한 곳에서만 정한다 - 여기에 적어 두면 값을 올린
  * 날 이 줄만 옛 수로 남는다.
@@ -141,8 +141,7 @@ export type ApplicationPayload = {
   /**
    * 건네는 방법. 현장 수령이면 주소를 보내지 않는다.
    *
-   * 플리마켓 경로에서만 pickup 을 고를 수 있다. 상시 판매에서 보내면 서버가
-   * 거절한다 — 부칠 곳 없는 주문을 받지 않기 위해서다.
+   * 온라인·플리마켓 모두 상상관에서 수령할 수 있다. pickup 이면 주소를 보내지 않는다.
    */
   deliveryMethod: GoodsDeliveryMethod;
   postalCode: string;
@@ -315,10 +314,9 @@ export const completeSurvey = (
   );
 
 /**
- * 설문을 건너뛰고 바로 굿즈 신청으로 간다.
+ * 제작 정보 등록을 시작한다.
  *
- * 적용가는 정가다. 설문을 마친 사람은 할인가를 받으므로, 이 길로 들어온
- * 사람에게는 신청 전에 값이 다르다는 것을 먼저 보여줘야 한다.
+ * 서버가 판매 통로의 가격을 적용한다.
  */
 export const startDirectPurchase = (session: SurveyDraftSession) =>
   apiRequest<SurveyCompletion>(
@@ -413,7 +411,12 @@ export const uploadSurveyPhoto = async (
   clientFileId: string,
   contentType: string
 ) => {
-  const upload = await createPhotoUpload(session, file, clientFileId, contentType);
+  const upload = await createPhotoUpload(
+    session,
+    file,
+    clientFileId,
+    contentType
+  );
   if (upload.status === "CONFIRMED") return upload.photoId;
   if (!upload.uploadUrl) {
     throw new GoodsSurveyApiError(

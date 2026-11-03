@@ -6,7 +6,7 @@ describe("현장 한정가", () => {
   it("서버가 깎아 주는 값과 같은 값을 적는다", () => {
     // 서버는 정가에서 flea-discount-krw 를 뺀다(29,900 - 11,000). 여기가
     // 어긋나면 동의 문구에 적은 금액과 청구되는 금액이 달라진다.
-    expect(GOODS_PRICE.presale - 11_000).toBe(GOODS_PRICE.flea);
+    expect(GOODS_PRICE.list - 11_000).toBe(GOODS_PRICE.flea);
     expect(GOODS_PRICE.flea).toBe(18_900);
   });
 

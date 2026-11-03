@@ -24,20 +24,18 @@ const home = readFileSync(join(__dirname, "Home.tsx"), "utf-8");
 const flat = home.replace(/\s+/g, " ");
 
 describe("홈 화면 기준 문구", () => {
-  it("세 가지 방법 카드에 카테고리·제목·설명이 있다", () => {
+  it("두 가지 방법 카드에 카테고리·제목·설명이 있다", () => {
     [
       ["기록과 케어", "포에버 앱"],
       ["우리 아이 맞춤 제작", "3D 맞춤 굿즈 얼리버드"],
-      ["함께 만드는 다음 서비스", "반려인 설문"],
     ].forEach(([category, title]) => {
       expect(flat).toContain(category);
       expect(flat).toContain(title);
     });
   });
 
-  it("굿즈·설문 줄에 실적 한 줄이 붙는다", () => {
+  it("굿즈 줄에 실적 한 줄이 붙는다", () => {
     expect(home).toContain('proof: "우리 아이 완전 맞춤 3D굿즈 100건 제작 중"');
-    expect(home).toContain('proof: "반려인 731명 조사 완료"');
   });
 
   it("앱 줄에는 실적을 지어내지 않는다", () => {
@@ -45,13 +43,10 @@ describe("홈 화면 기준 문구", () => {
     expect(home).toContain('proof: ""');
   });
 
-  it("설문 실적에 기준 날짜를 붙인다", () => {
-    // 731명이 언제 기준인지 없으면 시간이 지나도 같은 수가 사실처럼 남는다.
-    expect(home).toContain('proofNote: "(2026. 08. 12 기준)"');
-  });
-
   it("히어로 아래 실적 두 줄을 그대로 둔다", () => {
-    expect(flat).toContain("반려견 생애주기에 따른 보호자의 행동 데이터를 모았습니다.");
+    expect(flat).toContain(
+      "반려견 생애주기에 따른 보호자의 행동 데이터를 모았습니다."
+    );
     expect(flat).toContain(
       "보호자의 사진과 이야기를 바탕으로 한 맞춤 제작을 이어가고 있습니다."
     );
@@ -59,7 +54,9 @@ describe("홈 화면 기준 문구", () => {
 
   it("히어로 본문에 쉼표를 넣지 않는다", () => {
     // "변화를 쌓고, 필요한" 으로 두었던 적이 있다. 피그마는 쉼표가 없다.
-    expect(flat).toContain("건강 변화를 쌓고 필요한 케어와 병원 상담 준비를 돕습니다.");
+    expect(flat).toContain(
+      "건강 변화를 쌓고 필요한 케어와 병원 상담 준비를 돕습니다."
+    );
   });
 });
 
@@ -76,16 +73,11 @@ describe("홈 화면 구조", () => {
     expect(highlighted).toHaveLength(1);
   });
 
-  it("버튼 세 줄이 저마다 다른 색이다", () => {
+  it("앱과 굿즈 버튼의 위계를 유지한다", () => {
     // 앱은 조용한 버튼, 굿즈는 --primary, 설문은 그보다 밝은 주황이다.
     expect(home.match(/variant: "quiet" as const/g) ?? []).toHaveLength(1);
     expect(home.match(/variant: "primary" as const/g) ?? []).toHaveLength(1);
-    expect(home.match(/variant: "survey" as const/g) ?? []).toHaveLength(1);
-  });
-
-  it("설문 버튼은 --primary 가 아닌 다른 주황이다", () => {
-    // 굿즈 버튼(#FF9F43)과 나란히 두면 설문 쪽이 아주 조금 밝다.
-    expect(flat).toContain('SURVEY_BUTTON_BG = "#FFA94E"');
+    expect(home).not.toContain('variant: "survey"');
   });
 
   it("굿즈 줄에 보조 링크가 하나 더 있다", () => {
@@ -94,9 +86,11 @@ describe("홈 화면 구조", () => {
 
   it("이동만 하는 버튼에는 화살표를 붙인다", () => {
     // 피그마가 '보기·살펴보기'류에만 화살표를 뒀다. 신청·참여는 없다.
-    ["앱 서비스 살펴보기 →", "향후 방향 보기 →", "문의 유형 선택하기 →"].forEach(
-      label => expect(flat).toContain(label)
-    );
+    [
+      "앱 서비스 살펴보기 →",
+      "향후 방향 보기 →",
+      "문의 유형 선택하기 →",
+    ].forEach(label => expect(flat).toContain(label));
     expect(flat).not.toContain("굿즈 얼리버드 신청하기 →");
     expect(flat).not.toContain("15분 설문 참여하기 →");
   });
@@ -105,8 +99,10 @@ describe("홈 화면 구조", () => {
     // 피그마에서 일곱 버튼을 확대해 보니 이 하나만 그렇다. 밑줄은 자리도
     // 크기도 바꾸지 않아서, 좌표와 색만 재던 방식으로는 잡히지 않았다.
     expect(home.match(/underlined: true/g) ?? []).toHaveLength(1);
-    expect(home.match(/underlined: false/g) ?? []).toHaveLength(2);
-    expect(flat).toContain('entry.underlined ? "underline underline-offset-4" : ""');
+    expect(home.match(/underlined: false/g) ?? []).toHaveLength(1);
+    expect(flat).toContain(
+      'entry.underlined ? "underline underline-offset-4" : ""'
+    );
   });
 
   it("문의 아이콘은 피그마가 내보낸 자산이다", () => {
@@ -120,11 +116,15 @@ describe("홈 화면 구조", () => {
   it("STEP 설명이 피그마 문구다", () => {
     // 다른 프레임에는 '예전과 달라진 점', '진료 상담 전에 필요한 정보'로
     // 적혀 있다. 어느 프레임을 봤는지가 여기서 갈린다.
-    expect(flat).toContain("지난 기록과 나란히 보며 달라진 점을 놓치지 않아요.");
-    expect(flat).toContain("관찰한 내용을 정리해 진료 상담 전 정보를 준비해요.");
+    expect(flat).toContain(
+      "지난 기록과 나란히 보며 달라진 점을 놓치지 않아요."
+    );
+    expect(flat).toContain(
+      "관찰한 내용을 정리해 진료 상담 전 정보를 준비해요."
+    );
   });
 
-  it("세 가지 방법 눈썹 문구에 마침표가 있다", () => {
+  it("두 가지 방법 눈썹 문구에 마침표가 있다", () => {
     expect(flat).toContain("<Eyebrow>지금 필요한 길을 선택하세요.</Eyebrow>");
   });
 });
@@ -146,7 +146,7 @@ describe("홈 화면 크기와 모양", () => {
     expect(flat).toContain("tracking-[-1.3px]");
   });
 
-  it("세 가지 방법 제목은 23px 이다", () => {
+  it("두 가지 방법 제목은 23px 이다", () => {
     // 19px 로 두었던 적이 있다. 네 단계나 작았다.
     expect(flat).toContain("text-[23px] font-semibold leading-[31.05px]");
   });
@@ -165,7 +165,9 @@ describe("홈 화면 크기와 모양", () => {
   });
 
   it("히어로 버튼만 20px 이다", () => {
-    expect(home.match(/\$\{BUTTON\} bg-primary text-xl/g) ?? []).toHaveLength(1);
+    expect(home.match(/\$\{BUTTON\} bg-primary text-xl/g) ?? []).toHaveLength(
+      1
+    );
     expect(home.match(/\$\{BUTTON\} text-xl/g) ?? []).toHaveLength(1);
   });
 
@@ -179,14 +181,6 @@ describe("홈 화면 크기와 모양", () => {
   it("흐름 세 칸 사이를 56px 로 벌린다", () => {
     // 32px 로 두면 세 칸이 한 덩어리처럼 붙어 보인다.
     expect(flat).toContain("md:grid-cols-3 md:gap-14");
-  });
-
-  it("설문 기준일만 피그마 값을 따르지 않는다", () => {
-    // 피그마는 7px 다. 앞의 '반려인 731명 조사 완료' 가 14px 인데 그 옆에
-    // 7px 를 두면 화면에서 거의 읽히지 않는다. 12px 로 올려 두었다.
-    // 이 화면에서 값을 일부러 어긋나게 둔 곳은 여기 하나뿐이다.
-    expect(flat).toContain('<span className="text-xs font-normal">');
-    expect(flat).not.toContain("text-[7px]");
   });
 
   it("고지 문구는 본문보다 흐리다", () => {

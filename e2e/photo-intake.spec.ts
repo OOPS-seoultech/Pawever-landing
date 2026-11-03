@@ -48,7 +48,7 @@ test.describe("09 FINAL 사진 등록 카드", () => {
     await submit.click();
 
     // 구매 버튼과 같은 곳으로 간다. 사진을 올렸다고 다른 길로 새면 안 된다.
-    await expect(page).toHaveURL(/\/goods-survey\/survey\?direct=1$/);
+    await expect(page).toHaveURL(/\/goods-survey\/order$/);
   });
 
   test("칸을 더 열어 다섯 장까지 고를 수 있다", async ({ page }) => {

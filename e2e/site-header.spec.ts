@@ -75,7 +75,7 @@ test.describe("좁은 화면 헤더", () => {
     const nav = page.locator("header nav");
     await nav.evaluate(el => el.scrollTo(el.scrollWidth, 0));
     await expect(
-      page.locator("header nav a", { hasText: "설문 참여" })
+      page.locator("header nav a", { hasText: "피규어 주문" })
     ).toBeInViewport();
   });
 });
