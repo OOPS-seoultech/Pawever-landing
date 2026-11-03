@@ -26,7 +26,7 @@ const LIST_PRICE = "29,900원";
 /** 정가에서 내려온 비율. (29,900 - 18,900) / 29,900 */
 const FLEA_DISCOUNT = "36.8%";
 
-test.describe("플리마켓 랜딩", () => {
+test.describe("콩콩마켓 랜딩", () => {
   test.beforeEach(async ({ page }) => {
     await mockFleaCampaign(page);
     // 정가 버튼은 상시 판매로 간다. 그쪽 모집도 함께 물려 둔다.
@@ -45,8 +45,12 @@ test.describe("플리마켓 랜딩", () => {
     // 값이 화면과 서버에서 갈리면 사람은 동의하지 않은 금액을 청구받는다.
     await page.goto("/flea");
 
+    await expect(page).toHaveTitle("삼육대 콩콩마켓 전용가 | Pawever");
+    await expect(page.locator("body")).not.toContainText(
+      /서울과학기술대학교|과기대|플리마켓|대동제/
+    );
     await expect(page.locator(".flea-price-card")).toContainText(
-      "서울과학기술대학교 플리마켓 전용가"
+      "삼육대학교 콩콩마켓 전용가"
     );
     await expect(page.locator(".flea-price-card")).toContainText(FLEA_PRICE);
     await expect(page.locator(".flea-price-card")).toContainText(
@@ -214,7 +218,7 @@ test.describe("플리마켓 랜딩", () => {
     await expect(faq).toContainText("선착순 70개만 제작합니다");
     await expect(faq).not.toContainText("오픈 시 공개합니다");
     // 이 화면의 기본은 방문수령이라 배송비가 없다.
-    await expect(faq).toContainText("과기대에서 받아가시면 배송비가 없고");
+    await expect(faq).toContainText("삼육대에서 받아가시면 배송비가 없고");
   });
 
   test("구매 버튼 넷이 모두 등록 화면으로 간다", async ({ page }) => {
