@@ -3,8 +3,9 @@
 ## 범위와 보존
 
 - 운영 저장소: OOPS-seoultech/Pawever-landing. 기존 Cloudflare Pages 배포 사용.
-- 배포 전 main: `4584c9300a0c0ef80cb8364e106f3c9bfaa8a8c4`.
-- 보존 태그: `backup/admin-before-20261104-4584c93`.
+- 배포 전 main: `30c7c021f9ff5b2a8caac91f8f862541595ea57b`.
+- 보존 태그: `backup/admin-before-20261104-30c7c02`. 작업 시작 당시 `4584c93` 백업도 별도 유지한다.
+- 검사 중 병합된 판매 페이지 PR #119를 포함한다. 이번 PR의 복구는 #119 판매 페이지 변경을 되돌리지 않는다.
 - 기존 `/admin/orders`, `/admin/workflow`, `/admin/my-work`와 처리 화면은 유지한다.
 - 신규 `/admin/operations`가 기존 인증/권한과 주문 API를 사용한다. 별도 주문 DB를 만들지 않는다.
 - 백엔드, 주문 신청 화면/API, SMS, Aligo, Telegram, 환경변수, DB 스키마를 변경하지 않는다.
@@ -35,14 +36,14 @@
 태그에서 필요한 파일만 복원하고 동일 검증·PR 절차로 main에 반영한다. 운영 주문 데이터를 과거로 돌리는 작업이 아니다.
 
 ```bash
-git restore --source backup/admin-before-20261104-4584c93 -- client/src/pages/AdminLogin.tsx
-git restore --source backup/admin-before-20261104-4584c93 -- client/src/components/AdminShell.tsx
+git restore --source backup/admin-before-20261104-30c7c02 -- client/src/pages/AdminLogin.tsx
+git restore --source backup/admin-before-20261104-30c7c02 -- client/src/components/AdminShell.tsx
 ```
 
 - 진입점만 복원: `AdminLogin.tsx`. 기존 로그인 후 작업 화면으로 돌아간다.
 - 메뉴만 복원: `AdminShell.tsx`. 신규 화면 주소 자체는 유지된다.
 - 신규 화면 전체 제거: 위 두 파일과 `App.tsx` 복원 후 신규 `AdminOperations.tsx`, `AdminMaterialComparison.tsx`, `lib/adminOperations.ts` 및 대응 테스트 삭제. 다른 기능 파일은 복원하지 않는다.
 - 전체 프론트 복구: 이 PR만 revert. 다른 개발자가 이후 반영한 커밋을 reset/force push 하지 않는다.
-- 전체 이력은 로컬 `docs/operations/backups/2026-11-04-admin-rollout/Pawever-landing-before.bundle`, 기준 소스는 같은 폴더 `Pawever-landing-before.tar.gz`에도 보존한다.
+- 전체 이력은 로컬 `docs/operations/backups/2026-11-04-admin-rollout/Pawever-landing-before-30c7c02.bundle`, 기준 소스는 같은 폴더 `Pawever-landing-before-30c7c02.tar.gz`에도 보존한다.
 
 DB를 변경하지 않아 DB 롤백은 필요 없다. 이것은 주문 DB 백업을 만들었다는 뜻이 아니다. 배포 후 생성된 실제 주문/파일/발송 이력은 그대로 남는다.
