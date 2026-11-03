@@ -137,6 +137,13 @@ export function AdminShell({
         aria-label="관리 메뉴"
         className="mx-auto flex w-full max-w-6xl shrink-0 flex-wrap gap-4 border-b px-4 py-3 text-sm"
       >
+        {staff?.permissions.includes("VIEW_ORDER_BASIC") && (
+          <AdminNavLink href="/admin/operations">
+            {staff.permissions.includes("VIEW_ALL_ORDERS")
+              ? "운영 현황"
+              : "제작 작업실"}
+          </AdminNavLink>
+        )}
         {staff?.permissions.includes("VIEW_FILAMENT") && (
           <AdminNavLink href="/admin/filaments">필라멘트</AdminNavLink>
         )}
