@@ -12,7 +12,7 @@ describe("판매 이미지", () => {
     expect(assets.length).toBeGreaterThan(5);
     for (const file of [
       ...assets,
-      ...[1, 2, 3, 4].map(n => `customer-review-${n}.jpg`),
+      ...[1, 2, 3, 4].map(n => `customer-review-${n}.webp`),
     ])
       expect(
         existsSync(

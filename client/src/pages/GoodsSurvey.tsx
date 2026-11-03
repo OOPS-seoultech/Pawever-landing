@@ -446,7 +446,7 @@ export default function GoodsSurvey() {
             {[1, 2, 3, 4].map(number => (
               <img
                 key={number}
-                src={`${ASSET_BASE}/customer-review-${number}.jpg`}
+                src={`${ASSET_BASE}/customer-review-${number}.webp`}
                 alt={`실제 고객 후기 ${number}: 반려동물과 맞춤 피규어 사진`}
                 width="600"
                 height="1067"
