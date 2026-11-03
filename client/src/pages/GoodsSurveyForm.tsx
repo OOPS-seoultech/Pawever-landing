@@ -2440,7 +2440,7 @@ export default function GoodsSurveyForm() {
                         onChange={() => setDeliveryMethod("pickup")}
                       />
                       <span>
-                        <strong>과기대에서 받아가기</strong>
+                        <strong>삼육대에서 받아가기</strong>
                         {/* 언제 어디서 건네는지는 아직 정해지지 않았다.
                             "행사장에서 직접 전달"이라고 적어 두었는데, 제작에
                             시간이 걸리면 지킬 수 없는 말이 된다. 정해진 것만

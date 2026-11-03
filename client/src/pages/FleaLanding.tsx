@@ -14,7 +14,7 @@ import "./GoodsSurvey.css";
 import "./FleaLanding.css";
 
 /**
- * 서울과학기술대학교 대동제 플리마켓 전용 랜딩.
+ * 삼육대학교 콩콩마켓 전용 랜딩.
  *
  * 피그마 `8-2. Rending Page`(0uW99BqaTJKUVlowzQswli / 5472:1444) 그대로다.
  * 현장에 QR 을 두고 그 자리에서 주문을 받는 화면이라, 상시 랜딩과 달리 설문을
@@ -47,7 +47,7 @@ const SHIPPING_FEE = 3_000;
  * 버튼 식별자.
  *
  * 상시 랜딩의 btn_A* 와 겹치지 않게 F 로 나눈다. 같은 값을 쓰면 분석 도구에서
- * 두 랜딩의 클릭이 한 줄로 합쳐져, 플리마켓이 실제로 얼마나 눌렸는지 셀 수
+ * 두 랜딩의 클릭이 한 줄로 합쳐져, 콩콩마켓이 실제로 얼마나 눌렸는지 셀 수
  * 없다.
  */
 const CTA_IDS = {
@@ -174,7 +174,7 @@ const faqs = [
     // 고침: 이 화면은 설문을 거치지 않는다. 원문은 상시 판매가만 말해서,
     // 방금 현장가를 보고 들어온 사람이 자기 값이 아닌 수를 읽게 된다.
     answer:
-      `과기대 플리마켓 현장가 ${wonText(GOODS_PRICE.flea)}은 설문과 상관없이 적용됩니다. 온라인 상시 판매에서는 설문을 마치면 ${wonText(GOODS_PRICE.member)}에 구매할 수 있습니다.`,
+      `삼육대 콩콩마켓 현장가 ${wonText(GOODS_PRICE.flea)}은 설문과 상관없이 적용됩니다. 온라인 상시 판매에서는 설문을 마치면 ${wonText(GOODS_PRICE.member)}에 구매할 수 있습니다.`,
   },
   {
     question: "사진은 어떤 걸 보내야 하나요?",
@@ -190,14 +190,14 @@ const faqs = [
     question: "2차는 몇 개만 판매하나요?",
     // 고침: 같은 페이지 07 이 이미 "선착순 70개만 제작합니다"라고 말한다.
     // 아래에서 "아직 공개 안 함"이라고 하면 한 페이지가 두 말을 한다.
-    answer: "이번 과기대 플리마켓은 선착순 70개만 제작합니다.",
+    answer: "이번 삼육대 콩콩마켓은 선착순 70개만 제작합니다.",
   },
   {
     question: "배송비와 제작 기간은 어떻게 되나요?",
     // 고침: 이 화면의 기본은 방문수령이라 배송비가 없다. 원문만 읽으면
     // 3,000원을 반드시 내는 것으로 읽힌다.
     answer:
-      "과기대에서 받아가시면 배송비가 없고, 택배로 받으시면 3,000원이 별도입니다. 정확한 제작 기간은 주문 단계에서 안내합니다.",
+      "삼육대에서 받아가시면 배송비가 없고, 택배로 받으시면 3,000원이 별도입니다. 정확한 제작 기간은 주문 단계에서 안내합니다.",
   },
   {
     question: "광고 수신에 동의해야 할인받을 수 있나요?",
@@ -244,7 +244,7 @@ export default function FleaLanding() {
       robots.name = "robots";
       document.head.appendChild(robots);
     }
-    document.title = "과기대 플리마켓 전용가 | Pawever";
+    document.title = "삼육대 콩콩마켓 전용가 | Pawever";
     // 현장 QR 로만 여는 화면이다. 검색으로 들어와 한정가를 보게 두지 않는다.
     robots.content = "noindex, nofollow";
     return () => {
@@ -320,7 +320,7 @@ export default function FleaLanding() {
               height="16"
             />
           </a>
-          <span>플리마켓 전용 할인 페이지</span>
+          <span>콩콩마켓 전용 할인 페이지</span>
         </header>
 
         {/* 01 — 킥커가 없다. 사러 온 사람에게 값부터 보여 준다(5472:1465). */}
@@ -359,7 +359,7 @@ export default function FleaLanding() {
           />
 
           <div className="flea-price-card">
-            <span>서울과학기술대학교 플리마켓 전용가</span>
+            <span>삼육대학교 콩콩마켓 전용가</span>
             <strong>
               {wonText(FLEA_PRICE)}
               <em>
@@ -529,7 +529,7 @@ export default function FleaLanding() {
           </p>
 
           <p className="flea-punch">
-            <u>과기대 플리마켓 한정</u>으로만
+            <u>삼육대 콩콩마켓 한정</u>으로만
             <br />
             <em>시중 단가 기준 약 97% 저렴</em>하게 드려요{" "}
           </p>
@@ -599,10 +599,10 @@ export default function FleaLanding() {
           <p className="flea-caption">* 실제 출력 이미지</p>
 
           <article className="flea-buy-card">
-            <span>과기대 플리마켓 전용 {FLEA_DISCOUNT_PERCENT}% 할인가</span>
+            <span>삼육대 콩콩마켓 전용 {FLEA_DISCOUNT_PERCENT}% 할인가</span>
             <strong>{wonText(FLEA_PRICE)}</strong>
             <small>선착순 70개 한정수량</small>
-            {buyCta("figure", `대동제 맞이 ${FLEA_DISCOUNT_PERCENT}% 저렴하게`)}
+            {buyCta("figure", `콩콩마켓 맞이 ${FLEA_DISCOUNT_PERCENT}% 저렴하게`)}
           </article>
         </section>
 
@@ -741,22 +741,22 @@ export default function FleaLanding() {
         <section className="gs-section flea-purchase" id="offer">
           <span className="gs-kicker">08 PURCHASE</span>
           <p className="gs-copy">
-            플리마켓이 끝나면 {wonText(LIST_PRICE)}으로 금액이 원상복구됩니다.
+            콩콩마켓이 끝나면 {wonText(LIST_PRICE)}으로 금액이 원상복구됩니다.
           </p>
 
           <article className="flea-buy-card">
-            <span>플리마켓 한정 판매가</span>
+            <span>콩콩마켓 한정 판매가</span>
             <h3>바로 주문하기</h3>
             <strong>{wonText(FLEA_PRICE)}</strong>
-            <small>선착순 70명 예약하고, 과기대에서 수령하기</small>
+            <small>선착순 70명 예약하고, 삼육대에서 수령하기</small>
             {buyCta("purchase_flea", `${wonText(FLEA_PRICE)}에 구매하기`)}
           </article>
 
-          {/* 과기대 밖 지인에게 보내는 길이다. 여기만 상시 판매로 간다. */}
+          {/* 삼육대 밖 지인에게 보내는 길이다. 여기만 상시 판매로 간다. */}
           <article className="flea-buy-card flea-buy-card--list">
             <h3>기존 가격대로 주문하기</h3>
             <strong>{wonText(LIST_PRICE)}</strong>
-            <small>온라인 배송비 별도, 과기대 외 다른 지인에게 소개용</small>
+            <small>온라인 배송비 별도, 삼육대 외 다른 지인에게 소개용</small>
             {buyCta(
               "purchase_list",
               `정가 ${wonText(LIST_PRICE)}에 구매하기`,

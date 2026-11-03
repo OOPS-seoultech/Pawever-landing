@@ -53,7 +53,7 @@ function Router() {
       <Route path="/contact" component={Contact} />
       <Route path="/goods-survey/survey" component={GoodsSurveyForm} />
       <Route path="/goods-survey" component={GoodsSurvey} />
-      {/* 과기대 대동제 플리마켓 전용. 현장 QR 로만 들어온다. */}
+      {/* 삼육대 콩콩마켓 전용. 현장 QR 로만 들어온다. */}
       <Route path="/flea" component={FleaLanding} />
       {/* 안내 메일의 수신거부 링크가 닿는 자리. */}
       <Route path="/unsubscribe" component={Unsubscribe} />
