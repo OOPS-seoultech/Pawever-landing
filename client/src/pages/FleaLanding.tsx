@@ -144,7 +144,7 @@ const processSteps = [
 /** 02 WHY NOW 의 후기 둘(5472:1506, 5472:1520). */
 const voices = [
   {
-    who: "12135  님",
+    who: "이성*님",
     avatar: "voice-avatar-1.webp",
     lines: [
       "그때 사진을 더 찍어둘걸,",
@@ -152,7 +152,7 @@ const voices = [
     ],
   },
   {
-    who: "12135  님",
+    who: "김예*님",
     avatar: "voice-avatar-2.webp",
     lines: [
       "잘받았습니다 봄이랑 비슷하게 생겨서 너무",
@@ -405,6 +405,13 @@ export default function FleaLanding() {
           />
           <p className="flea-caption">* 실제 출력 이미지</p>
 
+          <figure className="flea-instagram-reviews">
+            <GoodsCustomerReviews />
+            <figcaption>
+              *실제 주문자분들께서 보내주신 후기입니다.
+            </figcaption>
+          </figure>
+
           <div className="gs-voice-list flea-voices">
             {voices.map(({ who, avatar, lines }, index) => (
               <article className="gs-voice" key={index}>
@@ -444,12 +451,6 @@ export default function FleaLanding() {
             height="137"
             decoding="async"
           />
-          <figure className="flea-instagram-reviews">
-            <GoodsCustomerReviews />
-            <figcaption>
-              실제 주문자분들께서 작성하신 후기입니다.
-            </figcaption>
-          </figure>
           <p className="flea-punch flea-punch--sm">
             영화 티켓보다 저렴한 가격으로,
             <br />
