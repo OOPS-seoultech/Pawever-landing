@@ -49,6 +49,7 @@ export default function AdminOperations() {
   const [loading, setLoading] = useState(true);
   const [updatedAt, setUpdatedAt] = useState("");
   const detail = useRef<HTMLDivElement>(null);
+  const focusDetail = useRef(false);
   const selectedButton = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
     setRows([]);
@@ -138,6 +139,10 @@ export default function AdminOperations() {
     );
   };
   useEffect(() => {
+    if (detailOpen && focusDetail.current) {
+      detail.current?.focus();
+      focusDetail.current = false;
+    }
     if (
       detailOpen &&
       selected &&
@@ -153,7 +158,7 @@ export default function AdminOperations() {
     setIssuesOnly(false);
   };
   return (
-    <AdminShell title={all ? "운영 현황" : "제작 작업실"} role={role}>
+    <AdminShell title={all ? "운영 현황" : "제작 작업실"} role={role} wide>
       {!allowed ? (
         <p>{staff ? "작업 조회 권한이 없습니다." : "계정 확인 중..."}</p>
       ) : (
@@ -225,7 +230,7 @@ export default function AdminOperations() {
             className={cn(
               "grid min-w-0 items-start gap-4 lg:grid-cols-[160px_minmax(0,1fr)]",
               detailOpen &&
-                "xl:grid-cols-[160px_minmax(260px,1fr)_minmax(0,1.7fr)]"
+                "xl:grid-cols-[160px_minmax(280px,360px)_minmax(0,1fr)]"
             )}
           >
             <nav
@@ -315,6 +320,8 @@ export default function AdminOperations() {
                   className={`flex w-full shrink-0 flex-col gap-2 rounded-lg border bg-background p-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${selected === row.orderNumber ? "border-primary ring-1 ring-primary" : ""}`}
                   onClick={event => {
                     selectedButton.current = event.currentTarget;
+                    focusDetail.current = event.detail === 0;
+                    if (focusDetail.current) detail.current?.focus();
                     setSelected(row.orderNumber);
                     setDetailOpen(true);
                   }}

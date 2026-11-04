@@ -158,6 +158,24 @@ test("다수 주문의 카드·사진을 겹치지 않게 표시하고 패널을
   const narrow = await list.boundingBox();
   expect(wide!.width).toBeGreaterThan(narrow!.width);
   await expect(comparison).toHaveCount(1);
+  for (const viewport of [
+    { width: 1366, height: 768 },
+    { width: 1920, height: 1080 },
+  ]) {
+    await page.setViewportSize(viewport);
+    const listBox = await list.boundingBox(),
+      detailBox = await panel.boundingBox();
+    expect(listBox!.x + listBox!.width).toBeLessThanOrEqual(detailBox!.x);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth
+      )
+    ).toBe(true);
+  }
+  await first.focus();
+  await first.press("Enter");
+  await expect(panel).toBeFocused();
+
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth

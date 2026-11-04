@@ -103,7 +103,7 @@ export function AdminMaterialComparison({ row }: { row: WorkflowOrder }) {
         {canPhotos && (
           <div className="flex min-w-0 flex-col gap-2">
             <h3 className="text-sm font-medium">신청 사진</h3>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2 2xl:grid-cols-3">
               {photos.map(photo => (
                 <a
                   key={photo.slot}
@@ -147,7 +147,7 @@ export function AdminMaterialComparison({ row }: { row: WorkflowOrder }) {
                   width={1024}
                   height={1024}
                   alt="현재 모델링 회차 4면도"
-                  className="h-auto w-full rounded object-contain"
+                  className="h-auto max-h-96 w-full rounded object-contain"
                   onError={() =>
                     setError(
                       "4면도 링크가 만료되었거나 열리지 않습니다. 비교 자료를 새로고침해 주세요."
