@@ -20,12 +20,21 @@ import {
 import type { GoodsOrderStatus } from "@/lib/adminApi";
 
 describe("관리자 주문 상태 규칙", () => {
+  it("관리자 완료는 배송 사실을 요구하지 않는 종료 상태이며 일반 전이로 만들지 않는다", () => {
+    expect(statusTone("ADMIN_COMPLETED")).toBe("done");
+    expect(statusesForView("DONE")).toContain("ADMIN_COMPLETED");
+    expect(STATUS_LABELS.ADMIN_COMPLETED).toBe("관리자 완료");
+    expect(settableStatusesFor("OWNER", "ADMIN_COMPLETED")).toEqual([]);
+    expect(canRegisterTracking("OWNER", "ADMIN_COMPLETED")).toBe(false);
+    expect(canCompletePickup("OWNER", "ADMIN_COMPLETED", "PICKUP")).toBe(false);
+    expect(canCancel("OWNER", "ADMIN_COMPLETED", true)).toBe(false);
+  });
   it("상태와 처리 버튼을 혼동하지 않도록 목록 이름을 구분한다", () => {
     expect(
       ADMIN_ORDER_VIEWS.find(view => view.key === "PAYMENT_CHECK")?.label
     ).toBe("입금 대기");
     expect(ADMIN_ORDER_VIEWS.find(view => view.key === "DONE")?.label).toBe(
-      "발송·수령 완료"
+      "완료"
     );
     expect(ADMIN_ORDER_VIEWS.find(view => view.key === "PROBLEM")?.label).toBe(
       "취소·만료·실패"
