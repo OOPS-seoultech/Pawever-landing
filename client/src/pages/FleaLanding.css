@@ -199,7 +199,7 @@
 
 .flea-instagram-reviews figcaption {
   margin-top: 12px;
-  color: #8c8580;
+  color: var(--gs-body);
   font-size: 12px;
   line-height: 1.6;
   text-align: center;

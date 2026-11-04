@@ -50,7 +50,7 @@ test("티켓 바로 아래 익명 후기 네 장을 2×2로 표시하고 안내 
     expect(layout.photos[2].y).toBeGreaterThan(layout.photos[0].bottom);
     expect(layout.captionTop).toBeGreaterThan(layout.photos[3].bottom);
     expect(layout.captionFont).toBe("12px");
-    expect(layout.captionColor).toBe("rgb(140, 133, 128)");
+    expect(layout.captionColor).toBe("rgb(95, 90, 85)");
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth
