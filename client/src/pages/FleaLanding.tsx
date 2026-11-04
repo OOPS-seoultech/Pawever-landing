@@ -6,6 +6,7 @@ import { getSurveyCampaign, type SurveyCampaign } from "@/lib/goodsSurveyApi";
 import { saveGoodsSurveyPhotoHandoff } from "@/lib/goodsSurveyPhotoHandoff";
 import { PhotoIntakeCard, PrimaryCta } from "./goodsSurveyIntake";
 import { GoodsDeliveryGallery } from "./goodsDeliveryGallery";
+import { GoodsCustomerReviews } from "./goodsCustomerReviews";
 import {
   fleaDiscountPercentText,
   GOODS_PRICE,
@@ -443,6 +444,12 @@ export default function FleaLanding() {
             height="137"
             decoding="async"
           />
+          <figure className="flea-instagram-reviews">
+            <GoodsCustomerReviews />
+            <figcaption>
+              실제 주문자분들께서 작성하신 후기입니다.
+            </figcaption>
+          </figure>
           <p className="flea-punch flea-punch--sm">
             영화 티켓보다 저렴한 가격으로,
             <br />

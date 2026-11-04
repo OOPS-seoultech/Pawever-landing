@@ -193,6 +193,18 @@
   transform: rotate(-7.49deg);
 }
 
+.flea-instagram-reviews {
+  margin: 40px 0 0;
+}
+
+.flea-instagram-reviews figcaption {
+  margin-top: 12px;
+  color: var(--gs-body);
+  font-size: 12px;
+  line-height: 1.6;
+  text-align: center;
+}
+
 .flea-punch {
   margin-top: 25px;
   font-size: 25px;
