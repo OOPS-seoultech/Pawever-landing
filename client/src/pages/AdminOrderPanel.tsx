@@ -317,7 +317,10 @@ export function AdminOrderPanel({
                         src={link.url}
                         alt={`사진 ${row.slot}`}
                         loading="lazy"
-                        className="aspect-square w-full rounded border object-cover transition hover:opacity-80"
+                        decoding="async"
+                        width={160}
+                        height={160}
+                        className="aspect-square h-auto w-full rounded border object-cover transition hover:opacity-80"
                       />
                     </a>
                   ) : (

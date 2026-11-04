@@ -55,6 +55,7 @@ type Props = {
   /** 목록으로 돌아가는 자리. 상세 화면에서만 쓴다. */
   backTo?: string;
   splitWorkspace?: boolean;
+  wide?: boolean;
 };
 
 function AdminNavLink({
@@ -87,6 +88,7 @@ export function AdminShell({
   children,
   backTo,
   splitWorkspace = false,
+  wide = false,
 }: Props) {
   const { staff, error } = useStaffSession();
   const [, setLocation] = useLocation();
@@ -102,7 +104,9 @@ export function AdminShell({
       className={`min-h-screen bg-muted/30 ${splitWorkspace ? "lg:flex lg:h-dvh lg:min-h-0 lg:flex-col lg:overflow-hidden" : ""}`}
     >
       <header className="shrink-0 border-b bg-background">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3">
+        <div
+          className={`mx-auto flex w-full flex-wrap items-center gap-3 px-4 py-3 ${wide ? "max-w-[1800px]" : "max-w-6xl"}`}
+        >
           {backTo ? (
             <Link
               href={backTo}
@@ -135,7 +139,7 @@ export function AdminShell({
       </header>
       <nav
         aria-label="관리 메뉴"
-        className="mx-auto flex w-full max-w-6xl shrink-0 flex-wrap gap-4 border-b px-4 py-3 text-sm"
+        className={`mx-auto flex w-full shrink-0 flex-wrap gap-4 border-b px-4 py-3 text-sm ${wide ? "max-w-[1800px]" : "max-w-6xl"}`}
       >
         {staff?.permissions.includes("VIEW_ORDER_BASIC") && (
           <AdminNavLink href="/admin/operations">
@@ -181,7 +185,7 @@ export function AdminShell({
         )}
       </nav>
       <main
-        className={`mx-auto w-full max-w-6xl px-4 py-6 ${splitWorkspace ? "lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:overflow-hidden" : ""}`}
+        className={`mx-auto w-full px-4 py-6 ${wide ? "max-w-[1800px]" : "max-w-6xl"} ${splitWorkspace ? "lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:overflow-hidden" : ""}`}
       >
         {error ? <AdminError message={error} /> : children}
       </main>

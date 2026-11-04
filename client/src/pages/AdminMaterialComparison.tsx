@@ -76,9 +76,9 @@ export function AdminMaterialComparison({ row }: { row: WorkflowOrder }) {
   return (
     <section
       aria-label="고객 사진·4면도 비교"
-      className="flex flex-col gap-3 rounded-lg border bg-background p-4"
+      className="flex shrink-0 flex-col gap-3 rounded-lg border bg-background p-4"
     >
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="font-semibold">고객 사진 · 현재 4면도</h2>
         <Button
           size="sm"
@@ -103,7 +103,7 @@ export function AdminMaterialComparison({ row }: { row: WorkflowOrder }) {
         {canPhotos && (
           <div className="flex min-w-0 flex-col gap-2">
             <h3 className="text-sm font-medium">신청 사진</h3>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2 2xl:grid-cols-3">
               {photos.map(photo => (
                 <a
                   key={photo.slot}
@@ -113,8 +113,12 @@ export function AdminMaterialComparison({ row }: { row: WorkflowOrder }) {
                 >
                   <img
                     src={photo.url}
+                    loading="lazy"
+                    decoding="async"
+                    width={640}
+                    height={640}
                     alt={`고객 사진 ${photo.slot}`}
-                    className="aspect-square w-full rounded object-contain"
+                    className="aspect-square h-auto w-full rounded object-contain"
                     onError={() =>
                       setError(
                         "사진 링크가 만료되었거나 열리지 않습니다. 비교 자료를 새로고침해 주세요."
@@ -138,8 +142,12 @@ export function AdminMaterialComparison({ row }: { row: WorkflowOrder }) {
               <a href={fourView} target="_blank" rel="noreferrer">
                 <img
                   src={fourView}
+                  loading="lazy"
+                  decoding="async"
+                  width={1024}
+                  height={1024}
                   alt="현재 모델링 회차 4면도"
-                  className="w-full rounded object-contain"
+                  className="h-auto max-h-96 w-full rounded object-contain"
                   onError={() =>
                     setError(
                       "4면도 링크가 만료되었거나 열리지 않습니다. 비교 자료를 새로고침해 주세요."
