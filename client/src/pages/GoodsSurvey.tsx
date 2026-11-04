@@ -7,6 +7,7 @@ import { getSurveyCampaign, type SurveyCampaign } from "@/lib/goodsSurveyApi";
 import { saveGoodsSurveyPhotoHandoff } from "@/lib/goodsSurveyPhotoHandoff";
 import { PhotoIntakeCard, PrimaryCta } from "./goodsSurveyIntake";
 import { GoodsDeliveryGallery } from "./goodsDeliveryGallery";
+import { GoodsCustomerReviews } from "./goodsCustomerReviews";
 import { GOODS_PRICE, wonText } from "./goodsSurveyContent";
 import "./GoodsSurvey.css";
 const PRICE = GOODS_PRICE;
@@ -442,19 +443,7 @@ export default function GoodsSurvey() {
             진행합니다.
           </p>
           <h3 className="gs-customer-review-heading">실제 고객 후기</h3>
-          <div className="gs-customer-reviews">
-            {[1, 2, 3, 4].map(number => (
-              <img
-                key={number}
-                src={`${ASSET_BASE}/customer-review-${number}.webp`}
-                alt={`실제 고객 후기 ${number}: 반려동물과 맞춤 피규어 사진`}
-                width="600"
-                height="1067"
-                loading="lazy"
-                decoding="async"
-              />
-            ))}
-          </div>
+          <GoodsCustomerReviews />
           <LandingFigure slot={FIGURES.proof} className="gs-figure--wide" />
           <p className="gs-note">
             ※ 사진의 화질·각도와 3D 출력 특성에 따라 실제 반려동물과 색상 및
