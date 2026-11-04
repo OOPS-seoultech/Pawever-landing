@@ -75,6 +75,9 @@ test.describe("콩콩마켓 랜딩", () => {
       const proof = document.querySelector(".flea-proof h2")!;
       return {
         ticketShadow: getComputedStyle(ticket).boxShadow,
+        heroArrowBlend: getComputedStyle(
+          document.querySelector(".flea-hero .gs-hero-arrow")!
+        ).mixBlendMode,
         proofLines: proof.getBoundingClientRect().height /
           parseFloat(getComputedStyle(proof).lineHeight),
         ticketGap: ticket.nextElementSibling!.getBoundingClientRect().top -
@@ -87,6 +90,7 @@ test.describe("콩콩마켓 랜딩", () => {
     });
 
     expect(spacing.ticketShadow).toBe("none");
+    expect(spacing.heroArrowBlend).toBe("multiply");
     expect(spacing.proofLines).toBeCloseTo(2, 1);
     expect(spacing.ticketGap).toBeGreaterThanOrEqual(20);
     expect(spacing.handBelow).toBeCloseTo(30, 0);
