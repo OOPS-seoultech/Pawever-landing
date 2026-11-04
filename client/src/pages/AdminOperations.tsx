@@ -20,6 +20,7 @@ import {
 } from "@/lib/adminOperations";
 import { AdminWorkflowPanel } from "./AdminWorkflowPanel";
 import { AdminMaterialComparison } from "./AdminMaterialComparison";
+import { AdminAdministrativeCompletion } from "./AdminAdministrativeCompletion";
 
 export default function AdminOperations() {
   const role = useAdminGuard();
@@ -178,6 +179,13 @@ export default function AdminOperations() {
               {updatedAt ? " · 이전 조회 결과입니다. 새로고침해 주세요." : ""}
             </p>
           )}
+          <div className="mb-3">
+            <AdminAdministrativeCompletion
+              rows={rows}
+              disabled={loading}
+              onCompleted={() => setRevision(value => value + 1)}
+            />
+          </div>
           <div className="grid min-w-0 gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[180px_minmax(260px,1fr)_minmax(0,2fr)] lg:overflow-hidden">
             <nav
               aria-label="작업 단계"
@@ -279,6 +287,9 @@ export default function AdminOperations() {
                     {row.orderNumber}
                   </span>
                   <span className="text-sm">
+                    {row.administrativelyCompleted
+                      ? "관리자 완료 · 당시 단계: "
+                      : ""}
                     {stageLabels[row.productionStage] ?? row.productionStage} ·{" "}
                     {row.assignee?.name ?? "미배정"}
                   </span>

@@ -19,6 +19,7 @@ export type WorkflowOrder = {
   goodsType: string;
   keyringAdded: boolean;
   orderStatus: string;
+  administrativelyCompleted?: boolean;
   paymentStatus: string;
   productionStage: string;
   shipmentStatus: string;

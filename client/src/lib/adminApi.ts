@@ -20,6 +20,7 @@ export type GoodsOrderStatus =
   | "SHIPPED"
   /** 현장에서 직접 건넸다. 현장 수령 주문의 끝이다. */
   | "PICKED_UP"
+  | "ADMIN_COMPLETED"
   | "PAYMENT_EXPIRED"
   | "PAYMENT_FAILED"
   | "CANCELED"

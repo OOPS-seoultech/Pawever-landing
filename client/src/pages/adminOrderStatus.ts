@@ -15,6 +15,7 @@ export const STATUS_LABELS: Record<GoodsOrderStatus, string> = {
   IN_PRODUCTION: "제작 중",
   SHIPPED: "발송 완료",
   PICKED_UP: "수령 완료",
+  ADMIN_COMPLETED: "관리자 완료",
   PAYMENT_EXPIRED: "입금 기한 만료",
   PAYMENT_FAILED: "결제 실패",
   CANCELED: "주문 취소",
@@ -29,6 +30,7 @@ export const FILTERABLE_STATUSES: GoodsOrderStatus[] = [
   "IN_PRODUCTION",
   "SHIPPED",
   "PICKED_UP",
+  "ADMIN_COMPLETED",
   "PAYMENT_EXPIRED",
   "PAYMENT_FAILED",
   "CANCELED",
@@ -49,6 +51,7 @@ export const PRODUCTION_VISIBLE_STATUSES: GoodsOrderStatus[] = [
   "IN_PRODUCTION",
   "SHIPPED",
   "PICKED_UP",
+  "ADMIN_COMPLETED",
   "LEGACY_FREE",
 ];
 
@@ -201,7 +204,11 @@ export const ADMIN_ORDER_VIEWS: readonly {
     statuses: ["PAYMENT_COMPLETED", "LEGACY_FREE"],
   },
   { key: "IN_PRODUCTION", label: "제작 중", statuses: ["IN_PRODUCTION"] },
-  { key: "DONE", label: "발송·수령 완료", statuses: ["SHIPPED", "PICKED_UP"] },
+  {
+    key: "DONE",
+    label: "완료",
+    statuses: ["SHIPPED", "PICKED_UP", "ADMIN_COMPLETED"],
+  },
   {
     key: "PROBLEM",
     label: "취소·만료·실패",
@@ -343,6 +350,7 @@ export const statusTone = (
       return "active";
     case "SHIPPED":
     case "PICKED_UP":
+    case "ADMIN_COMPLETED":
       return "done";
     case "LEGACY_FREE":
       // 아직 만들어 보내야 하는 물건이다. 끝난 것으로 보이면 안 된다.

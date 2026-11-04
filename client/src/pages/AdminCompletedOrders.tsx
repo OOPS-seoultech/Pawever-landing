@@ -7,6 +7,7 @@ import { formatDateTime, formatKrw } from "@/lib/adminFormat";
 
 type CompletedOrder = {
   orderNumber: string;
+  administrativelyCompleted?: boolean;
   goodsType: string;
   deliveryMethod: string;
   shipmentStatus: string;
@@ -213,6 +214,9 @@ export default function AdminCompletedOrders() {
               className="flex flex-wrap items-center gap-2 rounded border p-3 text-sm"
             >
               <span className="font-medium">{order.orderNumber}</span>
+              {order.administrativelyCompleted && (
+                <span>관리자 완료 · 기존 기록 보존</span>
+              )}
               <span>
                 {order.goodsType} ·{" "}
                 {order.deliveryMethod === "PICKUP" ? "직접 수령" : "배송"}
@@ -226,7 +230,9 @@ export default function AdminCompletedOrders() {
                 {formatKrw(order.paymentAmountKrw)} ·{" "}
                 {order.deliveryCompletedAt
                   ? formatDateTime(order.deliveryCompletedAt)
-                  : "완료 시각 없음"}
+                  : order.administrativelyCompleted
+                    ? "배송 완료 시각 미기록"
+                    : "완료 시각 없음"}
               </span>
               {owner && (
                 <Button

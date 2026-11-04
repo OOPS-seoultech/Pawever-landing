@@ -325,6 +325,36 @@ export function AdminWorkflowPanel({
           기존 제작 중 주문입니다. 실제 제작 단계를 확인한 후 전환해야 합니다.
         </p>
       )}
+      {row.administrativelyCompleted && (
+        <div className="space-y-2 rounded border p-3 text-sm">
+          <p>
+            관리자 완료로 종료한 주문입니다. 표시된 제작·입금·배송 기록은 종료
+            당시 상태이며, 실제 배송 완료를 새로 기록한 것은 아닙니다.
+          </p>
+          {staff?.role === "OWNER" && has("OVERRIDE_WORKFLOW") && (
+            <Button
+              variant="outline"
+              disabled={pending}
+              onClick={() => {
+                const reason = window.prompt(
+                  "관리자 완료를 취소하고 이전 상태로 복구할 사유를 입력해 주세요."
+                );
+                if (reason?.trim())
+                  void run(
+                    () =>
+                      command(`${prefix}/restore-administrative-completion`, {
+                        version: row.version,
+                        reason: reason.trim(),
+                      }),
+                    "관리자 완료 이전 상태로 복구했습니다. 고객 알림은 발송하지 않았습니다."
+                  );
+              }}
+            >
+              관리자 완료 이전 상태로 복구
+            </Button>
+          )}
+        </div>
+      )}
       {row.blockingIssues.length > 0 && (
         <ul className="space-y-1 rounded border border-amber-200 bg-amber-50 p-3 text-sm">
           {row.blockingIssues.map(issue => (
@@ -719,6 +749,8 @@ export function AdminWorkflowPanel({
               {(
                 {
                   CONFIRM_PAYMENT: "입금 확인",
+                  ADMIN_COMPLETE: "관리자 완료 · 고객 알림 없음",
+                  RESTORE_ADMIN_COMPLETE: "관리자 완료 이전 상태 복구",
                   START_PRINT_BATCH: "플레이트 출력 시작",
                   FINISH_PRINT_BATCH: "주문별 출력 결과 기록",
                   COMPLETE_POST_PROCESSING: "후가공 완료",
