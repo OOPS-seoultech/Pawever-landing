@@ -1,10 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import { AdminShell, useAdminGuard } from "@/components/AdminShell";
 import { useStaffSession } from "@/components/AdminSession";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
+import { AdminOrderPhotoPreview } from "./AdminOrderPhotoPreview";
 import { AdminApiError, adminRequest } from "@/lib/adminApi";
 import {
   issueLabels,
@@ -22,6 +25,8 @@ import { AdminWorkflowPanel } from "./AdminWorkflowPanel";
 import { AdminMaterialComparison } from "./AdminMaterialComparison";
 import { AdminAdministrativeCompletion } from "./AdminAdministrativeCompletion";
 
+const AdminSalesSummary = lazy(() => import("./AdminSalesSummary"));
+
 export default function AdminOperations() {
   const role = useAdminGuard();
   const { staff } = useStaffSession();
@@ -38,6 +43,8 @@ export default function AdminOperations() {
   const [issuesOnly, setIssuesOnly] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [revision, setRevision] = useState(0);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [salesRevision, setSalesRevision] = useState(0);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [updatedAt, setUpdatedAt] = useState("");
@@ -46,6 +53,7 @@ export default function AdminOperations() {
   useEffect(() => {
     setRows([]);
     setSelected(null);
+    setDetailOpen(false);
     setUpdatedAt("");
     if (!allowed) {
       setLoading(false);
@@ -64,6 +72,7 @@ export default function AdminOperations() {
         );
         if (!live) return;
         setRows(next);
+        setSalesRevision(value => value + 1);
         setUpdatedAt(new Date().toLocaleTimeString("ko-KR"));
         setError("");
       } catch (e) {
@@ -71,6 +80,7 @@ export default function AdminOperations() {
         if (e instanceof AdminApiError && [401, 403].includes(e.status)) {
           setRows([]);
           setSelected(null);
+          setDetailOpen(false);
           setUpdatedAt("");
         }
         setError(
@@ -114,7 +124,8 @@ export default function AdminOperations() {
   // Keep the current task receipt after a handoff, but never show it in a different stage queue.
   const current = visible.find(row => row.orderNumber === selected);
   const selectedRow = rows.find(row => row.orderNumber === selected);
-  const changed = (row: WorkflowOrder) =>
+  const changed = (row: WorkflowOrder) => {
+    setSalesRevision(value => value + 1);
     setRows(previous =>
       all ||
       (row.assignee?.id === staff?.id &&
@@ -125,23 +136,37 @@ export default function AdminOperations() {
           )
         : previous.filter(value => value.orderNumber !== row.orderNumber)
     );
+  };
+  useEffect(() => {
+    if (
+      detailOpen &&
+      selected &&
+      !window.matchMedia("(min-width: 1280px)").matches
+    )
+      detail.current?.scrollIntoView({ block: "start" });
+  }, [detailOpen, selected]);
   const selectQueue = (value: OperationQueue | "active") => {
     setQueue(value);
     setSelected(null);
+    setDetailOpen(false);
     setQuery("");
     setIssuesOnly(false);
   };
   return (
-    <AdminShell
-      title={all ? "운영 현황" : "제작 작업실"}
-      role={role}
-      splitWorkspace
-    >
+    <AdminShell title={all ? "운영 현황" : "제작 작업실"} role={role}>
       {!allowed ? (
         <p>{staff ? "작업 조회 권한이 없습니다." : "계정 확인 중..."}</p>
       ) : (
         <>
-          <div className="mb-4 flex flex-wrap items-center gap-3 text-sm">
+          {all && staff?.permissions.includes("VIEW_PAYMENT") && (
+            <Suspense fallback={<p role="status">매출 조회 중…</p>}>
+              <AdminSalesSummary
+                key={permissionsKey}
+                revision={salesRevision + revision}
+              />
+            </Suspense>
+          )}
+          <div className="mb-4 flex shrink-0 flex-wrap items-center gap-3 text-sm">
             <p className="flex-1 text-muted-foreground">
               {all ? "실제 접수 주문 전체" : "내게 배정된 미완료 작업"} · 진행{" "}
               {active.length}건 · 확인 필요{" "}
@@ -179,17 +204,33 @@ export default function AdminOperations() {
               {updatedAt ? " · 이전 조회 결과입니다. 새로고침해 주세요." : ""}
             </p>
           )}
-          <div className="mb-3">
+          <div className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-3">
             <AdminAdministrativeCompletion
               rows={rows}
               disabled={loading}
               onCompleted={() => setRevision(value => value + 1)}
             />
+            <label className="flex items-center gap-2 text-sm">
+              <Switch
+                aria-label="사진·상세 패널"
+                aria-controls="operation-detail"
+                checked={detailOpen}
+                disabled={!selected}
+                onCheckedChange={setDetailOpen}
+              />
+              사진·상세 패널
+            </label>
           </div>
-          <div className="grid min-w-0 gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[180px_minmax(260px,1fr)_minmax(0,2fr)] lg:overflow-hidden">
+          <div
+            className={cn(
+              "grid min-w-0 items-start gap-4 lg:grid-cols-[160px_minmax(0,1fr)]",
+              detailOpen &&
+                "xl:grid-cols-[160px_minmax(260px,1fr)_minmax(0,1.7fr)]"
+            )}
+          >
             <nav
               aria-label="작업 단계"
-              className="flex flex-wrap content-start gap-2 lg:flex-col lg:flex-nowrap lg:overflow-y-auto lg:p-1"
+              className="flex flex-wrap content-start gap-2 lg:sticky lg:top-4 lg:max-h-[calc(100dvh-2rem)] lg:flex-col lg:flex-nowrap lg:overflow-y-auto lg:p-1"
             >
               <Button
                 variant={queue === "active" ? "default" : "outline"}
@@ -216,7 +257,7 @@ export default function AdminOperations() {
             </nav>
             <section
               aria-label="단계별 주문 목록"
-              className="flex min-w-0 flex-col gap-3 lg:min-h-0 lg:overflow-y-auto lg:p-1 lg:pr-2"
+              className="grid min-w-0 content-start gap-3 lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto lg:p-1 lg:pr-2"
             >
               <h2 className="font-semibold">
                 {queue === "active"
@@ -239,6 +280,7 @@ export default function AdminOperations() {
                 onChange={e => {
                   setQuery(e.target.value);
                   setSelected(null);
+                  setDetailOpen(false);
                 }}
               />
               <label className="flex items-center gap-2 text-sm">
@@ -248,6 +290,7 @@ export default function AdminOperations() {
                   onChange={e => {
                     setIssuesOnly(e.target.checked);
                     setSelected(null);
+                    setDetailOpen(false);
                   }}
                 />
                 확인 필요한 주문만
@@ -269,19 +312,27 @@ export default function AdminOperations() {
                   key={row.orderNumber}
                   type="button"
                   aria-pressed={selected === row.orderNumber}
-                  className={`flex w-full flex-col gap-2 rounded-lg border bg-background p-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${selected === row.orderNumber ? "border-primary ring-1 ring-primary" : ""}`}
+                  className={`flex w-full shrink-0 flex-col gap-2 rounded-lg border bg-background p-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${selected === row.orderNumber ? "border-primary ring-1 ring-primary" : ""}`}
                   onClick={event => {
                     selectedButton.current = event.currentTarget;
                     setSelected(row.orderNumber);
-                    if (!window.matchMedia("(min-width: 1024px)").matches)
-                      detail.current?.scrollIntoView({ block: "start" });
+                    setDetailOpen(true);
                   }}
                 >
-                  <span className="break-words font-medium">
-                    {row.petName}
-                    {identity && row.guardianName
-                      ? ` · ${row.guardianName}`
-                      : ""}
+                  <span className="flex min-w-0 items-center gap-3">
+                    {staff?.permissions.includes("VIEW_CUSTOMER_PHOTOS") && (
+                      <AdminOrderPhotoPreview
+                        key={`${row.orderNumber}:${permissionsKey}`}
+                        number={row.orderNumber}
+                        petName={row.petName}
+                      />
+                    )}
+                    <span className="min-w-0 break-words font-medium">
+                      {row.petName}
+                      {identity && row.guardianName
+                        ? ` · ${row.guardianName}`
+                        : ""}
+                    </span>
                   </span>
                   <span className="break-all text-xs text-muted-foreground">
                     {row.orderNumber}
@@ -296,6 +347,8 @@ export default function AdminOperations() {
                   {staff?.permissions.includes("VIEW_PAYMENT") && (
                     <span className="text-xs">
                       {paymentLabels[row.paymentStatus] ?? row.paymentStatus}
+                      {row.salePriceKrw != null &&
+                        ` · 판매가 ${row.salePriceKrw.toLocaleString("ko-KR")}원`}
                     </span>
                   )}
                   {filaments && (
@@ -333,46 +386,50 @@ export default function AdminOperations() {
                 </button>
               ))}
             </section>
-            <div
-              ref={detail}
-              role="region"
-              aria-label="운영 주문 상세"
-              tabIndex={0}
-              className="flex min-w-0 scroll-mt-4 flex-col gap-3 lg:min-h-0 lg:overflow-y-auto lg:p-1 lg:pr-2"
-            >
-              {current ? (
-                <>
-                  <Button
-                    variant="outline"
-                    className="self-start lg:hidden"
-                    onClick={() => {
-                      selectedButton.current?.scrollIntoView({
-                        block: "center",
-                      });
-                      selectedButton.current?.focus({ preventScroll: true });
-                    }}
-                  >
-                    선택한 주문으로 돌아가기
-                  </Button>
-                  <AdminMaterialComparison
-                    key={`${current.orderNumber}:${permissionsKey}`}
-                    row={current}
-                  />
-                  <AdminWorkflowPanel
-                    key={`${current.orderNumber}:${permissionsKey}`}
-                    orderNumber={current.orderNumber}
-                    showPhotos={false}
-                    onChanged={changed}
-                  />
-                </>
-              ) : (
-                <p className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
-                  {selectedRow
-                    ? `현재 단계가 변경되었습니다. ${operationQueues.find(item => item.id === operationQueue(selectedRow))?.label} 목록에서 이어서 확인하세요.`
-                    : "주문을 선택하면 사진·4면도와 현재 가능한 작업을 이곳에서 확인합니다."}
-                </p>
-              )}
-            </div>
+            {detailOpen && (
+              <div
+                id="operation-detail"
+                ref={detail}
+                role="region"
+                aria-label="운영 주문 상세"
+                tabIndex={0}
+                className="grid min-w-0 scroll-mt-4 content-start gap-3 lg:col-start-2 xl:col-start-auto"
+              >
+                {current ? (
+                  <>
+                    <Button
+                      variant="outline"
+                      className="justify-self-start"
+                      onClick={() => {
+                        setDetailOpen(false);
+                        selectedButton.current?.scrollIntoView({
+                          block: "center",
+                        });
+                        selectedButton.current?.focus({ preventScroll: true });
+                      }}
+                    >
+                      사진·상세 패널 닫기
+                    </Button>
+                    <AdminMaterialComparison
+                      key={`${current.orderNumber}:${permissionsKey}`}
+                      row={current}
+                    />
+                    <AdminWorkflowPanel
+                      key={`${current.orderNumber}:${permissionsKey}`}
+                      orderNumber={current.orderNumber}
+                      showPhotos={false}
+                      onChanged={changed}
+                    />
+                  </>
+                ) : (
+                  <p className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
+                    {selectedRow
+                      ? `현재 단계가 변경되었습니다. ${operationQueues.find(item => item.id === operationQueue(selectedRow))?.label} 목록에서 이어서 확인하세요.`
+                      : "주문을 선택하면 사진·4면도와 현재 가능한 작업을 이곳에서 확인합니다."}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </>
       )}

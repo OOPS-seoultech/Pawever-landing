@@ -23,6 +23,7 @@ import {
 import { formatDateTime, formatKrw } from "@/lib/adminFormat";
 import { AdminModelReview, ModelReviewHistory } from "./AdminModelReview";
 import { AdminFinishing } from "./AdminFinishing";
+import { AdminSalePrice } from "./AdminSalePrice";
 import { AdminFilamentMapping } from "./AdminFilamentMapping";
 
 export function AdminWorkflowPanel({
@@ -320,6 +321,25 @@ export function AdminWorkflowPanel({
           담당: {row.assignee?.name ?? "미배정"}
         </span>
       </div>
+      {has("VIEW_PAYMENT") && row.salePriceKrw != null && (
+        <AdminSalePrice
+          key={`${row.orderNumber}:${row.version}`}
+          row={row}
+          editable={has("MANAGE_OPERATION_SETTINGS") && has("VIEW_ALL_ORDERS")}
+          pending={pending}
+          onSave={(custom, price) =>
+            void run(
+              () =>
+                command(`${prefix}/sale-price`, {
+                  version: row.version,
+                  custom,
+                  ...(custom ? { salePriceKrw: price } : {}),
+                }),
+              "판매가를 저장했습니다. 고객 알림은 발송하지 않았습니다."
+            )
+          }
+        />
+      )}
       {row.requiresMigrationReview && (
         <p className="text-sm text-amber-900">
           기존 제작 중 주문입니다. 실제 제작 단계를 확인한 후 전환해야 합니다.
@@ -546,8 +566,12 @@ export function AdminWorkflowPanel({
                 rel="noreferrer"
               >
                 <img
-                  className="aspect-square w-full rounded object-cover"
+                  className="aspect-square h-auto w-full rounded object-cover"
                   src={photo.url}
+                  loading="lazy"
+                  decoding="async"
+                  width={640}
+                  height={640}
                   alt={`고객 사진 ${photo.slot}`}
                 />
               </a>
@@ -749,6 +773,7 @@ export function AdminWorkflowPanel({
               {(
                 {
                   CONFIRM_PAYMENT: "입금 확인",
+                  SALE_PRICE_CHANGE: "관리용 판매가 변경",
                   ADMIN_COMPLETE: "관리자 완료 · 고객 알림 없음",
                   RESTORE_ADMIN_COMPLETE: "관리자 완료 이전 상태 복구",
                   START_PRINT_BATCH: "플레이트 출력 시작",

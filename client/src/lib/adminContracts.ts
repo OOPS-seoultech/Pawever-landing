@@ -56,6 +56,8 @@ export type WorkflowOrder = {
     modelingAttempt?: number;
   }[];
   expectedAmount: number | null;
+  salePriceKrw?: number | null;
+  salePriceCustom?: boolean;
 };
 export type ModelReview = {
   id: number;
