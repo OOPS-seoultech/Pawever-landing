@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./adminFixtures";
 
 const row = (number: string, pending = false) => ({
   orderNumber: number,

@@ -344,6 +344,16 @@ export default function AdminPrintBatches() {
                     <br />
                     출력 담당: {selected.printingAssigneeName || "미지정"}
                   </p>
+                  {selected.allowedActions.includes("UPLOAD_BATCH_FILE") && (
+                    <Button
+                      variant="outline"
+                      onClick={() =>
+                        navigate(`/admin/local-files?plate=${selected.id}`)
+                      }
+                    >
+                      로컬 파일에서 플레이트 파일 등록
+                    </Button>
+                  )}
                   {selected.blockingIssues.map((issue, i) => (
                     <p key={i} className="text-sm text-amber-900">
                       {issue}
@@ -358,7 +368,7 @@ export default function AdminPrintBatches() {
                       >
                         <a
                           className="break-words underline"
-                          href={`/admin/orders/${encodeURIComponent(o.orderNumber)}`}
+                          href={`/admin/orders/${encodeURIComponent(o.orderNumber)}?petIndex=${o.petIndex}`}
                           target="_blank"
                           rel="noreferrer"
                         >

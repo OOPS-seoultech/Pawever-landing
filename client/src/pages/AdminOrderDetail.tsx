@@ -13,7 +13,7 @@ export default function AdminOrderDetail() {
   const role = useAdminGuard();
   const { orderNumber = "" } = useParams<{ orderNumber: string }>();
   const [, setReloadKey] = useState(0);
-  const noteChange = useCallback(() => setReloadKey((key) => key + 1), []);
+  const noteChange = useCallback(() => setReloadKey(key => key + 1), []);
 
   return (
     <AdminShell
@@ -23,6 +23,9 @@ export default function AdminOrderDetail() {
     >
       <AdminOrderPanel
         orderNumber={orderNumber}
+        petIndex={Number(
+          new URLSearchParams(window.location.search).get("petIndex") ?? 0
+        )}
         role={role}
         onChanged={noteChange}
       />

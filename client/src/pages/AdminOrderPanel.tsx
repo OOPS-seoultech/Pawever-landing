@@ -43,10 +43,12 @@ import {
  */
 export function AdminOrderPanel({
   orderNumber,
+  petIndex = 0,
   role,
   onChanged,
 }: {
   orderNumber: string;
+  petIndex?: number;
   role: AdminRole | null;
   onChanged?: () => void;
 }) {
@@ -151,8 +153,9 @@ export function AdminOrderPanel({
     <>
       <div className="mb-4">
         <AdminWorkflowPanel
-          key={orderNumber}
+          key={`${orderNumber}:${petIndex}`}
           orderNumber={orderNumber}
+          petIndex={petIndex}
           showPhotos={false}
           onChanged={() => {
             void load();

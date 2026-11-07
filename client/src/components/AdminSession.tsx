@@ -7,6 +7,8 @@ import {
 } from "react";
 import { useLocation } from "wouter";
 import { getStaff, type Staff } from "@/lib/adminContracts";
+import { AdminLocalFolderProvider } from "./AdminLocalFolder";
+import { AdminFirstVisit } from "./AdminFirstVisit";
 import { readAdminToken, AdminApiError } from "@/lib/adminApi";
 
 const Context = createContext<{ staff: Staff | null; error: string | null }>({
@@ -60,6 +62,14 @@ export function AdminSessionProvider({ children }: { children: ReactNode }) {
     };
   }, [secured, navigate]);
   return (
-    <Context.Provider value={{ staff, error }}>{children}</Context.Provider>
+    <Context.Provider value={{ staff, error }}>
+      <AdminLocalFolderProvider
+        key={`${staff?.id ?? "signed-out"}:${staff?.permissions.slice().sort().join(",") ?? ""}`}
+        accountId={secured ? (staff?.id ?? null) : null}
+      >
+        {children}
+        {secured && staff && <AdminFirstVisit />}
+      </AdminLocalFolderProvider>
+    </Context.Provider>
   );
 }

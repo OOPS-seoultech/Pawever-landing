@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./adminFixtures";
 
 const order = (
   orderNumber: string,
@@ -227,7 +227,7 @@ test("데스크톱에서 사진과 현재 회차 4면도를 비교하고 모델 
   await page.route("**/api/**", route => {
     const path = new URL(route.request().url()).pathname;
     let data: unknown = [];
-    if (path.endsWith("/me")) return route.fallback();
+    if (path.endsWith("/me") || path === "/api/admin/notices/onboarding" || path === "/api/production/file-targets") return route.fallback();
     if (path.endsWith("/workflow/orders")) data = [row];
     if (path.endsWith("/workflow")) data = row;
     if (path.endsWith("/photo-links"))

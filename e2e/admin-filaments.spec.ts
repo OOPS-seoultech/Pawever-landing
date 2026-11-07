@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./adminFixtures";
 
 const spool = {
   id: 41,
@@ -155,7 +155,7 @@ test("부위별 실제 필라멘트를 저장하고 재시도 후 플레이트 �
   const keys: string[] = [];
   await page.route("**/api/**", async route => {
     const path = new URL(route.request().url()).pathname;
-    if (path.endsWith("/me")) return route.fallback();
+    if (path.endsWith("/me") || path === "/api/admin/notices/onboarding" || path === "/api/production/file-targets") return route.fallback();
     if (path.endsWith("/filaments"))
       return route.fulfill({
         json: {

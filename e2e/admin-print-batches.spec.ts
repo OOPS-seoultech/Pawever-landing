@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./adminFixtures";
 
 test("구성을 바꾸면 이전 파일로 확정할 수 없고 임시 구성을 취소할 수 있다", async ({
   page,
@@ -168,7 +168,7 @@ test("주문을 묶고 슬롯·파일을 확인한 후 한 번에 출력 대기�
   await page.route("**/api/**", async route => {
     const request = route.request(),
       path = new URL(request.url()).pathname;
-    if (path.endsWith("/me")) return route.fallback();
+    if (path.endsWith("/me") || path === "/api/admin/notices/onboarding" || path === "/api/production/file-targets") return route.fallback();
     let data: unknown = null;
     if (path.endsWith("/candidates")) data = plate ? [] : orders;
     else if (path.endsWith("/staff"))
@@ -596,7 +596,7 @@ test("검수 불합격에는 사유와 보정 경로와 메모가 필요하다",
   };
   await page.route("**/api/**", route => {
     const path = new URL(route.request().url()).pathname;
-    if (path.endsWith("/me")) return route.fallback();
+    if (path.endsWith("/me") || path === "/api/admin/notices/onboarding" || path === "/api/production/file-targets") return route.fallback();
     let data: any = row;
     if (path.endsWith("/my-tasks")) data = [row];
     else if (path.endsWith("/timeline")) data = [];

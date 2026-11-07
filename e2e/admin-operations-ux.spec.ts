@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./adminFixtures";
 
 test("완료 주문이 없으면 AS 입력 대신 다음 단계를 안내한다", async ({
   page,
