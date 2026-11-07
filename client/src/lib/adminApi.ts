@@ -158,7 +158,13 @@ export type AdminOrderDetail = {
 };
 
 export type AdminPhotoDownload = {
-  photos: { slot: number; url: string; expiresAt: string }[];
+  photos: {
+    slot: number;
+    url: string;
+    expiresAt: string;
+    photoId?: string;
+    petIndex?: number | null;
+  }[];
 };
 
 export type AdminAccount = {
@@ -374,9 +380,9 @@ export const getAdminOrder = (orderNumber: string) =>
   );
 
 /** 링크는 잠깐만 열린다. 받아 둔 주소를 저장해 두면 이력만 남고 통제가 사라진다. */
-export const requestPhotoLinks = (orderNumber: string) =>
+export const requestPhotoLinks = (orderNumber: string, petIndex?: number) =>
   adminRequest<AdminPhotoDownload>(
-    `/api/admin/orders/${encodeURIComponent(orderNumber)}/photo-links`,
+    `/api/admin/orders/${encodeURIComponent(orderNumber)}/photo-links${petIndex == null ? "" : `?petIndex=${petIndex}`}`,
     { method: "POST" }
   );
 
@@ -386,11 +392,14 @@ export const requestPhotoLinks = (orderNumber: string) =>
  * 파일을 그대로 받으므로 봉투(ApiResponse)를 거치지 않는다. 로그인 토큰을
  * 실어야 해서 링크를 그냥 걸 수 없고, 받아서 blob 으로 저장한다.
  */
-export const downloadAdminPhotoArchive = async (orderNumber: string) => {
+export const downloadAdminPhotoArchive = async (
+  orderNumber: string,
+  petIndex?: number
+) => {
   const token = readAdminToken();
   const response = await fetch(
     resolveApiUrl(
-      `/api/admin/orders/${encodeURIComponent(orderNumber)}/photos.zip`
+      `/api/admin/orders/${encodeURIComponent(orderNumber)}/photos.zip${petIndex == null ? "" : `?petIndex=${petIndex}`}`
     ),
     {
       method: "POST",
@@ -413,7 +422,7 @@ export const downloadAdminPhotoArchive = async (orderNumber: string) => {
 
   return {
     blob: await response.blob(),
-    fileName: `${orderNumber}_photos.zip`,
+    fileName: `${orderNumber}${petIndex == null ? "" : `_pet${petIndex + 1}`}_photos.zip`,
   };
 };
 

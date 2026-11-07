@@ -9,6 +9,9 @@ test("목록은 독립 스크롤되고 선택한 미배정 작업만 기본 배�
   );
   let rows = Array.from({ length: 30 }, (_, index) => ({
     orderNumber: `PE-WORK-${index}`,
+    petIndex: 0,
+    petCount: 1,
+    pets: [],
     petName: `동물${index}`,
     goodsType: "figure",
     keyringAdded: false,

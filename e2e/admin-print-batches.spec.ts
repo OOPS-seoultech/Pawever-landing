@@ -87,6 +87,9 @@ test("구성을 바꾸면 이전 파일로 확정할 수 없고 임시 구성을
 
 const initialOrder = (number: string) => ({
   orderNumber: number,
+  petIndex: 0,
+  petCount: 1,
+  pets: [],
   petName: "콩이",
   goodsType: "figure",
   keyringAdded: false,
@@ -414,7 +417,7 @@ test("출력 시작과 중간 기록 후 실패 주문만 분리한다", async (
   await page.getByLabel("퍼지 잔여물(g)").fill("5");
   await page.getByRole("button", { name: "중간 확인 저장" }).click();
   await expect(page.getByText("중간 상태 정상", { exact: true })).toBeVisible();
-  await page.getByLabel("PE-PLATE2 출력 실패").check();
+  await page.getByLabel("PE-PLATE2 · 콩이 출력 실패").check();
   await expect(
     page.getByRole("button", { name: "출력 완료", exact: true })
   ).toBeDisabled();

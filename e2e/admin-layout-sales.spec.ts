@@ -12,6 +12,9 @@ test("다수 주문의 카드·사진을 겹치지 않게 표시하고 패널을
   );
   const rows = Array.from({ length: 40 }, (_, i) => ({
     orderNumber: `TEST-${i}`,
+    petIndex: 0,
+    petCount: 1,
+    pets: [],
     petName: `반려동물${i}`,
     guardianName: `보호자${i}`,
     goodsType: "figure",
@@ -98,6 +101,7 @@ test("다수 주문의 카드·사진을 겹치지 않게 표시하고 패널을
       expect(request.postDataJSON()).toEqual({
         version: 0,
         custom: true,
+        petIndex: 0,
         salePriceKrw: 24000,
       });
       rows[0] = {
