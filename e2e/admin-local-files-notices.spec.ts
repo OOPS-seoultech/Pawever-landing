@@ -115,7 +115,7 @@ async function setup(
       else {
         const body = request.postDataJSON();
         writes.push({ path, ...body });
-        order.version = ++version;
+        (path.includes("print-batches") ? plate : order).version = ++version;
         data = {
           artifactId: "new-file",
           version,
@@ -129,7 +129,7 @@ async function setup(
       if (!confirmations.has(key)) {
         confirmations.add(key);
         writes.push({ path, ...request.postDataJSON() });
-        order.version = ++version;
+        (path.includes("print-batches") ? plate : order).version = ++version;
         const artifact = {
           id: "new-file",
           fileName: path.includes("print-batches")
@@ -383,4 +383,44 @@ test("직접 선택한 슬라이서 3MF는 응답 유실 후 재시도해도 한
     path: "/api/production/print-batches/7/artifacts/upload-requests",
     fileName: "result.gcode.3mf",
   });
+});
+
+test("긴 첫 안내에서도 제목·본문 스크롤·버튼이 겹치지 않는다", async ({
+  page,
+}) => {
+  guide.body +=
+    "\n\n" +
+    Array.from(
+      { length: 40 },
+      (_, i) =>
+        `## 안내 ${i + 1}\n완성본은 주문과 아이별 폴더에 보관하고 등록할 대상을 확인해 주세요.`
+    ).join("\n\n");
+  await setup(page);
+  await page.goto("/admin/operations");
+  const modal = page.getByRole("dialog");
+  await expect(
+    modal.getByRole("heading", { name: "안내 40", exact: true })
+  ).toHaveCount(1);
+  for (const size of [
+    { width: 1440, height: 1000 },
+    { width: 542, height: 904 },
+  ]) {
+    await page.setViewportSize(size);
+    const sizes = await modal.evaluate(dialog => {
+      const header = dialog.querySelector('[data-slot="dialog-header"]')!;
+      const footer = dialog.querySelector('[data-slot="dialog-footer"]')!;
+      const body = header.nextElementSibling!;
+      return [header, body, footer].map(e => ({
+        height: e.getBoundingClientRect().height,
+        scroll: e.scrollHeight,
+        top: e.getBoundingClientRect().top,
+        bottom: e.getBoundingClientRect().bottom,
+      }));
+    });
+    expect(sizes[0].height + 1).toBeGreaterThanOrEqual(sizes[0].scroll);
+    expect(sizes[2].height + 1).toBeGreaterThanOrEqual(sizes[2].scroll);
+    expect(sizes[0].bottom).toBeLessThanOrEqual(sizes[1].top);
+    expect(sizes[1].bottom).toBeLessThanOrEqual(sizes[2].top);
+    expect(sizes[1].scroll).toBeGreaterThan(sizes[1].height);
+  }
 });

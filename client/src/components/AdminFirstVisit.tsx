@@ -84,9 +84,9 @@ export function AdminFirstVisit() {
           showCloseButton={false}
           onEscapeKeyDown={e => e.preventDefault()}
           onInteractOutside={e => e.preventDefault()}
-          className="flex max-h-[85dvh] flex-col sm:max-w-3xl"
+          className="flex h-[85dvh] flex-col sm:max-w-3xl"
         >
-          <DialogHeader>
+          <DialogHeader className="shrink-0">
             <DialogTitle>{notice?.title ?? "작업 폴더 연결 안내"}</DialogTitle>
             <DialogDescription>
               처음 한 번 표시하는 안내입니다. 언제든 공지사항에서 다시 확인할 수
@@ -101,7 +101,7 @@ export function AdminFirstVisit() {
               {error}
             </p>
           )}
-          <DialogFooter>
+          <DialogFooter className="shrink-0">
             <Button
               variant="outline"
               disabled={pending}
