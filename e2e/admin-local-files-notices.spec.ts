@@ -115,7 +115,7 @@ async function setup(
       else {
         const body = request.postDataJSON();
         writes.push({ path, ...body });
-        order.version = ++version;
+        (path.includes("print-batches") ? plate : order).version = ++version;
         data = {
           artifactId: "new-file",
           version,
@@ -129,7 +129,7 @@ async function setup(
       if (!confirmations.has(key)) {
         confirmations.add(key);
         writes.push({ path, ...request.postDataJSON() });
-        order.version = ++version;
+        (path.includes("print-batches") ? plate : order).version = ++version;
         const artifact = {
           id: "new-file",
           fileName: path.includes("print-batches")
