@@ -178,7 +178,8 @@ export function AdminPrintRun({
                   key={`${i.orderNumber}:${i.petIndex}`}
                   className="break-words"
                 >
-                  {i.orderNumber} · 아이 {i.petIndex + 1}: {i.note}
+                  {i.orderNumber}
+                  {i.petIndex != null && ` · 아이 ${i.petIndex + 1}`}: {i.note}
                 </p>
               ))}
               <p className="text-xs text-muted-foreground">

@@ -19,7 +19,7 @@ export type PrintBatch = {
     id: number;
     note: string;
     purgeGrams: number | null;
-    issues: { orderNumber: string; petIndex: number; note: string }[];
+    issues: { orderNumber: string; petIndex?: number; note: string }[];
     actorName: string;
     createdAt: string;
   }[];
