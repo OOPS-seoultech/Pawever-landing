@@ -145,6 +145,16 @@ test("한 주문의 두 아이를 구별하고 개별 사진·단계와 주문 �
   await expect(
     panel.getByRole("heading", { name: "PE-TWO · 뚜비" })
   ).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "고객 사진·4면도 비교" })
+  ).toHaveCount(1);
+  await panel.getByRole("button", { name: /^별이 ·/ }).click();
+  await expect(
+    panel.getByRole("heading", { name: "PE-TWO · 별이" })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "고객 사진·4면도 비교" })
+  ).toHaveCount(1);
   expect(requestedPets).toContain("0");
   expect(requestedPets).toContain("1");
   expect(

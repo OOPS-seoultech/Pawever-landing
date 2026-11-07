@@ -423,11 +423,11 @@ export default function AdminOperations() {
                       사진·상세 패널 닫기
                     </Button>
                     <AdminMaterialComparison
-                      key={`${workKey(current)}:${permissionsKey}`}
+                      key={`comparison:${workKey(current)}:${permissionsKey}`}
                       row={current}
                     />
                     <AdminWorkflowPanel
-                      key={`${workKey(current)}:${permissionsKey}`}
+                      key={`workflow:${workKey(current)}:${permissionsKey}`}
                       orderNumber={current.orderNumber}
                       petIndex={current.petIndex}
                       onSelectPet={index =>
