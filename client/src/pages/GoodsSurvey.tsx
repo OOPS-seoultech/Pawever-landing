@@ -1,6 +1,7 @@
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
+import SellerNotice from "@/components/SellerNotice";
 import { setSurveyPhaseContext, trackEvent } from "@/lib/analytics/analytics";
 import { usePageEngagement, useScrollDepth } from "@/lib/analytics/react";
 import { getSurveyCampaign, type SurveyCampaign } from "@/lib/goodsSurveyApi";
@@ -619,6 +620,8 @@ export default function GoodsSurvey() {
             <br />
             <Link href="/contact">문의하기</Link>
           </p>
+          {/* 값이 다 차기 전에는 그리지 않는다. lib/sellerNotice 참고. */}
+          <SellerNotice />
         </footer>
         <div className="gs-stickybar">
           {goodsAvailable ? (
