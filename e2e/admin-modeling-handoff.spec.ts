@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./adminFixtures";
 
 const modelPermissions = [
   "VIEW_ORDER_BASIC",
@@ -82,7 +82,7 @@ test("검수 담당자는 넘어온 고객 사진과 모델 파일을 열람한�
   let downloads = 0;
   await page.route("**/api/**", async route => {
     const path = new URL(route.request().url()).pathname;
-    if (path.endsWith("/me")) return route.fallback();
+    if (path.endsWith("/me") || path === "/api/admin/notices/onboarding" || path === "/api/production/file-targets") return route.fallback();
     if (path.endsWith("/my-tasks"))
       return route.fulfill({ json: { success: true, data: [row] } });
     if (path.endsWith("/workflow"))
@@ -157,7 +157,7 @@ test("담당자 관리에서 작업 역할과 기본 배정을 저장한다", as
   };
   await page.route("**/api/**", async route => {
     const path = new URL(route.request().url()).pathname;
-    if (path.endsWith("/me")) return route.fallback();
+    if (path.endsWith("/me") || path === "/api/admin/notices/onboarding" || path === "/api/production/file-targets") return route.fallback();
     if (path === "/api/admin/accounts")
       return route.fulfill({ json: { success: true, data: [] } });
     if (path.endsWith("/staff"))
@@ -329,7 +329,7 @@ test("입금 금액 불일치와 동시 수정 오류는 다음 행동을 안내
   let attempt = 0;
   await page.route("**/api/**", async route => {
     const path = new URL(route.request().url()).pathname;
-    if (path.endsWith("/me")) return route.fallback();
+    if (path.endsWith("/me") || path === "/api/admin/notices/onboarding" || path === "/api/production/file-targets") return route.fallback();
     if (path.endsWith("/workflow/orders"))
       return route.fulfill({ json: { success: true, data: [row] } });
     if (path.endsWith("/timeline"))

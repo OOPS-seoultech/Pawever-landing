@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./adminFixtures";
 
 /**
  * 우체국 접수 내역 붙여넣기.

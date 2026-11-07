@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./adminFixtures";
 
 async function session(page: Page, allowed = true) {
   await page.addInitScript(() =>

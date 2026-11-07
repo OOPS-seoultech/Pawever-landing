@@ -180,6 +180,12 @@ export function AdminShell({
             </AdminNavLink>
           </>
         )}
+        {staff && (
+          <>
+            <AdminNavLink href="/admin/local-files">로컬 파일</AdminNavLink>
+            <AdminNavLink href="/admin/notices">공지사항</AdminNavLink>
+          </>
+        )}
         {staff?.permissions.includes("MANAGE_ACCOUNTS") && (
           <AdminNavLink href="/admin/accounts">담당자 설정</AdminNavLink>
         )}

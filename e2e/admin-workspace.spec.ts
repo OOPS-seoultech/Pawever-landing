@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./adminFixtures";
 
 test("목록은 독립 스크롤되고 선택한 미배정 작업만 기본 배정한다", async ({
   page,

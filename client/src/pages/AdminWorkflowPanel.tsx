@@ -471,6 +471,29 @@ export function AdminWorkflowPanel({
             </details>
           )}
       </section>
+      {(can("UPLOAD_ARTIFACT") || can("UPLOAD_COLORED_MODEL")) && (
+        <Button
+          variant="outline"
+          onClick={() =>
+            navigate(
+              `/admin/local-files?order=${encodeURIComponent(orderNumber)}&pet=${row.petIndex}`
+            )
+          }
+        >
+          로컬 파일에서 자료 등록
+        </Button>
+      )}
+      {row.artifacts.some(file => file.kind === "COLORED_MODEL") && (
+        <section
+          className="flex flex-col gap-2 rounded border p-3"
+          aria-label="등록된 채색 3MF"
+        >
+          <h3 className="font-medium">채색 3MF</h3>
+          {row.artifacts
+            .filter(file => file.kind === "COLORED_MODEL")
+            .map(fileRow)}
+        </section>
+      )}
       {has("VIEW_PAYMENT") && row.salePriceKrw != null && (
         <AdminSalePrice
           key={`${row.orderNumber}:${row.version}`}
