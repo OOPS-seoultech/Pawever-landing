@@ -1,3 +1,4 @@
+import { workKey } from "@/lib/adminContracts";
 import { currentFilamentMappings } from "@/lib/printBatchContracts";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,7 @@ export function AdminPlateEditor({
   onCancel: () => void;
 }) {
   const [selected, setSelected] = useState<string[]>(
-    batch?.orders.map(o => o.orderNumber) ?? []
+    batch?.orders.map(workKey) ?? []
   );
   const [printer, setPrinter] = useState(batch?.printerName ?? "");
   const [worker, setWorker] = useState<number | null>(
@@ -38,10 +39,10 @@ export function AdminPlateEditor({
   const all = [
     ...(batch?.orders ?? []),
     ...candidates.filter(
-      c => !batch?.orders.some(o => o.orderNumber === c.orderNumber)
+      c => !batch?.orders.some(o => workKey(o) === workKey(c))
     ),
   ];
-  const included = all.filter(o => selected.includes(o.orderNumber));
+  const included = all.filter(o => selected.includes(workKey(o)));
   const used = new Map<number, FilamentMapping>();
   for (const order of included)
     for (const mapping of currentFilamentMappings(order))
@@ -72,6 +73,7 @@ export function AdminPlateEditor({
           printingAssigneeId: worker,
           orders: included.map(o => ({
             orderNumber: o.orderNumber,
+            petIndex: o.petIndex,
             version: o.version,
           })),
           slots: Array.from(used.keys())
@@ -114,17 +116,17 @@ export function AdminPlateEditor({
           )
           .map(o => (
             <label
-              key={o.orderNumber}
+              key={workKey(o)}
               className="flex items-start gap-2 rounded border p-3 text-sm"
             >
               <input
                 type="checkbox"
-                checked={selected.includes(o.orderNumber)}
+                checked={selected.includes(workKey(o))}
                 onChange={e =>
                   setSelected(old =>
                     e.target.checked
-                      ? [...old, o.orderNumber]
-                      : old.filter(n => n !== o.orderNumber)
+                      ? [...old, workKey(o)]
+                      : old.filter(n => n !== workKey(o))
                   )
                 }
               />

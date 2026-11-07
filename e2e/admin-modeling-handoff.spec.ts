@@ -9,6 +9,9 @@ const modelPermissions = [
 ];
 const initial = () => ({
   orderNumber: "PE-TEST001",
+  petIndex: 0,
+  petCount: 1,
+  pets: [],
   petName: "초코",
   goodsType: "figure",
   keyringAdded: true,

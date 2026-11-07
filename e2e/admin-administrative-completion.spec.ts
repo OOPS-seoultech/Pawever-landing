@@ -2,6 +2,9 @@ import { expect, test } from "@playwright/test";
 
 const row = (number: string, pending = false) => ({
   orderNumber: number,
+  petIndex: 0,
+  petCount: 1,
+  pets: [],
   petName: "테스트",
   guardianName: "테스트 보호자",
   goodsType: "figure",

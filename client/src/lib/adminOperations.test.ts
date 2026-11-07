@@ -7,6 +7,9 @@ import {
 import type { WorkflowOrder } from "./adminContracts";
 
 const order = (changes: Partial<WorkflowOrder> = {}): WorkflowOrder => ({
+  petIndex: 0,
+  petCount: 1,
+  pets: [],
   orderNumber: "TEST-1",
   petName: "나비",
   guardianName: "보호자",

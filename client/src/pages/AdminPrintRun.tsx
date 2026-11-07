@@ -1,3 +1,4 @@
+import { workKey } from "@/lib/adminContracts";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,10 +23,11 @@ export function AdminPrintRun({
   const can = (action: string) => batch.allowedActions.includes(action);
   const orders = batch.orders.map(o => ({
     orderNumber: o.orderNumber,
+    petIndex: o.petIndex,
     version: o.version,
   }));
   const invalidFailure = batch.orders.some(
-    o => failed[o.orderNumber] && !reasons[o.orderNumber]?.trim()
+    o => failed[workKey(o)] && !reasons[workKey(o)]?.trim()
   );
   return (
     <div className="space-y-4">
@@ -117,15 +119,15 @@ export function AdminPrintRun({
             </summary>
             <div className="mt-2 space-y-2">
               {batch.orders.map(o => (
-                <label key={o.orderNumber} className="block text-sm">
-                  {o.orderNumber} 이상 메모
+                <label key={workKey(o)} className="block text-sm">
+                  {o.orderNumber} · {o.petName} 이상 메모
                   <Input
                     maxLength={1000}
-                    value={issues[o.orderNumber] ?? ""}
+                    value={issues[workKey(o)] ?? ""}
                     onChange={e =>
                       setIssues(v => ({
                         ...v,
-                        [o.orderNumber]: e.target.value,
+                        [workKey(o)]: e.target.value,
                       }))
                     }
                   />
@@ -148,11 +150,12 @@ export function AdminPrintRun({
                   version: batch.version,
                   note: note.trim(),
                   purgeGrams: grams ? Number(grams) : null,
-                  issues: Object.entries(issues)
-                    .filter(([, v]) => v.trim())
-                    .map(([orderNumber, v]) => ({
-                      orderNumber,
-                      note: v.trim(),
+                  issues: batch.orders
+                    .filter(o => issues[workKey(o)]?.trim())
+                    .map(o => ({
+                      orderNumber: o.orderNumber,
+                      petIndex: o.petIndex,
+                      note: issues[workKey(o)].trim(),
                     })),
                 },
                 "중간 확인 기록을 저장했습니다."
@@ -171,8 +174,11 @@ export function AdminPrintRun({
               <p className="whitespace-pre-wrap break-words">{r.note}</p>
               {r.purgeGrams != null && <p>퍼지 잔여물: {r.purgeGrams}g</p>}
               {r.issues.map(i => (
-                <p key={i.orderNumber} className="break-words">
-                  {i.orderNumber}: {i.note}
+                <p
+                  key={`${i.orderNumber}:${i.petIndex}`}
+                  className="break-words"
+                >
+                  {i.orderNumber} · 아이 {i.petIndex + 1}: {i.note}
                 </p>
               ))}
               <p className="text-xs text-muted-foreground">
@@ -191,18 +197,18 @@ export function AdminPrintRun({
           </p>
           {batch.orders.map(o => (
             <div
-              key={o.orderNumber}
+              key={workKey(o)}
               className="space-y-2 rounded border p-3 text-sm"
             >
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
-                  aria-label={`${o.orderNumber} 출력 실패`}
-                  checked={!!failed[o.orderNumber]}
+                  aria-label={`${o.orderNumber} · ${o.petName} 출력 실패`}
+                  checked={!!failed[workKey(o)]}
                   onChange={e =>
                     setFailed(v => ({
                       ...v,
-                      [o.orderNumber]: e.target.checked,
+                      [workKey(o)]: e.target.checked,
                     }))
                   }
                 />
@@ -210,16 +216,16 @@ export function AdminPrintRun({
                   {o.orderNumber} · {o.petName} 출력 실패
                 </span>
               </label>
-              {failed[o.orderNumber] && (
+              {failed[workKey(o)] && (
                 <label className="block">
                   {o.orderNumber} 실패 사유
                   <Input
-                    value={reasons[o.orderNumber] ?? ""}
+                    value={reasons[workKey(o)] ?? ""}
                     maxLength={1000}
                     onChange={e =>
                       setReasons(v => ({
                         ...v,
-                        [o.orderNumber]: e.target.value,
+                        [workKey(o)]: e.target.value,
                       }))
                     }
                   />
@@ -236,10 +242,8 @@ export function AdminPrintRun({
                   version: batch.version,
                   orders: orders.map(o => ({
                     ...o,
-                    result: failed[o.orderNumber] ? "FAILED" : "SUCCESS",
-                    note: failed[o.orderNumber]
-                      ? reasons[o.orderNumber].trim()
-                      : "",
+                    result: failed[workKey(o)] ? "FAILED" : "SUCCESS",
+                    note: failed[workKey(o)] ? reasons[workKey(o)].trim() : "",
                   })),
                 },
                 "출력 결과를 기록했습니다. 성공 주문은 후가공, 실패 주문은 새 플레이트 구성으로 넘어갔습니다."
@@ -255,7 +259,7 @@ export function AdminPrintRun({
           <h3 className="text-sm font-medium">이번 출력 결과</h3>
           {batch.results?.map(r => (
             <p key={r.id} className="break-words text-sm">
-              {r.orderNumber} · 시도 {r.attempt} ·{" "}
+              {r.orderNumber} · 아이 {r.petIndex + 1} · 시도 {r.attempt} ·{" "}
               {r.result === "SUCCESS"
                 ? "출력 성공"
                 : r.result === "FAILED"

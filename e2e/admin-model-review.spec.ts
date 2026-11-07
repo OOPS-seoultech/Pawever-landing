@@ -2,6 +2,9 @@ import { test, expect, type Page } from "@playwright/test";
 
 const initial = () => ({
   orderNumber: "PE-REVIEW001",
+  petIndex: 0,
+  petCount: 1,
+  pets: [],
   petName: "콩이",
   goodsType: "figure",
   keyringAdded: false,

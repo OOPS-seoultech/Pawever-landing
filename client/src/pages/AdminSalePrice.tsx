@@ -23,8 +23,10 @@ export function AdminSalePrice({
   onSave: (custom: boolean, price: number) => void;
 }) {
   const [custom, setCustom] = useState(Boolean(row.salePriceCustom));
-  const [value, setValue] = useState(String(row.salePriceKrw ?? 18900));
-  const price = custom ? Number(value) : 18900;
+  const [value, setValue] = useState(
+    String(row.salePriceKrw ?? 18900 * row.petCount)
+  );
+  const price = custom ? Number(value) : 18900 * row.petCount;
   const valid =
     (!custom || value.trim() !== "") &&
     Number.isSafeInteger(price) &&
@@ -64,13 +66,14 @@ export function AdminSalePrice({
               min={0}
               max={100000000}
               step={1}
-              value={custom ? value : "18900"}
+              value={custom ? value : String(18900 * row.petCount)}
               disabled={pending || !custom}
               onChange={event => setValue(event.target.value)}
               aria-invalid={!valid}
             />
             <FieldDescription>
-              배송비 제외 · 고객 청구액과 입금 기록은 바뀌지 않습니다.
+              기본 18,900원 × {row.petCount}마리 · 주문 전체 판매가 · 배송비
+              제외 · 고객 청구액과 입금 기록은 바뀌지 않습니다.
             </FieldDescription>
           </Field>
           {!valid && (

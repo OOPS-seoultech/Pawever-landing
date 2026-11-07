@@ -4,9 +4,11 @@ import { requestPhotoLinks } from "@/lib/adminApi";
 /** Only fetch the first photo when its order card approaches the visible list. */
 export function AdminOrderPhotoPreview({
   number,
+  petIndex,
   petName,
 }: {
   number: string;
+  petIndex?: number;
   petName: string;
 }) {
   const target = useRef<HTMLSpanElement>(null);
@@ -19,7 +21,7 @@ export function AdminOrderPhotoPreview({
         if (!entries.some(entry => entry.isIntersecting)) return;
         observer.disconnect();
         setMessage("사진 로딩 중");
-        requestPhotoLinks(number)
+        requestPhotoLinks(number, petIndex)
           .then(value => {
             if (!live) return;
             setUrl(value.photos[0]?.url ?? "");
@@ -36,7 +38,7 @@ export function AdminOrderPhotoPreview({
       live = false;
       observer.disconnect();
     };
-  }, [number]);
+  }, [number, petIndex]);
   return (
     <span
       ref={target}

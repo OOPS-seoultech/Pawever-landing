@@ -36,7 +36,9 @@ export function AdminAdministrativeCompletion({
   const busy = useRef(false);
   const allowed =
     staff?.role === "OWNER" && staff.permissions.includes("OVERRIDE_WORKFLOW");
-  const eligible = rows.filter(
+  const eligible = Array.from(
+    new Map(rows.map(row => [row.orderNumber, row])).values()
+  ).filter(
     row =>
       row.orderStatus === "ACTIVE" &&
       row.shipmentStatus === "NOT_READY" &&

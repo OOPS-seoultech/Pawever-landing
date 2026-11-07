@@ -129,6 +129,9 @@ test("부위별 실제 필라멘트를 저장하고 재시도 후 플레이트 �
   await session(page);
   let row = {
     orderNumber: "PE-COLOR001",
+    petIndex: 0,
+    petCount: 1,
+    pets: [],
     petName: "콩이",
     goodsType: "figure",
     keyringAdded: false,

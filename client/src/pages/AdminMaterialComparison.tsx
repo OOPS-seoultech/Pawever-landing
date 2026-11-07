@@ -41,7 +41,7 @@ export function AdminMaterialComparison({ row }: { row: WorkflowOrder }) {
     const load = async () => {
       const results = await Promise.allSettled([
         canPhotos
-          ? requestPhotoLinks(row.orderNumber).then(result => {
+          ? requestPhotoLinks(row.orderNumber, row.petIndex).then(result => {
               if (live) setPhotos(result.photos);
             })
           : Promise.resolve(),
@@ -71,7 +71,7 @@ export function AdminMaterialComparison({ row }: { row: WorkflowOrder }) {
     return () => {
       live = false;
     };
-  }, [row.orderNumber, artifactId, canPhotos, revision]);
+  }, [row.orderNumber, row.petIndex, artifactId, canPhotos, revision]);
   if (!canPhotos && !canFiles) return null;
   return (
     <section

@@ -1,3 +1,4 @@
+import { workKey } from "@/lib/adminContracts";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { AdminShell, useAdminGuard } from "@/components/AdminShell";
@@ -206,6 +207,7 @@ export default function AdminPrintBatches() {
   const orderVersions =
     selected?.orders.map(o => ({
       orderNumber: o.orderNumber,
+      petIndex: o.petIndex,
       version: o.version,
     })) ?? [];
   const visible = rows.filter(
@@ -351,7 +353,7 @@ export default function AdminPrintBatches() {
                     <h3 className="text-sm font-medium">포함 주문</h3>
                     {selected.orders.map(o => (
                       <div
-                        key={o.orderNumber}
+                        key={workKey(o)}
                         className="min-w-0 rounded bg-muted p-3 text-sm"
                       >
                         <a

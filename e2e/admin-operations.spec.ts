@@ -6,6 +6,9 @@ const order = (
   paymentStatus = "CONFIRMED"
 ) => ({
   orderNumber,
+  petIndex: 0,
+  petCount: 1,
+  pets: [],
   petName: `아이${orderNumber}`,
   guardianName: `보호자${orderNumber}`,
   goodsType: "figure",

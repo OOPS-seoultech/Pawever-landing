@@ -14,6 +14,9 @@ export type StaffAccount = Omit<Staff, "permissions"> & {
 export type WorkflowOrder = {
   orderNumber: string;
   petName: string;
+  petIndex: number;
+  petCount: number;
+  pets: { petIndex: number; petName: string; productionStage: string }[];
   guardianName?: string | null;
   customGoods?: string | null;
   goodsType: string;
@@ -165,9 +168,12 @@ export const artifactKinds = [
   { kind: "PRINT_MODEL", label: "출력 파일", accept: ".stl,.3mf" },
 ];
 export const getStaff = () => adminRequest<Staff>("/api/admin/me");
-export const getWorkflow = (number: string) =>
+export const workKey = (row: Pick<WorkflowOrder, "orderNumber" | "petIndex">) =>
+  `${row.orderNumber}:${row.petIndex}`;
+
+export const getWorkflow = (number: string, petIndex = 0) =>
   adminRequest<WorkflowOrder>(
-    `/api/admin/orders/${encodeURIComponent(number)}/workflow`
+    `/api/admin/orders/${encodeURIComponent(number)}/workflow?petIndex=${petIndex}`
   );
 export const getStaffAccounts = () =>
   adminRequest<StaffAccount[]>("/api/admin/workflow/staff");

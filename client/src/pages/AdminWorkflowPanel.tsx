@@ -28,13 +28,23 @@ import { AdminFilamentMapping } from "./AdminFilamentMapping";
 
 export function AdminWorkflowPanel({
   orderNumber,
+  petIndex: initialPetIndex = 0,
+  onSelectPet,
   onChanged,
   showPhotos = true,
 }: {
   orderNumber: string;
+  petIndex?: number;
+  onSelectPet?: (index: number) => void;
   onChanged?: (row: WorkflowOrder) => void;
   showPhotos?: boolean;
 }) {
+  const [petIndex, setPetIndex] = useState(initialPetIndex);
+  const [newPetName, setNewPetName] = useState("");
+  const [sourcePhotos, setSourcePhotos] = useState<
+    AdminPhotoDownload["photos"]
+  >([]);
+  const [newPetPhotoIds, setNewPetPhotoIds] = useState<string[]>([]);
   const { staff } = useStaffSession();
   const [, navigate] = useLocation();
   const [row, setRow] = useState<WorkflowOrder | null>(null);
@@ -69,17 +79,17 @@ export function AdminWorkflowPanel({
     [navigate]
   );
   const load = useCallback(async () => {
-    const value = await getWorkflow(orderNumber);
+    const value = await getWorkflow(orderNumber, petIndex);
     setRow(value);
     return value;
-  }, [orderNumber]);
+  }, [orderNumber, petIndex]);
   const loadTimeline = useCallback(async () => {
     setEvents(
       await adminRequest(
         `/api/admin/orders/${encodeURIComponent(orderNumber)}/workflow/timeline`
       )
     );
-  }, [orderNumber]);
+  }, [orderNumber, petIndex]);
   useEffect(() => {
     let live = true;
     setRow(null);
@@ -88,7 +98,7 @@ export function AdminWorkflowPanel({
     setNotice("");
     setAmount("");
     setMemo("");
-    getWorkflow(orderNumber)
+    getWorkflow(orderNumber, petIndex)
       .then(value => {
         if (live) setRow(value);
       })
@@ -98,12 +108,12 @@ export function AdminWorkflowPanel({
     return () => {
       live = false;
     };
-  }, [orderNumber, fail]);
+  }, [orderNumber, petIndex, fail]);
   useEffect(() => {
     let live = true;
     setPhotos([]);
     if (canPhotos)
-      requestPhotoLinks(orderNumber)
+      requestPhotoLinks(orderNumber, petIndex)
         .then(value => {
           if (live) setPhotos(value.photos);
         })
@@ -113,7 +123,7 @@ export function AdminWorkflowPanel({
     return () => {
       live = false;
     };
-  }, [orderNumber, canPhotos, fail]);
+  }, [orderNumber, petIndex, canPhotos, fail]);
   useEffect(() => {
     if (canAssign) getStaffAccounts().then(setAccounts).catch(fail);
     else setAccounts([]);
@@ -127,11 +137,12 @@ export function AdminWorkflowPanel({
     path: string,
     body: object
   ): Promise<T> => {
-    const fingerprint = path + JSON.stringify(body);
+    const payload = { ...body, petIndex };
+    const fingerprint = path + JSON.stringify(payload);
     const key = keys.current.get(fingerprint) ?? crypto.randomUUID();
     keys.current.set(fingerprint, key);
     try {
-      const value = await workflowCommand<T>(path, body, key);
+      const value = await workflowCommand<T>(path, payload, key);
       keys.current.delete(fingerprint);
       return value;
     } catch (e) {
@@ -149,6 +160,7 @@ export function AdminWorkflowPanel({
     try {
       const next = await action();
       setRow(next);
+      setPetIndex(next.petIndex);
       setNotice(
         next.blockingIssues.includes("PAYMENT_MISMATCH") ? "" : message
       );
@@ -321,6 +333,144 @@ export function AdminWorkflowPanel({
           담당: {row.assignee?.name ?? "미배정"}
         </span>
       </div>
+      <section
+        aria-label="반려동물별 제작"
+        className="space-y-3 rounded border p-3"
+      >
+        <h3 className="font-medium">한 주문 · {row.petCount}마리 개별 제작</h3>
+        <div className="flex flex-wrap gap-2">
+          {(row.pets?.length
+            ? row.pets
+            : [
+                {
+                  petIndex: row.petIndex,
+                  petName: row.petName,
+                  productionStage: row.productionStage,
+                },
+              ]
+          ).map(pet => (
+            <Button
+              key={pet.petIndex}
+              variant={pet.petIndex === petIndex ? "default" : "outline"}
+              aria-pressed={pet.petIndex === petIndex}
+              disabled={pending}
+              onClick={() =>
+                onSelectPet
+                  ? onSelectPet(pet.petIndex)
+                  : setPetIndex(pet.petIndex)
+              }
+            >
+              {pet.petName} ·{" "}
+              {stageLabels[pet.productionStage] ?? pet.productionStage}
+            </Button>
+          ))}
+        </div>
+        <p className="text-xs text-muted-foreground">
+          사진·모델·검수·출력은 아이별로 관리합니다. 모두 검수 통과 후 한
+          주문으로 포장합니다.
+        </p>
+        {has("MANAGE_OPERATION_SETTINGS") &&
+          has("VIEW_ALL_ORDERS") &&
+          row.orderStatus === "ACTIVE" &&
+          row.shipmentStatus === "NOT_READY" &&
+          ["MODELING_QUEUE", "BLOCKED"].includes(row.productionStage) &&
+          has("VIEW_CUSTOMER_PHOTOS") && (
+            <details
+              onToggle={event => {
+                if (event.currentTarget.open) {
+                  setNewPetPhotoIds([]);
+                  requestPhotoLinks(orderNumber)
+                    .then(result => setSourcePhotos(result.photos))
+                    .catch(fail);
+                }
+              }}
+            >
+              <summary className="cursor-pointer text-sm">
+                반려동물 추가
+              </summary>
+              <div className="mt-2 flex flex-wrap items-end gap-2">
+                <label className="text-sm">
+                  추가할 아이 이름
+                  <Input
+                    value={newPetName}
+                    maxLength={80}
+                    disabled={pending}
+                    onChange={e => setNewPetName(e.target.value)}
+                  />
+                </label>
+                <Button
+                  variant="outline"
+                  disabled={
+                    pending ||
+                    !newPetName.trim() ||
+                    row.petCount >= 10 ||
+                    newPetPhotoIds.length < 3 ||
+                    newPetPhotoIds.length > 5
+                  }
+                  onClick={() =>
+                    void run(
+                      () =>
+                        command(`${prefix}/workflow/pets`, {
+                          version: row.version,
+                          petName: newPetName.trim(),
+                          photoIds: newPetPhotoIds,
+                        }),
+                      "아이와 사진을 추가했습니다. 목록에서 개별 제작을 진행해 주세요."
+                    )
+                  }
+                >
+                  아이 추가
+                </Button>
+              </div>
+              <fieldset className="mt-3 space-y-2">
+                <legend className="text-sm">
+                  추가할 아이 사진 3~5장 선택 · 기존 아이 사진도 3장 이상 남겨
+                  주세요
+                </legend>
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+                  {sourcePhotos.map(photo => (
+                    <label
+                      key={photo.photoId ?? photo.slot}
+                      className="flex flex-col gap-1 rounded border p-2 text-xs"
+                    >
+                      <img
+                        src={photo.url}
+                        alt={`등록 사진 ${photo.slot}`}
+                        loading="lazy"
+                        decoding="async"
+                        className="aspect-square w-full object-cover"
+                      />
+                      <span>
+                        <input
+                          type="checkbox"
+                          disabled={pending || !photo.photoId}
+                          checked={
+                            !!photo.photoId &&
+                            newPetPhotoIds.includes(photo.photoId)
+                          }
+                          onChange={event => {
+                            const id = photo.photoId;
+                            if (id)
+                              setNewPetPhotoIds(old =>
+                                event.target.checked
+                                  ? [...old, id]
+                                  : old.filter(value => value !== id)
+                              );
+                          }}
+                        />{" "}
+                        사진 {photo.slot}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+              <p className="mt-2 text-xs text-muted-foreground">
+                제작 시작 전에만 추가할 수 있습니다. 기본 판매가는 마릿수에 따라
+                계산됩니다. 직접 입력한 주문 총액과 고객 청구액은 유지됩니다.
+              </p>
+            </details>
+          )}
+      </section>
       {has("VIEW_PAYMENT") && row.salePriceKrw != null && (
         <AdminSalePrice
           key={`${row.orderNumber}:${row.version}`}
@@ -582,7 +732,7 @@ export function AdminWorkflowPanel({
             size="sm"
             disabled={pending}
             onClick={() =>
-              requestPhotoLinks(orderNumber)
+              requestPhotoLinks(orderNumber, petIndex)
                 .then(v => setPhotos(v.photos))
                 .catch(fail)
             }

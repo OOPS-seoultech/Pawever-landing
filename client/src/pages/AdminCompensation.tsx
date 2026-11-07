@@ -12,6 +12,7 @@ type Config = {
 type Entry = {
   id: number;
   orderNumber: string;
+  petIndex: number;
   workerId: number;
   workerName: string;
   amountKrw: number;
@@ -288,7 +289,7 @@ export function AdminCompensation({ accounts }: { accounts: StaffAccount[] }) {
                   onChange={() => toggleSettlement(r)}
                 />
                 <span>
-                  {r.orderNumber} · {r.workerName} · {formatKrw(r.amountKrw)} · {formatDateTime(r.createdAt)} · {r.paymentStatus === "UNPAID" ? "미지급" : r.paymentStatus === "PREPARED" ? "지급 준비" : r.paymentStatus === "PAID" ? "지급 완료" : "보류"}
+                  {r.orderNumber} · 아이 {r.petIndex + 1} · {r.workerName} · {formatKrw(r.amountKrw)} · {formatDateTime(r.createdAt)} · {r.paymentStatus === "UNPAID" ? "미지급" : r.paymentStatus === "PREPARED" ? "지급 준비" : r.paymentStatus === "PAID" ? "지급 완료" : "보류"}
                 </span>
               </label>
             ))}

@@ -12,6 +12,7 @@ import { AdminApiError, adminRequest } from "@/lib/adminApi";
 import {
   issueLabels,
   paymentLabels,
+  workKey,
   stageLabels,
   type WorkflowOrder,
 } from "@/lib/adminContracts";
@@ -56,6 +57,8 @@ export default function AdminOperations() {
     setSelected(null);
     setDetailOpen(false);
     setUpdatedAt("");
+  }, [allowed, all, permissionsKey]);
+  useEffect(() => {
     if (!allowed) {
       setLoading(false);
       return;
@@ -123,19 +126,19 @@ export default function AdminOperations() {
         .includes(query.trim().toLowerCase())
   );
   // Keep the current task receipt after a handoff, but never show it in a different stage queue.
-  const current = visible.find(row => row.orderNumber === selected);
-  const selectedRow = rows.find(row => row.orderNumber === selected);
+  const current = visible.find(row => workKey(row) === selected);
+  const selectedRow = rows.find(row => workKey(row) === selected);
   const changed = (row: WorkflowOrder) => {
+    setSelected(workKey(row));
     setSalesRevision(value => value + 1);
+    setRevision(value => value + 1);
     setRows(previous =>
       all ||
       (row.assignee?.id === staff?.id &&
         row.taskStatus !== "COMPLETED" &&
         row.orderStatus === "ACTIVE")
-        ? previous.map(value =>
-            value.orderNumber === row.orderNumber ? row : value
-          )
-        : previous.filter(value => value.orderNumber !== row.orderNumber)
+        ? previous.map(value => (workKey(value) === workKey(row) ? row : value))
+        : previous.filter(value => workKey(value) !== workKey(row))
     );
   };
   useEffect(() => {
@@ -174,8 +177,9 @@ export default function AdminOperations() {
           <div className="mb-4 flex shrink-0 flex-wrap items-center gap-3 text-sm">
             <p className="flex-1 text-muted-foreground">
               {all ? "실제 접수 주문 전체" : "내게 배정된 미완료 작업"} · 진행{" "}
-              {active.length}건 · 확인 필요{" "}
-              {active.filter(needsAttention).length}건
+              {new Set(active.map(row => row.orderNumber)).size}건 · 제작{" "}
+              {active.length}마리 · 확인 필요{" "}
+              {active.filter(needsAttention).length}마리
             </p>
             <span role="status">
               {loading
@@ -301,7 +305,7 @@ export default function AdminOperations() {
                 확인 필요한 주문만
               </label>
               <p className="text-xs text-muted-foreground">
-                검색 결과 {visible.length}건
+                검색 결과 {visible.length}마리
               </p>
               {!loading && !visible.length && (
                 <p className="rounded border border-dashed p-4 text-sm text-muted-foreground">
@@ -314,23 +318,24 @@ export default function AdminOperations() {
               )}
               {visible.map(row => (
                 <button
-                  key={row.orderNumber}
+                  key={workKey(row)}
                   type="button"
-                  aria-pressed={selected === row.orderNumber}
-                  className={`flex w-full shrink-0 flex-col gap-2 rounded-lg border bg-background p-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${selected === row.orderNumber ? "border-primary ring-1 ring-primary" : ""}`}
+                  aria-pressed={selected === workKey(row)}
+                  className={`flex w-full shrink-0 flex-col gap-2 rounded-lg border bg-background p-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${selected === workKey(row) ? "border-primary ring-1 ring-primary" : ""}`}
                   onClick={event => {
                     selectedButton.current = event.currentTarget;
                     focusDetail.current = event.detail === 0;
                     if (focusDetail.current) detail.current?.focus();
-                    setSelected(row.orderNumber);
+                    setSelected(workKey(row));
                     setDetailOpen(true);
                   }}
                 >
                   <span className="flex min-w-0 items-center gap-3">
                     {staff?.permissions.includes("VIEW_CUSTOMER_PHOTOS") && (
                       <AdminOrderPhotoPreview
-                        key={`${row.orderNumber}:${permissionsKey}`}
+                        key={`${workKey(row)}:${permissionsKey}`}
                         number={row.orderNumber}
+                        petIndex={row.petIndex}
                         petName={row.petName}
                       />
                     )}
@@ -355,7 +360,7 @@ export default function AdminOperations() {
                     <span className="text-xs">
                       {paymentLabels[row.paymentStatus] ?? row.paymentStatus}
                       {row.salePriceKrw != null &&
-                        ` · 판매가 ${row.salePriceKrw.toLocaleString("ko-KR")}원`}
+                        ` · 주문 ${row.petCount}마리 합계 ${row.salePriceKrw.toLocaleString("ko-KR")}원`}
                     </span>
                   )}
                   {filaments && (
@@ -418,12 +423,21 @@ export default function AdminOperations() {
                       사진·상세 패널 닫기
                     </Button>
                     <AdminMaterialComparison
-                      key={`${current.orderNumber}:${permissionsKey}`}
+                      key={`${workKey(current)}:${permissionsKey}`}
                       row={current}
                     />
                     <AdminWorkflowPanel
-                      key={`${current.orderNumber}:${permissionsKey}`}
+                      key={`${workKey(current)}:${permissionsKey}`}
                       orderNumber={current.orderNumber}
+                      petIndex={current.petIndex}
+                      onSelectPet={index =>
+                        setSelected(
+                          workKey({
+                            orderNumber: current.orderNumber,
+                            petIndex: index,
+                          })
+                        )
+                      }
                       showPhotos={false}
                       onChanged={changed}
                     />

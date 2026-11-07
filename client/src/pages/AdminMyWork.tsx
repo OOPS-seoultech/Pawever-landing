@@ -4,10 +4,12 @@ import { AdminShell, useAdminGuard } from "@/components/AdminShell";
 import { useStaffSession } from "@/components/AdminSession";
 import { adminRequest } from "@/lib/adminApi";
 import {
+  workKey,
   stageLabels,
   paymentLabels,
   issueLabels,
   workflowCommand,
+  getWorkflow,
   type WorkflowOrder,
 } from "@/lib/adminContracts";
 import { AdminWorkflowPanel } from "./AdminWorkflowPanel";
@@ -18,7 +20,7 @@ export default function AdminMyWork({ all = false }: { all?: boolean }) {
   const role = useAdminGuard();
   const { staff } = useStaffSession();
   const [rows, setRows] = useState<WorkflowOrder[]>([]);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<WorkflowOrder | null>(null);
   const detailPane = useRef<HTMLDivElement>(null);
   const selectedButton = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
@@ -109,7 +111,7 @@ export default function AdminMyWork({ all = false }: { all?: boolean }) {
     row.allowedActions.includes("ASSIGN_TASK") &&
     !["PRINT_QUEUE", "PRINTING", "PACKING"].includes(row.productionStage);
   const candidates = visible.filter(assignable);
-  const targets = candidates.filter(row => checked.includes(row.orderNumber));
+  const targets = candidates.filter(row => checked.includes(workKey(row)));
   const assignDefaults = async () => {
     if (assigningRef.current || loading || targets.length === 0) return;
     assigningRef.current = true;
@@ -117,24 +119,26 @@ export default function AdminMyWork({ all = false }: { all?: boolean }) {
     setAssignmentResults([]);
     try {
       for (const row of targets) {
-        const fingerprint = `${row.orderNumber}:${row.version}`;
-        let key = assignmentKeys.current.get(fingerprint);
-        if (!key) {
-          key = crypto.randomUUID();
-          assignmentKeys.current.set(fingerprint, key);
-        }
         try {
+          const latest = await getWorkflow(row.orderNumber, row.petIndex);
+          const fingerprint = `${workKey(row)}:${latest.version}`;
+          let key = assignmentKeys.current.get(fingerprint);
+          if (!key) {
+            key = crypto.randomUUID();
+            assignmentKeys.current.set(fingerprint, key);
+          }
           await workflowCommand(
             `/api/admin/orders/${encodeURIComponent(row.orderNumber)}/workflow/assign`,
             {
-              version: row.version,
+              version: latest.version,
+              petIndex: row.petIndex,
               useDefault: true,
               reason: "선택한 미배정 작업에 기본 담당자 적용",
             },
             key
           );
           setChecked(previous =>
-            previous.filter(number => number !== row.orderNumber)
+            previous.filter(number => number !== workKey(row))
           );
           setAssignmentResults(previous => [
             ...previous,
@@ -270,9 +274,7 @@ export default function AdminMyWork({ all = false }: { all?: boolean }) {
                       }
                       onChange={e =>
                         setChecked(
-                          e.target.checked
-                            ? candidates.map(row => row.orderNumber)
-                            : []
+                          e.target.checked ? candidates.map(workKey) : []
                         )
                       }
                     />
@@ -328,19 +330,19 @@ export default function AdminMyWork({ all = false }: { all?: boolean }) {
                 </div>
               )}
               {visible.map(row => (
-                <div key={row.orderNumber}>
+                <div key={workKey(row)}>
                   {assignable(row) && (
                     <label className="flex items-center gap-2 px-2 py-1 text-xs">
                       <input
                         type="checkbox"
                         disabled={assigning || loading}
-                        checked={checked.includes(row.orderNumber)}
+                        checked={checked.includes(workKey(row))}
                         onChange={e =>
                           setChecked(previous =>
                             e.target.checked
-                              ? [...previous, row.orderNumber]
+                              ? [...previous, workKey(row)]
                               : previous.filter(
-                                  number => number !== row.orderNumber
+                                  number => number !== workKey(row)
                                 )
                           )
                         }
@@ -350,14 +352,17 @@ export default function AdminMyWork({ all = false }: { all?: boolean }) {
                   )}
                   <button
                     type="button"
-                    key={row.orderNumber}
-                    aria-pressed={selected === row.orderNumber}
-                    className={`w-full min-w-0 space-y-2 rounded-lg border bg-background p-4 text-left hover:border-primary ${selected === row.orderNumber ? "border-primary ring-1 ring-primary" : ""}`}
+                    key={workKey(row)}
+                    aria-pressed={
+                      !!selected && workKey(selected) === workKey(row)
+                    }
+                    className={`w-full min-w-0 space-y-2 rounded-lg border bg-background p-4 text-left hover:border-primary ${!!selected && workKey(selected) === workKey(row) ? "border-primary ring-1 ring-primary" : ""}`}
                     onClick={event => {
                       selectedButton.current = event.currentTarget;
-                      setSelected(row.orderNumber);
+                      setSelected(row);
                       if (
-                        selected === row.orderNumber &&
+                        !!selected &&
+                        workKey(selected) === workKey(row) &&
                         !window.matchMedia("(min-width: 1024px)").matches
                       )
                         detailPane.current?.scrollIntoView({ block: "start" });
@@ -427,9 +432,24 @@ export default function AdminMyWork({ all = false }: { all?: boolean }) {
               )}
               {selected ? (
                 <AdminWorkflowPanel
-                  key={`${selected}:${detailRevision}`}
-                  orderNumber={selected}
-                  onChanged={() => void load()}
+                  key={`${workKey(selected)}:${detailRevision}`}
+                  orderNumber={selected.orderNumber}
+                  petIndex={selected.petIndex}
+                  onSelectPet={index =>
+                    void getWorkflow(selected.orderNumber, index)
+                      .then(setSelected)
+                      .catch(error =>
+                        setError(
+                          error instanceof Error
+                            ? error.message
+                            : "아이 정보를 불러오지 못했습니다."
+                        )
+                      )
+                  }
+                  onChanged={row => {
+                    setSelected(row);
+                    void load();
+                  }}
                 />
               ) : (
                 <p className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">

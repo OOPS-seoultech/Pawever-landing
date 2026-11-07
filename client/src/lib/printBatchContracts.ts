@@ -10,6 +10,7 @@ export type PrintBatch = {
   results?: {
     id: number;
     orderNumber: string;
+    petIndex: number;
     attempt: number;
     result: string;
     note: string;
@@ -18,7 +19,7 @@ export type PrintBatch = {
     id: number;
     note: string;
     purgeGrams: number | null;
-    issues: { orderNumber: string; note: string }[];
+    issues: { orderNumber: string; petIndex: number; note: string }[];
     actorName: string;
     createdAt: string;
   }[];
@@ -52,7 +53,7 @@ export type PlateConfig = {
   printerName: string;
   printingAssigneeId: number | null;
   slots: { slotLabel: string; filamentId: number }[];
-  orders: { orderNumber: string; version: number }[];
+  orders: { orderNumber: string; petIndex: number; version: number }[];
 };
 export const batchPath = "/api/production/print-batches";
 export const getBatches = () => adminRequest<PrintBatch[]>(batchPath);
