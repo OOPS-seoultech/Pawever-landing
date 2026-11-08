@@ -25,6 +25,10 @@ export function AdminSessionProvider({ children }: { children: ReactNode }) {
     location.startsWith("/admin/") &&
     !location.startsWith("/admin/accept-invite");
   useEffect(() => {
+    document.documentElement.classList.toggle("admin-theme", secured);
+    return () => document.documentElement.classList.remove("admin-theme");
+  }, [secured]);
+  useEffect(() => {
     if (!secured) {
       setStaff(null);
       setError(null);

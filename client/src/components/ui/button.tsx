@@ -16,8 +16,7 @@ const buttonVariants = cva(
           "border bg-transparent shadow-xs hover:bg-accent dark:bg-transparent dark:border-input dark:hover:bg-input/50",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost:
-          "hover:bg-accent dark:hover:bg-accent/50",
+        ghost: "hover:bg-accent dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
@@ -38,7 +37,7 @@ const buttonVariants = cva(
 
 function Button({
   className,
-  variant,
+  variant = "default",
   size,
   asChild = false,
   ...props
@@ -51,6 +50,7 @@ function Button({
   return (
     <Comp
       data-slot="button"
+      data-variant={variant}
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     />

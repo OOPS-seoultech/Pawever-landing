@@ -21,6 +21,8 @@ const initial = () => ({
   shipmentStatus: "NOT_READY",
   version: 1,
   taskId: 11,
+  taskAttempt: 1,
+  modelingTaskId: 11,
   taskStatus: "WAITING",
   assignee: { id: 2, name: "모델러" },
   blockingIssues: [],
@@ -82,7 +84,12 @@ test("검수 담당자는 넘어온 고객 사진과 모델 파일을 열람한�
   let downloads = 0;
   await page.route("**/api/**", async route => {
     const path = new URL(route.request().url()).pathname;
-    if (path.endsWith("/me") || path === "/api/admin/notices/onboarding" || path === "/api/production/file-targets") return route.fallback();
+    if (
+      path.endsWith("/me") ||
+      path === "/api/admin/notices/onboarding" ||
+      path === "/api/production/file-targets"
+    )
+      return route.fallback();
     if (path.endsWith("/my-tasks"))
       return route.fulfill({ json: { success: true, data: [row] } });
     if (path.endsWith("/workflow"))
@@ -131,7 +138,9 @@ test("검수 담당자는 넘어온 고객 사진과 모델 파일을 열람한�
   await expect(
     page.getByRole("link", { name: "담당자", exact: true })
   ).toHaveCount(0);
-  await page.getByRole("button", { name: "열기", exact: true }).click();
+  await page
+    .getByRole("button", { name: "파일 내려받기 (STL)", exact: true })
+    .click();
   await expect.poll(() => downloads).toBe(1);
 });
 
@@ -157,7 +166,12 @@ test("담당자 관리에서 작업 역할과 기본 배정을 저장한다", as
   };
   await page.route("**/api/**", async route => {
     const path = new URL(route.request().url()).pathname;
-    if (path.endsWith("/me") || path === "/api/admin/notices/onboarding" || path === "/api/production/file-targets") return route.fallback();
+    if (
+      path.endsWith("/me") ||
+      path === "/api/admin/notices/onboarding" ||
+      path === "/api/production/file-targets"
+    )
+      return route.fallback();
     if (path === "/api/admin/accounts")
       return route.fulfill({ json: { success: true, data: [] } });
     if (path.endsWith("/staff"))
@@ -183,9 +197,9 @@ test("담당자 관리에서 작업 역할과 기본 배정을 저장한다", as
   await page.getByLabel("모델링 결과물 등록", { exact: true }).check();
   await page.getByLabel("변경 사유").fill("모델링 업무 배정");
   await page.getByRole("button", { name: "작업 역할 저장" }).click();
-  await expect(page.getByRole("status")).toContainText(
-    "작업 역할을 저장했습니다."
-  );
+  await expect(
+    page.getByRole("status").filter({ hasText: "작업 역할을 저장했습니다." })
+  ).toContainText("작업 역할을 저장했습니다.");
   await page
     .getByRole("combobox", {
       name: "입금 확인 후 → 결과물 등록 담당자",
@@ -193,9 +207,9 @@ test("담당자 관리에서 작업 역할과 기본 배정을 저장한다", as
     })
     .selectOption("3");
   await page.getByRole("button", { name: "기본 담당자 저장" }).click();
-  await expect(page.getByRole("status")).toContainText(
-    "기본 담당자를 저장했습니다."
-  );
+  await expect(
+    page.getByRole("status").filter({ hasText: "기본 담당자를 저장했습니다." })
+  ).toBeVisible();
   expect(settings.modeling).toBe(3);
 });
 
@@ -204,12 +218,20 @@ test("모델러가 시작하고 필수 파일을 등록하면 검수 인계 결�
 }) => {
   await login(page, "PRODUCTION", modelPermissions);
   let row = initial();
-  let pending = { id: "", kind: "", fileName: "", size: 0 };
+  let pending = {
+    id: "",
+    kind: "",
+    fileName: "",
+    size: 0,
+    taskId: 11,
+    modelingAttempt: 1,
+  };
   const keys: string[] = [];
   await page.route("**/api/**", async route => {
     const request = route.request(),
       path = new URL(request.url()).pathname;
-    if (path === "/api/admin/me") return route.fallback();
+    if (path === "/api/admin/me" || path.endsWith("/download-link"))
+      return route.fallback();
     if (path.endsWith("/my-tasks"))
       return route.fulfill({
         json: {
@@ -244,6 +266,8 @@ test("모델러가 시작하고 필수 파일을 등록하면 검수 인계 결�
           kind: body.kind,
           fileName: body.fileName,
           size: body.size,
+          taskId: row.taskId,
+          modelingAttempt: 1,
         };
         return route.fulfill({
           json: {
@@ -260,7 +284,7 @@ test("모델러가 시작하고 필수 파일을 등록하면 검수 인계 결�
       if (path.endsWith("/confirm"))
         row.artifacts = [...row.artifacts, pending];
       if (path.endsWith("/complete")) {
-        expect(row.artifacts).toHaveLength(3);
+        expect(row.artifacts).toHaveLength(2);
         row = {
           ...row,
           productionStage: "MODEL_REVIEW",
@@ -291,14 +315,24 @@ test("모델러가 시작하고 필수 파일을 등록하면 검수 인계 결�
   for (const [label, name, mime] of [
     ["4면도", "views.png", "image/png"],
     ["모델 원본", "model.blend", "application/octet-stream"],
-    ["출력 파일", "model.stl", "application/octet-stream"],
   ]) {
     await page.getByLabel(`${label} 파일 선택`, { exact: true }).setInputFiles({
       name,
       mimeType: mime,
       buffer: Buffer.from("test-model-file"),
     });
-    await expect(page.getByText(name, { exact: true })).toBeVisible();
+    if (label === "4면도")
+      await expect(
+        page
+          .getByRole("region", { name: "고객 사진·4면도 비교" })
+          .getByRole("img", { name, exact: true })
+      ).toBeVisible();
+    else
+      await expect(
+        page
+          .getByRole("region", { name: "모델링 자료", exact: true })
+          .getByText(name, { exact: true })
+      ).toBeVisible();
   }
   await page.getByRole("button", { name: "모델링 완료", exact: true }).click();
   await expect(page.getByText("검수 담당자에게 인계했습니다.")).toBeVisible();
@@ -329,7 +363,13 @@ test("입금 금액 불일치와 동시 수정 오류는 다음 행동을 안내
   let attempt = 0;
   await page.route("**/api/**", async route => {
     const path = new URL(route.request().url()).pathname;
-    if (path.endsWith("/me") || path === "/api/admin/notices/onboarding" || path === "/api/production/file-targets") return route.fallback();
+    if (
+      path.endsWith("/download-link") ||
+      path.endsWith("/me") ||
+      path === "/api/admin/notices/onboarding" ||
+      path === "/api/production/file-targets"
+    )
+      return route.fallback();
     if (path.endsWith("/workflow/orders"))
       return route.fulfill({ json: { success: true, data: [row] } });
     if (path.endsWith("/timeline"))

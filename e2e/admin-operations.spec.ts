@@ -248,7 +248,7 @@ test("데스크톱에서 사진과 현재 회차 4면도를 비교하고 모델 
     comparison.getByRole("img", { name: "고객 사진 1", exact: true })
   ).toBeVisible();
   await expect(
-    comparison.getByRole("img", { name: "현재 모델링 회차 4면도", exact: true })
+    comparison.getByRole("img", { name: "current.png", exact: true })
   ).toBeVisible();
   expect(links).toEqual(["/api/production/artifacts/current/download-link"]);
   expect(

@@ -575,3 +575,41 @@ export const approveAdminAccount = (accountId: number, workRoles: string[]) =>
 
 export const disableAdminAccount = (accountId: number) =>
   adminRequest<void>(`/api/admin/accounts/${accountId}`, { method: "DELETE" });
+
+export async function downloadMultiviewArchive(taskId: number) {
+  const token = readAdminToken();
+  const response = await fetch(
+    resolveApiUrl(`/api/production/tasks/${taskId}/artifacts/multiview.zip`),
+    {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      cache: "no-store",
+    }
+  );
+  if (!response.ok) {
+    if (response.status === 401) clearAdminToken();
+    const error = await response.json().catch(() => null);
+    throw new AdminApiError(
+      error?.message ?? "4면도 ZIP을 내려받지 못했습니다.",
+      error?.code ?? "ARCHIVE_FAILED",
+      response.status
+    );
+  }
+  return response.blob();
+}
+
+export async function downloadProductionArtifact(id: string) {
+  let response: Response | undefined;
+  for (let retry = 0; retry < 2; retry++) {
+    const link = await adminRequest<{ url: string }>(
+      `/api/production/artifacts/${encodeURIComponent(id)}/download-link`,
+      { method: "POST" }
+    );
+    response = await fetch(link.url, { cache: "no-store" });
+    if (![401, 403].includes(response.status)) break;
+    await response.body?.cancel();
+  }
+  if (!response?.ok)
+    throw new Error("파일을 내려받지 못했습니다. 다시 시도해 주세요.");
+  return response.blob();
+}

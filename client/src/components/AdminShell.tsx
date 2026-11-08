@@ -101,8 +101,17 @@ export function AdminShell({
 
   return (
     <div
-      className={`min-h-screen bg-muted/30 ${splitWorkspace ? "lg:flex lg:h-dvh lg:min-h-0 lg:flex-col lg:overflow-hidden" : ""}`}
+      className={`min-h-screen bg-background ${splitWorkspace ? "lg:flex lg:h-dvh lg:min-h-0 lg:flex-col lg:overflow-hidden" : ""}`}
     >
+      {import.meta.env.DEV &&
+        import.meta.env.VITE_ADMIN_REVIEW_MODE === "true" && (
+          <div
+            role="status"
+            className="shrink-0 border-b bg-muted px-4 py-2 text-center text-sm"
+          >
+            로컬 검수 · 샘플 데이터 · 운영 주문에 저장되지 않습니다.
+          </div>
+        )}
       <header className="shrink-0 border-b bg-background">
         <div
           className={`mx-auto flex w-full flex-wrap items-center gap-3 px-4 py-3 ${wide ? "max-w-[1800px]" : "max-w-6xl"}`}
@@ -131,6 +140,9 @@ export function AdminShell({
                 {ROLE_LABELS[role]}
               </span>
             ) : null}
+            {staff && (
+              <AdminNavLink href="/admin/notices">공지사항</AdminNavLink>
+            )}
             <Button variant="ghost" size="sm" onClick={signOut}>
               로그아웃
             </Button>
@@ -142,25 +154,10 @@ export function AdminShell({
         className={`mx-auto flex w-full shrink-0 flex-wrap gap-4 border-b px-4 py-3 text-sm ${wide ? "max-w-[1800px]" : "max-w-6xl"}`}
       >
         {staff?.permissions.includes("VIEW_ORDER_BASIC") && (
-          <AdminNavLink href="/admin/operations">
-            {staff.permissions.includes("VIEW_ALL_ORDERS")
-              ? "운영 현황"
-              : "제작 작업실"}
-          </AdminNavLink>
+          <AdminNavLink href="/admin/my-work">내 작업</AdminNavLink>
         )}
-        {staff?.permissions.includes("VIEW_FILAMENT") && (
-          <AdminNavLink href="/admin/filaments">필라멘트</AdminNavLink>
-        )}
-        {staff?.permissions.includes("VIEW_ORDER_BASIC") && (
-          <>
-            <AdminNavLink href="/admin/my-work">내 작업</AdminNavLink>
-            <AdminNavLink href="/admin/compensation">
-              {staff?.role === "OWNER" ? "작업자 정산" : "내 정산"}
-            </AdminNavLink>
-          </>
-        )}
-        {staff?.role === "PRODUCTION" && (
-          <AdminNavLink href="/admin/as-assets">AS 열람</AdminNavLink>
+        {staff?.permissions.includes("VIEW_ALL_ORDERS") && (
+          <AdminNavLink href="/admin/orders">전체 주문·배송</AdminNavLink>
         )}
         {staff?.permissions.includes("MANAGE_PRINT_BATCH") && (
           <AdminNavLink href="/admin/print-batches">
@@ -172,22 +169,36 @@ export function AdminShell({
           <AdminNavLink href="/admin/shipments">포장·준등기</AdminNavLink>
         )}
         {staff?.permissions.includes("VIEW_ALL_ORDERS") && (
-          <>
-            <AdminNavLink href="/admin/workflow">입금·제작 관리</AdminNavLink>
-            <AdminNavLink href="/admin/orders">전체 주문·배송</AdminNavLink>
-            <AdminNavLink href="/admin/completed-orders">
-              완료 주문·AS
-            </AdminNavLink>
-          </>
+          <AdminNavLink href="/admin/completed-orders">
+            완료 주문·AS
+          </AdminNavLink>
         )}
-        {staff && (
-          <>
-            <AdminNavLink href="/admin/local-files">로컬 파일</AdminNavLink>
-            <AdminNavLink href="/admin/notices">공지사항</AdminNavLink>
-          </>
+        {staff?.permissions.includes("VIEW_FILAMENT") && (
+          <AdminNavLink href="/admin/filaments">필라멘트</AdminNavLink>
+        )}
+        {staff?.permissions.includes("VIEW_ALL_ORDERS") && (
+          <AdminNavLink href="/admin/workflow">입금·제작 관리</AdminNavLink>
         )}
         {staff?.permissions.includes("MANAGE_ACCOUNTS") && (
           <AdminNavLink href="/admin/accounts">담당자 설정</AdminNavLink>
+        )}
+        {staff?.permissions.includes("VIEW_ORDER_BASIC") && (
+          <AdminNavLink href="/admin/compensation">
+            {staff.role === "OWNER" ? "작업자 정산" : "내 정산"}
+          </AdminNavLink>
+        )}
+        {staff?.permissions.includes("VIEW_ORDER_BASIC") && (
+          <AdminNavLink href="/admin/operations">
+            {staff.permissions.includes("VIEW_ALL_ORDERS")
+              ? "운영 현황"
+              : "제작 작업실"}
+          </AdminNavLink>
+        )}
+        {staff && (
+          <AdminNavLink href="/admin/local-files">로컬 파일</AdminNavLink>
+        )}
+        {staff?.role === "PRODUCTION" && (
+          <AdminNavLink href="/admin/as-assets">AS 열람</AdminNavLink>
         )}
       </nav>
       <main

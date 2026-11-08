@@ -425,6 +425,7 @@ export default function AdminOperations() {
                     <AdminMaterialComparison
                       key={`comparison:${workKey(current)}:${permissionsKey}`}
                       row={current}
+                      onChanged={changed}
                     />
                     <AdminWorkflowPanel
                       key={`workflow:${workKey(current)}:${permissionsKey}`}

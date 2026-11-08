@@ -41,7 +41,9 @@ describe("관리자 화면의 수령 방법", () => {
     // 상세로 갔다 돌아오면 필터도 페이지도 풀린다. 70건을 그렇게 처리하면
     // 같은 자리를 몇 번씩 찾아 들어간다.
     expect(list).toContain("setOpened(order.orderNumber)");
-    expect(list).not.toContain("setLocation(`/admin/orders/${order.orderNumber}`)");
+    expect(list).not.toContain(
+      "setLocation(`/admin/orders/${order.orderNumber}`)"
+    );
     expect(list).toContain("<AdminOrderPanel");
   });
 
@@ -96,17 +98,10 @@ describe("관리자 화면의 수령 방법", () => {
     expect(page).toContain("useParams");
   });
 
-  it("상세를 열면 사진이 바로 보인다", () => {
-    // 제작에 쓰는 값이라 한 번 더 눌러야 보이면 그 클릭이 매번 붙는다.
-    // 링크를 받는 일은 상세를 읽을 때 함께 한다.
-    expect(detail).toMatch(/getAdminOrder\([^)]*\);[\s\S]{0,600}requestPhotoLinks\(/);
-    expect(detail).not.toContain("미리보기 열기");
-  });
-
-  it("링크가 닫히면 다시 불러올 자리가 있다", () => {
-    // 5분이 지나면 그림이 깨진다. 그때 되살릴 방법이 없으면 화면을 닫았다
-    // 다시 열어야 한다.
-    expect(detail).toContain("다시 불러오기");
+  it("상세의 사진·4면도는 공통 비교 영역을 사용한다", () => {
+    expect(detail).toContain("showPhotos");
+    expect(detail).toContain("onSelectPet={setActivePetIndex}");
+    expect(detail).not.toContain("누르면 원본이 새 탭에 열립니다");
   });
 
   it("상태 변경이 결제 여부를 함께 본다", () => {

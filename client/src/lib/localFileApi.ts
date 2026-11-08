@@ -1,3 +1,4 @@
+import { prepareImageUpload } from "./prepareImageUpload";
 import { adminRequest, readAdminToken } from "./adminApi";
 import { workflowCommand } from "./adminContracts";
 import type { PrintBatch } from "./printBatchContracts";
@@ -22,10 +23,14 @@ export async function registerLocalFile(
   file: File,
   target: FileTarget | PrintBatch,
   kind: LocalKind | "PLATE",
-  key: string
+  key: string,
+  replacesArtifactId?: string
 ) {
   const login = readAdminToken();
+  if (kind === "MULTIVIEW") file = await prepareImageUpload(file);
   await validateLocalFile(file, kind);
+  if (readAdminToken() !== login)
+    throw new Error("로그인 계정이 변경되어 등록을 중단했습니다.");
   const plate = "layoutRevision" in target;
   if (plate !== (kind === "PLATE"))
     throw new Error(
@@ -45,6 +50,7 @@ export async function registerLocalFile(
       version: target.version,
       fileName: file.name,
       size: file.size,
+      ...(replacesArtifactId ? { replacesArtifactId } : {}),
       ...(!plate
         ? { kind, contentType: file.type || "application/octet-stream" }
         : {}),

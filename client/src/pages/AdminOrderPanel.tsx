@@ -3,18 +3,16 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useStaffSession } from "@/components/AdminSession";
 import { AdminError, CopyButton } from "@/components/AdminShell";
 import {
   AdminApiError,
   cancelAdminOrder,
   changeAdminOrderStatus,
   completeAdminPickup,
-  downloadAdminPhotoArchive,
   getAdminOrder,
   registerAdminTracking,
-  requestPhotoLinks,
   type AdminOrderDetail as OrderDetail,
-  type AdminPhotoDownload,
   type AdminRole,
   type GoodsOrderStatus,
 } from "@/lib/adminApi";
@@ -27,7 +25,6 @@ import {
   cancelGuide,
   canCompletePickup,
   canRegisterTracking,
-  photoSlotRows,
   settableStatusesFor,
   statusChangeHint,
   STATUS_LABELS,
@@ -53,11 +50,16 @@ export function AdminOrderPanel({
   onChanged?: () => void;
 }) {
   const [, setLocation] = useLocation();
+  const { staff } = useStaffSession();
+  const [activePetIndex, setActivePetIndex] = useState(petIndex);
+  useEffect(() => setActivePetIndex(petIndex), [orderNumber, petIndex]);
 
+  const [salePriceTarget, setSalePriceTarget] = useState<HTMLDivElement | null>(
+    null
+  );
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [links, setLinks] = useState<AdminPhotoDownload | null>(null);
   const [pending, setPending] = useState(false);
 
   const [nextStatus, setNextStatus] = useState<GoodsOrderStatus | "">("");
@@ -88,18 +90,6 @@ export function AdminOrderPanel({
       setOrder(detail);
       setCompany(detail.shipping?.trackingCompany ?? "");
       setInvoice(detail.shipping?.trackingNumber ?? "");
-
-      // 사진은 제작에 쓰는 값이라 열자마자 보여야 한다. 한 번 더 눌러야
-      // 보이면, 상세를 여는 일이 잦아진 지금은 그 클릭이 매번 붙는다.
-      //
-      // 링크를 받는 일은 서버에 접속기록으로 남는다. 화면에서 본 것과
-      // 파일로 가져간 것을 서버가 다른 이름으로 적으므로, 자동으로 받아도
-      // 실제로 가져간 사람을 찾는 데 방해가 되지 않는다.
-      if (detail.photos.some(photo => photo.filled)) {
-        setLinks(await requestPhotoLinks(orderNumber));
-      } else {
-        setLinks(null);
-      }
     } catch (caught) {
       handle(caught);
     }
@@ -153,10 +143,12 @@ export function AdminOrderPanel({
     <>
       <div className="mb-4">
         <AdminWorkflowPanel
-          key={`${orderNumber}:${petIndex}`}
+          key={`${orderNumber}:${activePetIndex}`}
           orderNumber={orderNumber}
-          petIndex={petIndex}
-          showPhotos={false}
+          petIndex={activePetIndex}
+          onSelectPet={setActivePetIndex}
+          showPhotos
+          salePriceTarget={salePriceTarget}
           onChanged={() => {
             void load();
             onChanged?.();
@@ -171,6 +163,74 @@ export function AdminOrderPanel({
       ) : null}
 
       <div className="grid gap-4 xl:grid-cols-2">
+        {order.shipping ? (
+          <Section title="배송">
+            <Row label="보호자" value={order.shipping.guardianName} />
+            <Row label="연락처" value={order.shipping.phone} copyAs="연락처" />
+            {/* 방법을 주소보다 먼저 둔다. 주소가 빈 이유를 알고 나서 봐야
+                빠뜨린 것과 구분된다. */}
+            <Row
+              label="수령 방법"
+              value={
+                order.shipping.deliveryMethod === "PICKUP"
+                  ? "현장 수령 (배송비 없음)"
+                  : "택배"
+              }
+            />
+            {order.shipping.deliveryMethod === "PICKUP" ? (
+              <Row label="주소" value="현장에서 직접 전달 — 주소를 받지 않음" />
+            ) : (
+              <Row
+                label="주소"
+                value={
+                  [
+                    order.shipping.postalCode
+                      ? `(${order.shipping.postalCode})`
+                      : "",
+                    order.shipping.address ?? "",
+                    order.shipping.addressDetail ?? "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ") || "-"
+                }
+                copyAs="주소"
+              />
+            )}
+            <Row
+              label="송장"
+              value={
+                order.shipping.trackingNumber
+                  ? `${order.shipping.trackingCompany ?? ""} ${order.shipping.trackingNumber}`
+                  : "-"
+              }
+            />
+          </Section>
+        ) : (
+          <Section title="배송">
+            {/* 제작팀에게는 서버가 비워서 내려준다. */}
+            <p className="text-sm text-muted-foreground">
+              보호자 정보는 관리자만 볼 수 있습니다.
+            </p>
+          </Section>
+        )}
+
+        {order.payment ? (
+          <Section title="결제">
+            <Row label="수단" value={order.payment.method ?? "-"} />
+            <Row
+              label="결제 시각"
+              value={formatDateTime(order.payment.paidAt)}
+            />
+            <Row
+              label="만료 시각"
+              value={formatDateTime(order.payment.paymentExpiresAt)}
+            />
+            {order.payment.cancelReason ? (
+              <Row label="취소 사유" value={order.payment.cancelReason} />
+            ) : null}
+          </Section>
+        ) : null}
+
         <Section title="주문">
           <Row
             label="상태"
@@ -224,171 +284,7 @@ export function AdminOrderPanel({
               />
             </>
           ) : null}
-        </Section>
-
-        {order.payment ? (
-          <Section title="결제">
-            <Row label="수단" value={order.payment.method ?? "-"} />
-            <Row
-              label="결제 시각"
-              value={formatDateTime(order.payment.paidAt)}
-            />
-            <Row
-              label="만료 시각"
-              value={formatDateTime(order.payment.paymentExpiresAt)}
-            />
-            {order.payment.cancelReason ? (
-              <Row label="취소 사유" value={order.payment.cancelReason} />
-            ) : null}
-          </Section>
-        ) : null}
-
-        {order.shipping ? (
-          <Section title="배송">
-            <Row label="보호자" value={order.shipping.guardianName} />
-            <Row label="연락처" value={order.shipping.phone} copyAs="연락처" />
-            {/* 방법을 주소보다 먼저 둔다. 주소가 빈 이유를 알고 나서 봐야
-                빠뜨린 것과 구분된다. */}
-            <Row
-              label="수령 방법"
-              value={
-                order.shipping.deliveryMethod === "PICKUP"
-                  ? "현장 수령 (배송비 없음)"
-                  : "택배"
-              }
-            />
-            {order.shipping.deliveryMethod === "PICKUP" ? (
-              <Row label="주소" value="현장에서 직접 전달 — 주소를 받지 않음" />
-            ) : (
-              <Row
-                label="주소"
-                value={
-                  [
-                    order.shipping.postalCode
-                      ? `(${order.shipping.postalCode})`
-                      : "",
-                    order.shipping.address ?? "",
-                    order.shipping.addressDetail ?? "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ") || "-"
-                }
-                copyAs="주소"
-              />
-            )}
-            <Row
-              label="송장"
-              value={
-                order.shipping.trackingNumber
-                  ? `${order.shipping.trackingCompany ?? ""} ${order.shipping.trackingNumber}`
-                  : "-"
-              }
-            />
-          </Section>
-        ) : (
-          <Section title="배송">
-            {/* 제작팀에게는 서버가 비워서 내려준다. */}
-            <p className="text-sm text-muted-foreground">
-              보호자 정보는 관리자만 볼 수 있습니다.
-            </p>
-          </Section>
-        )}
-
-        <Section title="사진">
-          <p className="mb-3 text-sm text-muted-foreground">
-            사진 1은 필수, 2~5는 선택입니다. 누르면 원본이 새 탭에 열립니다.
-            보이는 사진은 5분 뒤 닫히고, 누가 열어 봤는지 이력에 남습니다.
-          </p>
-
-          {/* 올리지 않은 자리도 자리로 남긴다. 빼 버리면 안 올린 것인지
-              화면이 못 그린 것인지 구분이 안 된다. */}
-          {/* 미리보기는 원본 링크를 그대로 쓴다. 썸네일을 따로 저장하면
-              고객 사진의 사본이 하나 더 생기고, 파기할 때 그것도 같이
-              지워야 한다 — 빠뜨리기 쉬운 자리가 하나 늘어난다. */}
-          <ul className="mb-3 grid grid-cols-5 gap-2">
-            {photoSlotRows(order.photos).map(row => {
-              const link = links?.photos.find(photo => photo.slot === row.slot);
-              return (
-                <li key={row.slot} className="text-center">
-                  {row.filled && link ? (
-                    <a
-                      href={link.url}
-                      target="_blank"
-                      rel="noreferrer noopener"
-                    >
-                      <img
-                        src={link.url}
-                        alt={`사진 ${row.slot}`}
-                        loading="lazy"
-                        decoding="async"
-                        width={160}
-                        height={160}
-                        className="aspect-square h-auto w-full rounded border object-cover transition hover:opacity-80"
-                      />
-                    </a>
-                  ) : (
-                    <div
-                      className={`flex aspect-square w-full items-center justify-center rounded border text-[11px] ${
-                        row.filled
-                          ? "border-dashed text-muted-foreground"
-                          : "bg-muted/40 text-muted-foreground"
-                      }`}
-                    >
-                      {row.filled ? "불러오는 중" : "미기입"}
-                    </div>
-                  )}
-                  <span className="mt-1 block text-[11px] text-muted-foreground">
-                    {row.slot}번
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-
-          {links ? (
-            <p className="mb-2 text-xs text-muted-foreground">
-              {formatDateTime(links.photos[0]?.expiresAt)}까지 보입니다. 지나면
-              다시 불러오세요.
-            </p>
-          ) : null}
-
-          <div className="flex flex-wrap gap-2">
-            {/* 5분이 지나면 그림이 깨진다. 그때 다시 받는 자리다. */}
-            <Button
-              variant="secondary"
-              size="sm"
-              disabled={pending || !order.photos.some(photo => photo.filled)}
-              onClick={() =>
-                run(async () => {
-                  setLinks(await requestPhotoLinks(order.orderNumber));
-                }, "사진을 다시 불러왔습니다.")
-              }
-            >
-              다시 불러오기
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={pending || !order.photos.some(photo => photo.filled)}
-              onClick={() =>
-                run(async () => {
-                  const archive = await downloadAdminPhotoArchive(
-                    order.orderNumber
-                  );
-                  // 브라우저가 파일로 저장하게 한다. 링크를 걸면 로그인
-                  // 토큰을 실을 수 없어서 401 이 돌아온다.
-                  const url = URL.createObjectURL(archive.blob);
-                  const anchor = document.createElement("a");
-                  anchor.href = url;
-                  anchor.download = archive.fileName;
-                  anchor.click();
-                  URL.revokeObjectURL(url);
-                }, "사진을 모두 내려받았습니다.")
-              }
-            >
-              전체 내려받기 (ZIP)
-            </Button>
-          </div>
+          <div ref={setSalePriceTarget} className="mt-5" />
         </Section>
 
         <Section title="상태 변경">
@@ -656,9 +552,9 @@ export function AdminOrderPanel({
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="rounded-lg border bg-background p-4">
+    <section className="rounded-[15px] border bg-muted p-4">
       <h2 className="mb-3 text-sm font-semibold">{title}</h2>
-      {children}
+      <div className="rounded-[15px] border bg-background p-3">{children}</div>
     </section>
   );
 }
