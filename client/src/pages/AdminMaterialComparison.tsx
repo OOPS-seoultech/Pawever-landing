@@ -89,6 +89,16 @@ export function AdminMaterialComparison({
   const fileInput = useRef<HTMLInputElement>(null);
   const addInput = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState(false);
+  const uploading = useRef(false);
+  const mounted = useRef(true);
+  const [remainingFiles, setRemainingFiles] = useState<File[]>([]);
+  const [uploadStatus, setUploadStatus] = useState("");
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   const [error, setError] = useState("");
   const jobs = useRef(new Map<string, { key: string; row: WorkflowOrder }>());
   useEffect(() => {
@@ -143,53 +153,72 @@ export function AdminMaterialComparison({
       if (selectionSequence.current === token) setPreparing(false);
     }
   };
-  const upload = async (file: File, replacesId?: string) => {
-    if (pending) return;
+  const upload = async (files: File[], replacesId?: string) => {
+    if (uploading.current || !files.length) return;
+    uploading.current = true;
     setPending(true);
     setError("");
-    const fingerprint = JSON.stringify([
-      replacesId ?? "new",
-      file.name,
-      file.size,
-      file.lastModified,
-    ]);
+    setRemainingFiles([]);
+    let completed = 0;
+    let fingerprint = "";
     try {
-      const fresh = await getWorkflow(row.orderNumber, row.petIndex);
-      const previousJob = jobs.current.get(fingerprint);
-      if (
-        !previousJob &&
-        (!fresh.allowedActions.includes("UPLOAD_ARTIFACT") ||
-          (replacesId &&
-            !currentMultiviews(fresh).some(a => a.id === replacesId)))
-      )
-        throw new Error(
-          "파일 또는 제작 단계가 변경됐습니다. 현재 자료를 다시 확인해 주세요."
+      for (const file of files) {
+        if (!mounted.current) return;
+        if (!replacesId)
+          setUploadStatus(`4면도 등록 중 ${completed + 1}/${files.length}장`);
+        fingerprint = JSON.stringify([
+          replacesId ?? "new",
+          file.name,
+          file.size,
+          file.lastModified,
+        ]);
+        const fresh = await getWorkflow(row.orderNumber, row.petIndex);
+        if (!mounted.current) return;
+        const previousJob = jobs.current.get(fingerprint);
+        if (
+          !previousJob &&
+          (!fresh.allowedActions.includes("UPLOAD_ARTIFACT") ||
+            (replacesId &&
+              !currentMultiviews(fresh).some(a => a.id === replacesId)))
+        )
+          throw new Error(
+            "파일 또는 제작 단계가 변경됐습니다. 현재 자료를 다시 확인해 주세요."
+          );
+        const job = previousJob ?? { key: crypto.randomUUID(), row: fresh };
+        jobs.current.set(fingerprint, job);
+        await registerLocalFile(
+          file,
+          { ...job.row, taskId: job.row.taskId!, kinds: ["MULTIVIEW"] },
+          "MULTIVIEW",
+          job.key,
+          replacesId
         );
-      const job = previousJob ?? {
-        key: crypto.randomUUID(),
-        row: fresh,
-      };
-      jobs.current.set(fingerprint, job);
-      await registerLocalFile(
-        file,
-        { ...job.row, taskId: job.row.taskId!, kinds: ["MULTIVIEW"] },
-        "MULTIVIEW",
-        job.key,
-        replacesId
-      );
-      jobs.current.delete(fingerprint);
-      onChanged?.(await getWorkflow(row.orderNumber, row.petIndex));
+        jobs.current.delete(fingerprint);
+        completed++;
+        const updated = await getWorkflow(row.orderNumber, row.petIndex);
+        if (!mounted.current) return;
+        onChanged?.(updated);
+      }
+      if (!replacesId) setUploadStatus(`4면도 ${completed}장 등록 완료`);
       setReplacement(null);
     } catch (e) {
+      if (!mounted.current) return;
       if (e instanceof AdminApiError && e.status >= 400 && e.status < 500)
         jobs.current.delete(fingerprint);
+      if (!replacesId) {
+        setRemainingFiles(files.slice(completed));
+        setUploadStatus(`4면도 ${completed}/${files.length}장 등록 완료`);
+      }
       setError(
-        e instanceof Error
-          ? e.message
-          : "교체하지 못했습니다. 기존 이미지는 유지됩니다."
+        `${files[completed]?.name ?? "목록 새로고침"}: ${
+          e instanceof Error
+            ? e.message
+            : "등록하지 못했습니다. 기존 이미지는 유지됩니다."
+        }`
       );
     } finally {
-      setPending(false);
+      uploading.current = false;
+      if (mounted.current) setPending(false);
     }
   };
   if (!canPhotos && !canFiles) return null;
@@ -255,16 +284,34 @@ export function AdminMaterialComparison({
                         accept=".svg,.png,.jpg,.jpeg,.webp"
                         className="hidden"
                         aria-label="4면도 파일 선택"
+                        multiple
                         disabled={pending}
                         onChange={e => {
-                          const file = e.target.files?.[0];
+                          const files = Array.from(e.target.files ?? []);
                           e.target.value = "";
-                          if (file) void upload(file);
+                          if (files.length) void upload(files);
                         }}
                       />
                     </>
                   )}
               </div>
+              <p className="text-xs text-muted-foreground">
+                여러 장을 한 번에 선택할 수 있습니다.
+              </p>
+              {uploadStatus && (
+                <p role="status" className="text-sm">
+                  {uploadStatus}
+                </p>
+              )}
+              {!pending && remainingFiles.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void upload(remainingFiles)}
+                >
+                  남은 {remainingFiles.length}장 다시 등록
+                </Button>
+              )}
               <AdminImageGallery
                 key={`${row.orderNumber}:${row.petIndex}:${artifactKey}`}
                 loadImages={loadFourViews}
@@ -397,7 +444,8 @@ export function AdminMaterialComparison({
               <Button
                 disabled={!selectedFile || !nextPreview || pending || preparing}
                 onClick={() => {
-                  if (selectedFile) void upload(selectedFile, replacement?.id);
+                  if (selectedFile)
+                    void upload([selectedFile], replacement?.id);
                 }}
               >
                 {pending ? "교체 중…" : "교체하기"}

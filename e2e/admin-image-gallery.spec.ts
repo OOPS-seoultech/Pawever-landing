@@ -32,6 +32,7 @@ async function sample(page: Page) {
     expiredThrough: 0,
     failOnce: false,
     uploads: [] as any[],
+    loseConfirmationAt: 0,
     modelRequests: 0,
     invalidModel: false,
     rows: [0, 1].map(petIndex => ({
@@ -72,6 +73,8 @@ async function sample(page: Page) {
       })),
     })),
   };
+  const uploadJobs = new Map<string, any>();
+  const confirmedUploads = new Set<string>();
   await page.route("**/__model/**", route => {
     state.modelRequests++;
     return route.fulfill({
@@ -163,32 +166,52 @@ async function sample(page: Page) {
         body: Buffer.from("UEsFBgAAAAAAAAAAAAAAAAAAAAAAAA==", "base64"),
       });
     else if (path.endsWith("/upload-requests")) {
-      const body = request.postDataJSON();
-      state.uploads.push(body);
-      const target = state.rows.find(
-        r => r.taskId === Number(path.split("/")[4])
-      )!;
-      data = {
-        artifactId: "replacement",
-        version: ++target.version,
-        url: `${url.origin}/__upload`,
-        headers: { "Content-Type": "image/png" },
-      };
-    } else if (path.endsWith("/replacement/confirm")) {
-      const body = state.uploads.at(-1),
-        target = state.rows.find(r =>
-          r.artifacts.some(a => a.id === body.replacesArtifactId)
+      const key = request.headers()["idempotency-key"];
+      let job = uploadJobs.get(key);
+      if (!job) {
+        const body = request.postDataJSON();
+        const target = state.rows.find(
+          r => r.taskId === Number(path.split("/")[4])
         )!;
-      target.artifacts.push({
-        id: "replacement",
-        kind: "MULTIVIEW",
-        fileName: body.fileName,
-        taskId: target.taskId,
-        modelingAttempt: 1,
-        size: png.length,
-        replacesArtifactId: body.replacesArtifactId,
-      });
-      target.version++;
+        expect(body.version).toBe(target.version);
+        state.uploads.push(body);
+        job = {
+          body,
+          target,
+          response: {
+            artifactId: `upload-${state.uploads.length}`,
+            version: ++target.version,
+            url: `${url.origin}/__upload`,
+            headers: { "Content-Type": body.contentType },
+          },
+        };
+        uploadJobs.set(key, job);
+      }
+      data = job.response;
+    } else if (/\/artifacts\/upload-\d+\/confirm$/.test(path)) {
+      const id = path.split("/").at(-2)!;
+      const job = [...uploadJobs.values()].find(
+        j => j.response.artifactId === id
+      )!;
+      const { body, target } = job;
+      if (!confirmedUploads.has(id)) {
+        expect(request.postDataJSON().version).toBe(target.version);
+        target.artifacts.push({
+          id,
+          kind: "MULTIVIEW",
+          fileName: body.fileName,
+          taskId: target.taskId,
+          modelingAttempt: 1,
+          size: body.size,
+          replacesArtifactId: body.replacesArtifactId,
+        });
+        target.version++;
+        confirmedUploads.add(id);
+      }
+      if (id === `upload-${state.loseConfirmationAt}`) {
+        state.loseConfirmationAt = 0;
+        return route.abort("failed");
+      }
       data = target;
     } else if (path.match(/^\/api\/admin\/orders\/[^/]+$/))
       data = {
@@ -227,9 +250,17 @@ test("우측 상단 공지, 아이별 사진과 4면도 2×2, 70% 확대·좌우
   await expect(
     page.getByRole("navigation", { name: "관리 메뉴" }).getByRole("link")
   ).toHaveText([
-    "내 작업", "전체 주문·배송", "플레이트·출력 대기", "포장·준등기",
-    "완료 주문·AS", "필라멘트", "입금·제작 관리", "담당자 설정",
-    "작업자 정산", "운영 현황", "로컬 파일",
+    "내 작업",
+    "전체 주문·배송",
+    "플레이트·출력 대기",
+    "포장·준등기",
+    "완료 주문·AS",
+    "필라멘트",
+    "입금·제작 관리",
+    "담당자 설정",
+    "작업자 정산",
+    "운영 현황",
+    "로컬 파일",
   ]);
   await expect(
     page
@@ -387,6 +418,76 @@ test("4면도 교체 후 현재 4개만 표시하고 이전 파일과 제작 단
   expect(state.rows[1].productionStage).toBe("MODELING");
   expect(state.rows[0].artifacts).toHaveLength(4);
 });
+
+for (const loseConfirmation of [false, true]) {
+  test(`4면도 여러 장 등록${loseConfirmation ? "은 응답 유실 후 남은 파일만 중복 없이 재시도한다" : "은 한 번 선택해 순서대로 현재 아이에게 저장한다"}`, async ({
+    page,
+  }) => {
+    const state = await sample(page);
+    state.rows[1].artifacts = [];
+    state.loseConfirmationAt = loseConfirmation ? 2 : 0;
+    await page.goto("/admin/orders/IMAGE-TEST?petIndex=1");
+    const jpeg = Buffer.from(
+      await page.evaluate(() => {
+        const canvas = document.createElement("canvas");
+        canvas.width = canvas.height = 3;
+        return canvas.toDataURL("image/jpeg").split(",")[1];
+      }),
+      "base64"
+    );
+    const picker = page.waitForEvent("filechooser");
+    await page.getByRole("button", { name: "4면도 추가", exact: true }).click();
+    const chooser = await picker;
+    expect(chooser.isMultiple()).toBe(true);
+    await chooser.setFiles([
+      { name: "front.png", mimeType: "image/png", buffer: png },
+      {
+        name: "left.svg",
+        mimeType: "image/svg+xml",
+        buffer: Buffer.from(
+          '<svg xmlns="http://www.w3.org/2000/svg" width="3" height="3"><rect width="3" height="3" fill="blue"/></svg>'
+        ),
+      },
+      { name: "right.JPG", mimeType: "image/jpeg", buffer: jpeg },
+      { name: "back.png", mimeType: "image/png", buffer: png },
+    ]);
+    if (loseConfirmation) {
+      await expect(page.getByRole("alert")).toContainText("left.svg");
+      expect(state.rows[1].artifacts).toHaveLength(2);
+      await page
+        .getByRole("button", { name: "남은 3장 다시 등록", exact: true })
+        .click();
+    }
+    await expect(
+      page.getByRole("status").filter({ hasText: /4면도 [34]장 등록 완료/ })
+    ).toBeVisible();
+    expect(state.uploads.map(file => file.fileName)).toEqual([
+      "front.png",
+      "left.png",
+      "right.JPG",
+      "back.png",
+    ]);
+    expect(state.rows[1].artifacts.map(file => file.fileName)).toEqual([
+      "front.png",
+      "left.png",
+      "right.JPG",
+      "back.png",
+    ]);
+    expect(state.rows[1].version).toBe(8);
+    expect(state.rows[1].productionStage).toBe("MODELING");
+    expect(state.rows[0].artifacts).toHaveLength(4);
+    await expect(
+      page.getByRole("button", { name: /남은 \d+장 다시 등록/ })
+    ).toHaveCount(0);
+    const comparison = page.getByRole("region", {
+      name: "고객 사진·4면도 비교",
+    });
+    await expect(
+      comparison.getByRole("img", { name: "left.png", exact: true })
+    ).toBeVisible();
+    await expect(comparison.getByRole("img")).toHaveCount(7);
+  });
+}
 
 test("고객 사진 저장 권한이 없으면 확대는 허용하고 저장은 비활성화한다", async ({
   page,
