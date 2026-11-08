@@ -206,9 +206,9 @@ test("수정 사유와 메모를 남기면 모델러에게 수정 작업을 돌�
     .getByRole("textbox", { name: "검수 메모", exact: true })
     .fill("귀 끝을 둥글게 수정해 주세요.");
   await request.click();
-  await expect(page.getByRole("status")).toContainText(
-    "수정 작업을 생성했습니다."
-  );
+  await expect(
+    page.getByRole("status").filter({ hasText: "수정 작업을 생성했습니다." })
+  ).toBeVisible();
   await expect(
     page.getByText("귀 끝을 둥글게 수정해 주세요.", { exact: true })
   ).toBeVisible();
