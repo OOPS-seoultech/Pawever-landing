@@ -51,6 +51,7 @@ describe("Chrome local workspace", () => {
       })
     ).toEqual(["주문", "PE-2026-000161", "아이2_별이"]);
     expect(acceptedFile("완성.gcode.3mf")).toBe(true);
+    expect(acceptedFile("정면.SVG")).toBe(true);
     expect(acceptedFile("완성.3mf.crdownload")).toBe(false);
   });
   it("creates only named directories and never writes or deletes file data", async () => {
@@ -74,10 +75,19 @@ describe("Chrome local workspace", () => {
   it("rejects partial 3MF downloads and type mismatches", async () => {
     await expect(
       validateLocalFile(
-        new File([new Uint8Array([80, 75, 3, 4, 1, 2])], "unfinished.3mf"),
+        new File(
+          [new Uint8Array([80, 75, 3, 4, 1, 2])],
+          "unfinished.gcode.3mf"
+        ),
         "PRINT_MODEL"
       )
     ).rejects.toThrow("완전히 저장");
+    await expect(
+      validateLocalFile(new File(["data"], "model.3mf"), "PRINT_MODEL")
+    ).rejects.toThrow("일반 .3mf");
+    await expect(
+      validateLocalFile(new File(["data"], "model.gcode.3mf"), "MODEL_SOURCE")
+    ).rejects.toThrow("출력 파일");
     await expect(
       validateLocalFile(new File(["gcode"], "model.gcode"), "MODEL_SOURCE")
     ).rejects.toThrow("확장자");

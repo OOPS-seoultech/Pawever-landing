@@ -216,3 +216,23 @@
     }
   }
 }
+
+/* Admin surfaces: white page, quiet information panels, white nested details. */
+:root.admin-theme {
+  --background: #ffffff;
+  --card: #f8f8f8;
+  --muted: #f8f8f8;
+  --secondary: #f8f8f8;
+  --accent: #ffecd6;
+  --accent-foreground: #723b0d;
+}
+.admin-theme [data-slot="button"][data-variant="default"] {
+  --primary: #ffe1bd;
+  --primary-foreground: #723b0d;
+}
+.admin-theme [data-slot="button"]:is([data-variant="outline"], [data-variant="secondary"]):not([data-image-picker]) {
+  background-color: var(--muted);
+}
+.admin-theme [data-slot="button"]:is([data-variant="outline"], [data-variant="secondary"]):not([data-image-picker]):hover {
+  background-color: var(--accent);
+}

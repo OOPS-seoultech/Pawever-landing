@@ -1,11 +1,17 @@
+import { adminDownloadName, saveAdminFile } from "@/lib/adminDownloads";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
+import { createPortal } from "react-dom";
+import { validateLocalFile, type LocalKind } from "@/lib/localFiles";
+import { currentMultiviews } from "@/lib/adminImages";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useStaffSession } from "@/components/AdminSession";
 import {
   AdminApiError,
   adminRequest,
+  downloadMultiviewArchive,
+  downloadProductionArtifact,
   requestPhotoLinks,
   type AdminPhotoDownload,
 } from "@/lib/adminApi";
@@ -23,6 +29,7 @@ import {
 import { formatDateTime, formatKrw } from "@/lib/adminFormat";
 import { AdminModelReview, ModelReviewHistory } from "./AdminModelReview";
 import { AdminFinishing } from "./AdminFinishing";
+import { AdminMaterialComparison } from "./AdminMaterialComparison";
 import { AdminSalePrice } from "./AdminSalePrice";
 import { AdminFilamentMapping } from "./AdminFilamentMapping";
 
@@ -32,12 +39,14 @@ export function AdminWorkflowPanel({
   onSelectPet,
   onChanged,
   showPhotos = true,
+  salePriceTarget,
 }: {
   orderNumber: string;
   petIndex?: number;
   onSelectPet?: (index: number) => void;
   onChanged?: (row: WorkflowOrder) => void;
   showPhotos?: boolean;
+  salePriceTarget?: HTMLElement | null;
 }) {
   const [petIndex, setPetIndex] = useState(initialPetIndex);
   const [newPetName, setNewPetName] = useState("");
@@ -51,19 +60,19 @@ export function AdminWorkflowPanel({
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [pending, setPending] = useState(false);
+  const [zipLoading, setZipLoading] = useState(false);
+  const [downloadingFile, setDownloadingFile] = useState("");
   const busy = useRef(false);
   const keys = useRef(new Map<string, string>());
   const [amount, setAmount] = useState("");
   const [memo, setMemo] = useState("");
   const [target, setTarget] = useState("");
   const [accounts, setAccounts] = useState<StaffAccount[]>([]);
-  const [photos, setPhotos] = useState<AdminPhotoDownload["photos"]>([]);
   const [events, setEvents] = useState<
     { action: string; createdAt: string; actorId: number | null }[]
   >([]);
   const permissions = staff?.permissions ?? [];
   const has = (permission: string) => permissions.includes(permission);
-  const canPhotos = has("VIEW_CUSTOMER_PHOTOS") && showPhotos;
   const canAssign = has("ASSIGN_WORK");
 
   const fail = useCallback(
@@ -93,7 +102,6 @@ export function AdminWorkflowPanel({
   useEffect(() => {
     let live = true;
     setRow(null);
-    setPhotos([]);
     setError("");
     setNotice("");
     setAmount("");
@@ -109,21 +117,6 @@ export function AdminWorkflowPanel({
       live = false;
     };
   }, [orderNumber, petIndex, fail]);
-  useEffect(() => {
-    let live = true;
-    setPhotos([]);
-    if (canPhotos)
-      requestPhotoLinks(orderNumber, petIndex)
-        .then(value => {
-          if (live) setPhotos(value.photos);
-        })
-        .catch(e => {
-          if (live) fail(e);
-        });
-    return () => {
-      live = false;
-    };
-  }, [orderNumber, petIndex, canPhotos, fail]);
   useEffect(() => {
     if (canAssign) getStaffAccounts().then(setAccounts).catch(fail);
     else setAccounts([]);
@@ -181,10 +174,30 @@ export function AdminWorkflowPanel({
       setPending(false);
     }
   };
+  const downloadFourViews = async () => {
+    const taskId = row?.modelingTaskId ?? row?.taskId;
+    if (!row || taskId == null || zipLoading) return;
+    setZipLoading(true);
+    setError("");
+    try {
+      const archive = await downloadMultiviewArchive(taskId);
+      saveAdminFile(archive, adminDownloadName(row, "multiview.zip"));
+    } catch (e) {
+      fail(e);
+    } finally {
+      setZipLoading(false);
+    }
+  };
   const upload = async (kind: string, file: File) => {
     if (!row) return;
     if (file.size < 1 || file.size > 100 * 1024 * 1024) {
       setError("파일은 1바이트 이상, 100MB 이하로 선택해 주세요.");
+      return;
+    }
+    try {
+      await validateLocalFile(file, kind as LocalKind);
+    } catch (e) {
+      fail(e);
       return;
     }
     await run(async () => {
@@ -222,15 +235,21 @@ export function AdminWorkflowPanel({
     );
   const can = (action: string) => row.allowedActions.includes(action);
   const currentArtifacts = row.artifacts.filter(a =>
-    a.taskId == null
-      ? (row.taskAttempt ?? 1) === 1
-      : a.taskId === (row.modelingTaskId ?? row.taskId)
+    a.kind === "PRINT_MODEL" &&
+    a.taskId != null &&
+    a.taskId >= (row.modelingTaskId ?? row.taskId ?? Infinity)
+      ? true
+      : a.taskId == null
+        ? (row.taskAttempt ?? 1) === 1
+        : a.taskId === (row.modelingTaskId ?? row.taskId)
   );
   const previousArtifacts = row.artifacts.filter(
     a => !currentArtifacts.includes(a)
   );
   const missing = artifactKinds.filter(
-    item => !currentArtifacts.some(a => a.kind === item.kind)
+    item =>
+      item.kind !== "PRINT_MODEL" &&
+      !currentArtifacts.some(a => a.kind === item.kind)
   );
   const prefix = `/api/admin/orders/${encodeURIComponent(orderNumber)}`;
   const eligible = accounts.filter(
@@ -253,35 +272,57 @@ export function AdminWorkflowPanel({
       className="flex min-w-0 flex-wrap items-center gap-2 text-sm"
       key={a.id}
     >
-      <span className="break-all">{a.fileName}</span>
       {has("DOWNLOAD_PRODUCTION_FILES") && (
         <Button
           size="sm"
-          variant="outline"
-          disabled={pending}
+          disabled={pending || !!downloadingFile}
           onClick={() => {
-            void adminRequest<{ url: string }>(
-              `/api/production/artifacts/${a.id}/download-link`,
-              { method: "POST" }
-            )
-              .then(link => {
-                const anchor = document.createElement("a");
-                anchor.href = link.url;
-                anchor.target = "_blank";
-                anchor.rel = "noreferrer";
-                anchor.click();
-              })
-              .catch(fail);
+            if (downloadingFile) return;
+            setDownloadingFile(a.id);
+            void downloadProductionArtifact(a.id)
+              .then(blob =>
+                saveAdminFile(blob, adminDownloadName(row, a.fileName))
+              )
+              .catch(fail)
+              .finally(() => setDownloadingFile(""));
           }}
         >
-          열기
+          {downloadingFile === a.id
+            ? "파일 준비 중…"
+            : /\.gcode\.3mf$/i.test(a.fileName)
+              ? "파일 내려받기 (GCODE.3MF)"
+              : `파일 내려받기 (${a.fileName.split(".").at(-1)?.toUpperCase() ?? "파일"})`}
         </Button>
       )}
+      <span className="min-w-0 break-all text-muted-foreground">
+        {a.fileName}
+        {row.artifacts.some(file => file.replacesArtifactId === a.id) &&
+          " · 교체 이전"}
+      </span>
     </div>
+  );
+  const salePriceEditor = has("VIEW_PAYMENT") && row.salePriceKrw != null && (
+    <AdminSalePrice
+      key={`${row.orderNumber}:${row.version}`}
+      row={row}
+      editable={has("MANAGE_OPERATION_SETTINGS") && has("VIEW_ALL_ORDERS")}
+      pending={pending}
+      onSave={(custom, price) =>
+        void run(
+          () =>
+            command(`${prefix}/sale-price`, {
+              version: row.version,
+              custom,
+              ...(custom ? { salePriceKrw: price } : {}),
+            }),
+          "판매가를 저장했습니다. 고객 알림은 발송하지 않았습니다."
+        )
+      }
+    />
   );
   return (
     <section
-      className="min-w-0 space-y-5 rounded-lg border bg-background p-4"
+      className="min-w-0 space-y-5 rounded-[15px] border bg-muted p-4"
       aria-label="작업 상세"
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -314,7 +355,7 @@ export function AdminWorkflowPanel({
           새로고침
         </Button>
       </div>
-      <div className="flex flex-wrap gap-2 text-sm">
+      <div className="flex flex-wrap gap-2 border-b pb-5 text-sm sm:mr-12">
         {has("VIEW_PAYMENT") && (
           <span className="rounded-full bg-muted px-3 py-1">
             {paymentLabels[row.paymentStatus] ?? row.paymentStatus}
@@ -471,18 +512,6 @@ export function AdminWorkflowPanel({
             </details>
           )}
       </section>
-      {(can("UPLOAD_ARTIFACT") || can("UPLOAD_COLORED_MODEL")) && (
-        <Button
-          variant="outline"
-          onClick={() =>
-            navigate(
-              `/admin/local-files?order=${encodeURIComponent(orderNumber)}&pet=${row.petIndex}`
-            )
-          }
-        >
-          로컬 파일에서 자료 등록
-        </Button>
-      )}
       {row.artifacts.some(file => file.kind === "COLORED_MODEL") && (
         <section
           className="flex flex-col gap-2 rounded border p-3"
@@ -494,25 +523,9 @@ export function AdminWorkflowPanel({
             .map(fileRow)}
         </section>
       )}
-      {has("VIEW_PAYMENT") && row.salePriceKrw != null && (
-        <AdminSalePrice
-          key={`${row.orderNumber}:${row.version}`}
-          row={row}
-          editable={has("MANAGE_OPERATION_SETTINGS") && has("VIEW_ALL_ORDERS")}
-          pending={pending}
-          onSave={(custom, price) =>
-            void run(
-              () =>
-                command(`${prefix}/sale-price`, {
-                  version: row.version,
-                  custom,
-                  ...(custom ? { salePriceKrw: price } : {}),
-                }),
-              "판매가를 저장했습니다. 고객 알림은 발송하지 않았습니다."
-            )
-          }
-        />
-      )}
+      {salePriceTarget
+        ? createPortal(salePriceEditor, salePriceTarget)
+        : salePriceEditor}
       {row.requiresMigrationReview && (
         <p className="text-sm text-amber-900">
           기존 제작 중 주문입니다. 실제 제작 단계를 확인한 후 전환해야 합니다.
@@ -727,42 +740,15 @@ export function AdminWorkflowPanel({
           )}
         </div>
       )}
-      {canPhotos && (
-        <div className="space-y-2 border-t pt-4">
-          <h3 className="font-medium">고객 사진</h3>
-          <div className="grid grid-cols-2 gap-2">
-            {photos.map(photo => (
-              <a
-                key={photo.slot}
-                href={photo.url}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <img
-                  className="aspect-square h-auto w-full rounded object-cover"
-                  src={photo.url}
-                  loading="lazy"
-                  decoding="async"
-                  width={640}
-                  height={640}
-                  alt={`고객 사진 ${photo.slot}`}
-                />
-              </a>
-            ))}
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={pending}
-            onClick={() =>
-              requestPhotoLinks(orderNumber, petIndex)
-                .then(v => setPhotos(v.photos))
-                .catch(fail)
-            }
-          >
-            사진 링크 갱신
-          </Button>
-        </div>
+      {showPhotos && (
+        <AdminMaterialComparison
+          key={`photos:${row.orderNumber}:${row.petIndex}`}
+          row={row}
+          onChanged={fresh => {
+            setRow(fresh);
+            onChanged?.(fresh);
+          }}
+        />
       )}
       {can("START_TASK") && (
         <Button
@@ -781,7 +767,11 @@ export function AdminWorkflowPanel({
         </Button>
       )}
       {has("VIEW_PRODUCTION_FILES") && (
-        <div className="space-y-3 border-t pt-4">
+        <div
+          role="region"
+          aria-label="모델링 자료"
+          className="space-y-3 border-t pt-4"
+        >
           <ModelReviewHistory row={row} />
           <h3 className="font-medium">모델링 자료</h3>
           {row.taskAttempt != null && (
@@ -794,26 +784,42 @@ export function AdminWorkflowPanel({
           {artifactKinds.map(item => (
             <div
               key={item.kind}
-              className="min-w-0 space-y-2 rounded border p-3"
+              className="min-w-0 space-y-2 rounded-[15px] border bg-background p-3"
             >
               <h4 className="text-sm font-medium">{item.label}</h4>
-              {currentArtifacts.filter(a => a.kind === item.kind).map(fileRow)}
-              {can("UPLOAD_ARTIFACT") && (
-                <label className="block text-xs text-muted-foreground">
-                  {item.label} 파일 선택
-                  <input
-                    className="mt-2 block w-full min-w-0 max-w-full text-sm"
-                    type="file"
-                    accept={item.accept}
-                    disabled={pending}
-                    onChange={e => {
-                      const file = e.target.files?.[0];
-                      e.target.value = "";
-                      if (file) void upload(item.kind, file);
-                    }}
-                  />
-                </label>
+              {item.kind === "MULTIVIEW" ? (
+                <Button
+                  disabled={
+                    zipLoading ||
+                    !has("DOWNLOAD_PRODUCTION_FILES") ||
+                    !currentMultiviews(row).length
+                  }
+                  onClick={() => void downloadFourViews()}
+                >
+                  {zipLoading ? "ZIP 준비 중…" : "파일 내려받기 (ZIP)"}
+                </Button>
+              ) : (
+                currentArtifacts.filter(a => a.kind === item.kind).map(fileRow)
               )}
+              {item.kind !== "MULTIVIEW" &&
+                (can("UPLOAD_ARTIFACT") ||
+                  (item.kind === "PRINT_MODEL" &&
+                    can("UPLOAD_PRINT_FILE"))) && (
+                  <label className="block text-xs text-muted-foreground">
+                    {item.label} 파일 선택
+                    <input
+                      className="mt-2 block w-full min-w-0 max-w-full text-sm"
+                      type="file"
+                      accept={item.accept}
+                      disabled={pending}
+                      onChange={e => {
+                        const file = e.target.files?.[0];
+                        e.target.value = "";
+                        if (file) void upload(item.kind, file);
+                      }}
+                    />
+                  </label>
+                )}
             </div>
           ))}
           {previousArtifacts.length > 0 && (
@@ -838,7 +844,8 @@ export function AdminWorkflowPanel({
           )}
           {can("UPLOAD_ARTIFACT") && (
             <p className="text-xs text-muted-foreground">
-              파일당 최대 100MB. 출력 파일은 STL 또는 3MF로 등록해 주세요.
+              파일당 최대 100MB. 모델 원본은 일반 .3mf, 출력 파일은 .gcode.3mf로
+              등록해 주세요.
             </p>
           )}
         </div>

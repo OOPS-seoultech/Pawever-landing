@@ -65,7 +65,13 @@ test("검수 체크 후 승인하면 색상 작업 대기로 넘어간다", asyn
   const keys: string[] = [];
   await page.route("**/api/**", async route => {
     const path = new URL(route.request().url()).pathname;
-    if (path.endsWith("/me") || path === "/api/admin/notices/onboarding" || path === "/api/production/file-targets") return route.fallback();
+    if (
+      path.endsWith("/download-link") ||
+      path.endsWith("/me") ||
+      path === "/api/admin/notices/onboarding" ||
+      path === "/api/production/file-targets"
+    )
+      return route.fallback();
     if (path.endsWith("/review")) {
       const body = route.request().postDataJSON();
       expect(body.decision).toBe("APPROVED");
@@ -137,7 +143,13 @@ test("수정 사유와 메모를 남기면 모델러에게 수정 작업을 돌�
   let row = initial();
   await page.route("**/api/**", async route => {
     const path = new URL(route.request().url()).pathname;
-    if (path.endsWith("/me") || path === "/api/admin/notices/onboarding" || path === "/api/production/file-targets") return route.fallback();
+    if (
+      path.endsWith("/download-link") ||
+      path.endsWith("/me") ||
+      path === "/api/admin/notices/onboarding" ||
+      path === "/api/production/file-targets"
+    )
+      return route.fallback();
     if (path.endsWith("/review")) {
       const body = route.request().postDataJSON();
       expect(body.decision).toBe("CHANGES_REQUESTED");
@@ -231,7 +243,13 @@ test("수정 작업은 이전 파일만으로 완료할 수 없고 요청 사유
   };
   await page.route("**/api/**", route => {
     const path = new URL(route.request().url()).pathname;
-    if (path.endsWith("/me") || path === "/api/admin/notices/onboarding" || path === "/api/production/file-targets") return route.fallback();
+    if (
+      path.endsWith("/download-link") ||
+      path.endsWith("/me") ||
+      path === "/api/admin/notices/onboarding" ||
+      path === "/api/production/file-targets"
+    )
+      return route.fallback();
     if (path.endsWith("/my-tasks"))
       return route.fulfill({ json: { success: true, data: [row] } });
     if (path.endsWith("/workflow"))

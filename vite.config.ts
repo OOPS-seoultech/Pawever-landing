@@ -7,7 +7,19 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, import.meta.dirname, "");
 
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [
+      react(),
+      tailwindcss(),
+      ...(mode === "development" && env.VITE_ADMIN_REVIEW_MODE === "true"
+        ? [
+            {
+              name: "local-review-fonts",
+              transformIndexHtml: (html: string) =>
+                html.replace(/<link[^>]+cdn\.jsdelivr\.net[^>]*>/g, ""),
+            },
+          ]
+        : []),
+    ],
     resolve: {
       alias: {
         "@": path.resolve(import.meta.dirname, "client", "src"),

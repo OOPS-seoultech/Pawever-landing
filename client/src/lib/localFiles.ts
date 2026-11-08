@@ -2,7 +2,7 @@ export const localKinds = {
   MULTIVIEW: {
     label: "2D 4면도",
     folder: "01_2D_4면도",
-    extensions: ["png", "jpg", "jpeg", "webp"],
+    extensions: ["svg", "png", "jpg", "jpeg", "webp"],
   },
   MODEL_SOURCE: {
     label: "3D 모델 원본",
@@ -10,9 +10,9 @@ export const localKinds = {
     extensions: ["glb", "gltf", "obj", "fbx", "blend", "stl", "3mf"],
   },
   PRINT_MODEL: {
-    label: "출력 모델",
+    label: "출력 파일 (G-code 3MF)",
     folder: "03_출력모델",
-    extensions: ["stl", "3mf"],
+    extensions: ["3mf"],
   },
   COLORED_MODEL: {
     label: "채색 3MF",
@@ -74,13 +74,21 @@ export const fileExtension = (name: string) =>
   name.split(".").pop()?.toLowerCase() ?? "";
 export function acceptedFile(name: string) {
   return (
-    /\.(png|jpe?g|webp|glb|gltf|obj|fbx|blend|stl|3mf|gcode)$/i.test(name) &&
-    !/\.(crdownload|part|tmp)(\.|$)/i.test(name)
+    /\.(svg|png|jpe?g|webp|glb|gltf|obj|fbx|blend|stl|3mf|gcode)$/i.test(
+      name
+    ) && !/\.(crdownload|part|tmp)(\.|$)/i.test(name)
   );
 }
 export async function validateLocalFile(file: File, kind: LocalKind | "PLATE") {
   if (!file.size || file.size > maxFileSize)
     throw new Error("파일은 0바이트보다 크고 100MB 이하여야 합니다.");
+  const sliced = /\.gcode\.3mf$/i.test(file.name);
+  if (kind === "PRINT_MODEL" && !sliced)
+    throw new Error(
+      "출력 파일은 .gcode.3mf로 등록해 주세요. 일반 .3mf는 모델 원본입니다."
+    );
+  if ((kind === "MODEL_SOURCE" || kind === "COLORED_MODEL") && sliced)
+    throw new Error(".gcode.3mf는 출력 파일로 등록해 주세요.");
   const ext = fileExtension(file.name);
   const extensions: readonly string[] =
     kind === "PLATE" ? ["3mf", "gcode"] : localKinds[kind].extensions;

@@ -57,6 +57,7 @@ export type WorkflowOrder = {
     size: number;
     taskId?: number;
     modelingAttempt?: number;
+    replacesArtifactId?: string | null;
   }[];
   expectedAmount: number | null;
   salePriceKrw?: number | null;
@@ -159,13 +160,13 @@ export const issueLabels: Record<string, string> = {
   PAYMENT_MISMATCH: "입금액이 주문 금액과 다릅니다.",
 };
 export const artifactKinds = [
-  { kind: "MULTIVIEW", label: "4면도", accept: ".png,.jpg,.jpeg,.webp" },
+  { kind: "MULTIVIEW", label: "4면도", accept: ".svg,.png,.jpg,.jpeg,.webp" },
   {
     kind: "MODEL_SOURCE",
     label: "모델 원본",
     accept: ".blend,.obj,.stl,.3mf,.fbx,.glb,.gltf",
   },
-  { kind: "PRINT_MODEL", label: "출력 파일", accept: ".stl,.3mf" },
+  { kind: "PRINT_MODEL", label: "출력 파일", accept: ".gcode.3mf" },
 ];
 export const getStaff = () => adminRequest<Staff>("/api/admin/me");
 export const workKey = (row: Pick<WorkflowOrder, "orderNumber" | "petIndex">) =>

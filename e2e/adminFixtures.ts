@@ -11,6 +11,17 @@ export const test = base.extend({
         json: { success: true, data: { orders: [], plates: [] } },
       })
     );
+    await page.route("**/api/production/artifacts/*/download-link", route =>
+      route.fulfill({
+        json: {
+          success: true,
+          data: {
+            url: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+c3ioAAAAASUVORK5CYII=",
+            expiresAt: "2030-01-01T00:00:00Z",
+          },
+        },
+      })
+    );
     await use(page);
   },
 });

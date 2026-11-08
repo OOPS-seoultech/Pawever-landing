@@ -316,7 +316,7 @@ export default function AdminLocalFiles() {
                 type="file"
                 multiple
                 className="sr-only"
-                accept=".png,.jpg,.jpeg,.webp,.glb,.gltf,.obj,.fbx,.blend,.stl,.3mf,.gcode"
+                accept=".svg,.png,.jpg,.jpeg,.webp,.glb,.gltf,.obj,.fbx,.blend,.stl,.3mf,.gcode"
                 onChange={e => {
                   const entries = Array.from(e.target.files ?? []).map(
                     (file, index) => ({
