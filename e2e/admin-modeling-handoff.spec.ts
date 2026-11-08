@@ -225,7 +225,9 @@ test("모델러가 시작하고 필수 파일을 등록하면 검수 인계 결�
     size: 0,
     taskId: 11,
     modelingAttempt: 1,
+    stageMultiview: false,
   };
+  const staged: typeof row.artifacts = [];
   const keys: string[] = [];
   await page.route("**/api/**", async route => {
     const request = route.request(),
@@ -262,12 +264,13 @@ test("모델러가 시작하고 필수 파일을 등록하면 검수 인계 결�
         };
       if (path.endsWith("/upload-requests")) {
         pending = {
-          id: body.kind,
+          id: `${body.kind}-${row.version}`,
           kind: body.kind,
           fileName: body.fileName,
           size: body.size,
           taskId: row.taskId,
           modelingAttempt: 1,
+          stageMultiview: Boolean(body.stageMultiview),
         };
         return route.fulfill({
           json: {
@@ -281,10 +284,20 @@ test("모델러가 시작하고 필수 파일을 등록하면 검수 인계 결�
           },
         });
       }
-      if (path.endsWith("/confirm"))
-        row.artifacts = [...row.artifacts, pending];
+      if (path.endsWith("/confirm")) {
+        if (pending.stageMultiview) staged.push(pending);
+        else row.artifacts = [...row.artifacts, pending];
+      }
+      if (path.endsWith("/artifacts/multiview-set")) {
+        expect(body.artifactIds).toEqual(staged.map(a => a.id));
+        expect(staged).toHaveLength(4);
+        row.artifacts = [
+          ...row.artifacts.filter(a => a.kind !== "MULTIVIEW"),
+          ...staged,
+        ];
+      }
       if (path.endsWith("/complete")) {
-        expect(row.artifacts).toHaveLength(2);
+        expect(row.artifacts).toHaveLength(5);
         row = {
           ...row,
           productionStage: "MODEL_REVIEW",
@@ -316,11 +329,18 @@ test("모델러가 시작하고 필수 파일을 등록하면 검수 인계 결�
     ["4면도", "views.png", "image/png"],
     ["모델 원본", "model.blend", "application/octet-stream"],
   ]) {
-    await page.getByLabel(`${label} 파일 선택`, { exact: true }).setInputFiles({
-      name,
-      mimeType: mime,
-      buffer: Buffer.from("test-model-file"),
-    });
+    await page.getByLabel(`${label} 파일 선택`, { exact: true }).setInputFiles(
+      label === "4면도"
+        ? ["views.png", "left.png", "right.png", "back.png"].map(fileName => ({
+            name: fileName,
+            mimeType: "image/png",
+            buffer: Buffer.from(
+              "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+c3ioAAAAASUVORK5CYII=",
+              "base64"
+            ),
+          }))
+        : { name, mimeType: mime, buffer: Buffer.from("test-model-file") }
+    );
     if (label === "4면도")
       await expect(
         page

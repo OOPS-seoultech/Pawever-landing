@@ -24,7 +24,11 @@ import {
 import { prepareImageUpload } from "@/lib/prepareImageUpload";
 import { Button } from "@/components/ui/button";
 import { AdminApiError, adminRequest } from "@/lib/adminApi";
-import { getWorkflow, type WorkflowOrder } from "@/lib/adminContracts";
+import {
+  getWorkflow,
+  workflowCommand,
+  type WorkflowOrder,
+} from "@/lib/adminContracts";
 import { currentMultiviews } from "@/lib/adminImages";
 import { adminDownloadName } from "@/lib/adminDownloads";
 import { registerLocalFile } from "@/lib/localFileApi";
@@ -91,7 +95,12 @@ export function AdminMaterialComparison({
   const [pending, setPending] = useState(false);
   const uploading = useRef(false);
   const mounted = useRef(true);
-  const [remainingFiles, setRemainingFiles] = useState<File[]>([]);
+  const pendingSet = useRef<{
+    files: File[];
+    ids: string[];
+    key: string;
+    body?: { version: number; artifactIds: string[] };
+  } | null>(null);
   const [uploadStatus, setUploadStatus] = useState("");
   useEffect(() => {
     mounted.current = true;
@@ -153,21 +162,28 @@ export function AdminMaterialComparison({
       if (selectionSequence.current === token) setPreparing(false);
     }
   };
-  const upload = async (files: File[], replacesId?: string) => {
+  const upload = async (files: File[], replacesId?: string, retry = false) => {
     if (uploading.current || !files.length) return;
+    if (!replacesId && files.length !== 4) {
+      setError("정면·좌측·우측·뒷면 이미지를 정확히 4장 선택해 주세요.");
+      return;
+    }
+    if (!replacesId && !retry)
+      pendingSet.current = { files, ids: [], key: crypto.randomUUID() };
+    const batch = replacesId ? null : pendingSet.current;
+    if (!replacesId && !batch) return;
     uploading.current = true;
     setPending(true);
     setError("");
-    setRemainingFiles([]);
-    let completed = 0;
+    let completed = batch?.ids.length ?? 0;
     let fingerprint = "";
     try {
-      for (const file of files) {
+      for (const file of files.slice(completed)) {
         if (!mounted.current) return;
         if (!replacesId)
           setUploadStatus(`4면도 등록 중 ${completed + 1}/${files.length}장`);
         fingerprint = JSON.stringify([
-          replacesId ?? "new",
+          replacesId ?? batch!.key,
           file.name,
           file.size,
           file.lastModified,
@@ -186,31 +202,58 @@ export function AdminMaterialComparison({
           );
         const job = previousJob ?? { key: crypto.randomUUID(), row: fresh };
         jobs.current.set(fingerprint, job);
-        await registerLocalFile(
+        const id = await registerLocalFile(
           file,
           { ...job.row, taskId: job.row.taskId!, kinds: ["MULTIVIEW"] },
           "MULTIVIEW",
           job.key,
           replacesId
+            ? { replacesArtifactId: replacesId }
+            : { stageMultiview: true }
         );
+        batch?.ids.push(id);
         jobs.current.delete(fingerprint);
         completed++;
         const updated = await getWorkflow(row.orderNumber, row.petIndex);
         if (!mounted.current) return;
         onChanged?.(updated);
       }
-      if (!replacesId) setUploadStatus(`4면도 ${completed}장 등록 완료`);
+      if (batch) {
+        setUploadStatus("새 4면도 4장으로 교체 중…");
+        const fresh = await getWorkflow(row.orderNumber, row.petIndex);
+        if (!mounted.current) return;
+        batch.body ??= { version: fresh.version, artifactIds: [...batch.ids] };
+        const published = await workflowCommand<WorkflowOrder>(
+          `/api/production/tasks/${fresh.taskId}/artifacts/multiview-set`,
+          batch.body,
+          batch.key
+        );
+        pendingSet.current = null;
+        if (!mounted.current) return;
+        onChanged?.(published);
+        setUploadStatus("4면도 4장 등록 완료");
+      }
       setReplacement(null);
     } catch (e) {
       if (!mounted.current) return;
       if (e instanceof AdminApiError && e.status >= 400 && e.status < 500)
         jobs.current.delete(fingerprint);
       if (!replacesId) {
-        setRemainingFiles(files.slice(completed));
-        setUploadStatus(`4면도 ${completed}/${files.length}장 등록 완료`);
+        setUploadStatus(
+          completed === 4
+            ? "4/4장 전송 완료 · 교체 확정 확인 필요"
+            : `4면도 ${completed}/4장 전송 완료 · 기존 4면도 유지`
+        );
+        if (
+          e instanceof AdminApiError &&
+          e.status >= 400 &&
+          e.status < 500 &&
+          batch
+        )
+          batch.body = undefined;
       }
       setError(
-        `${files[completed]?.name ?? "목록 새로고침"}: ${
+        `${files[completed]?.name ?? "교체 확정"}: ${
           e instanceof Error
             ? e.message
             : "등록하지 못했습니다. 기존 이미지는 유지됩니다."
@@ -276,7 +319,7 @@ export function AdminMaterialComparison({
                         disabled={pending}
                         onClick={() => addInput.current?.click()}
                       >
-                        4면도 추가
+                        4면도 등록·교체
                       </Button>
                       <input
                         ref={addInput}
@@ -296,20 +339,31 @@ export function AdminMaterialComparison({
                   )}
               </div>
               <p className="text-xs text-muted-foreground">
-                여러 장을 한 번에 선택할 수 있습니다.
+                정면·좌측·우측·뒷면 4장을 함께 선택해 주세요. 모두 등록되면 기존
+                4면도를 교체합니다.
               </p>
+              {artifacts.length > 4 && (
+                <p className="text-sm text-amber-800">
+                  이전 등록 사진이 {artifacts.length}장 남아 있습니다. 유지할
+                  4장을 다시 등록하면 새 세트만 남습니다.
+                </p>
+              )}
               {uploadStatus && (
                 <p role="status" className="text-sm">
                   {uploadStatus}
                 </p>
               )}
-              {!pending && remainingFiles.length > 0 && (
+              {!pending && pendingSet.current && (
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => void upload(remainingFiles)}
+                  onClick={() =>
+                    void upload(pendingSet.current!.files, undefined, true)
+                  }
                 >
-                  남은 {remainingFiles.length}장 다시 등록
+                  {pendingSet.current.ids.length === 4
+                    ? "4면도 교체 확정 다시 시도"
+                    : `남은 ${4 - pendingSet.current.ids.length}장 다시 등록`}
                 </Button>
               )}
               <AdminImageGallery
@@ -324,7 +378,10 @@ export function AdminMaterialComparison({
                 replacementDisabled={pending}
               />
               {error && !replacement && (
-                <p role="alert" className="text-sm text-destructive">
+                <p
+                  role="alert"
+                  className="break-words text-sm text-destructive"
+                >
                   {error}
                 </p>
               )}
@@ -428,7 +485,10 @@ export function AdminMaterialComparison({
                 </p>
               )}
               {error && (
-                <p role="alert" className="text-sm text-destructive">
+                <p
+                  role="alert"
+                  className="break-words text-sm text-destructive"
+                >
                   {error}
                 </p>
               )}
