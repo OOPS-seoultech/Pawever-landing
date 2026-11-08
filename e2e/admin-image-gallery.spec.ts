@@ -33,6 +33,7 @@ async function sample(page: Page) {
     failOnce: false,
     uploads: [] as any[],
     loseConfirmationAt: 0,
+    losePublication: false,
     modelRequests: 0,
     invalidModel: false,
     rows: [0, 1].map(petIndex => ({
@@ -75,6 +76,8 @@ async function sample(page: Page) {
   };
   const uploadJobs = new Map<string, any>();
   const confirmedUploads = new Set<string>();
+  const stagedImages = new Map<string, any>();
+  const publications = new Map<string, any>();
   await page.route("**/__model/**", route => {
     state.modelRequests++;
     return route.fulfill({
@@ -196,7 +199,7 @@ async function sample(page: Page) {
       const { body, target } = job;
       if (!confirmedUploads.has(id)) {
         expect(request.postDataJSON().version).toBe(target.version);
-        target.artifacts.push({
+        const file = {
           id,
           kind: "MULTIVIEW",
           fileName: body.fileName,
@@ -204,7 +207,9 @@ async function sample(page: Page) {
           modelingAttempt: 1,
           size: body.size,
           replacesArtifactId: body.replacesArtifactId,
-        });
+        };
+        if (body.stageMultiview) stagedImages.set(id, file);
+        else target.artifacts.push(file);
         target.version++;
         confirmedUploads.add(id);
       }
@@ -213,6 +218,29 @@ async function sample(page: Page) {
         return route.abort("failed");
       }
       data = target;
+    } else if (path.endsWith("/artifacts/multiview-set")) {
+      const key = request.headers()["idempotency-key"];
+      if (!publications.has(key)) {
+        const body = request.postDataJSON();
+        const target = state.rows.find(
+          r => r.taskId === Number(path.split("/")[4])
+        )!;
+        expect(body.version).toBe(target.version);
+        expect(body.artifactIds).toHaveLength(4);
+        target.artifacts = target.artifacts.filter(
+          a => a.kind !== "MULTIVIEW" || a.taskId !== target.taskId
+        );
+        target.artifacts.push(
+          ...body.artifactIds.map((id: string) => stagedImages.get(id))
+        );
+        target.version++;
+        publications.set(key, structuredClone(target));
+      }
+      if (state.losePublication) {
+        state.losePublication = false;
+        return route.abort("failed");
+      }
+      data = publications.get(key);
     } else if (path.match(/^\/api\/admin\/orders\/[^/]+$/))
       data = {
         orderNumber: "IMAGE-TEST",
@@ -419,13 +447,25 @@ test("4면도 교체 후 현재 4개만 표시하고 이전 파일과 제작 단
   expect(state.rows[0].artifacts).toHaveLength(4);
 });
 
-for (const loseConfirmation of [false, true]) {
-  test(`4면도 여러 장 등록${loseConfirmation ? "은 응답 유실 후 남은 파일만 중복 없이 재시도한다" : "은 한 번 선택해 순서대로 현재 아이에게 저장한다"}`, async ({
+for (const [oldCount, failure] of [
+  [0, ""],
+  [3, ""],
+  [4, ""],
+  [6, ""],
+  [3, "file"],
+  [4, "publish"],
+] as const) {
+  test(`기존 ${oldCount}장 → 새 4장 전체 교체 (${failure || "정상"})`, async ({
     page,
   }) => {
     const state = await sample(page);
-    state.rows[1].artifacts = [];
-    state.loseConfirmationAt = loseConfirmation ? 2 : 0;
+    state.rows[1].artifacts = Array.from({ length: oldCount }, (_, i) => ({
+      ...state.rows[1].artifacts[0],
+      id: `old-${i}`,
+      fileName: `old-${i}.png`,
+    }));
+    state.loseConfirmationAt = failure === "file" ? 2 : 0;
+    state.losePublication = failure === "publish";
     await page.goto("/admin/orders/IMAGE-TEST?petIndex=1");
     const jpeg = Buffer.from(
       await page.evaluate(() => {
@@ -436,7 +476,9 @@ for (const loseConfirmation of [false, true]) {
       "base64"
     );
     const picker = page.waitForEvent("filechooser");
-    await page.getByRole("button", { name: "4면도 추가", exact: true }).click();
+    await page
+      .getByRole("button", { name: "4면도 등록·교체", exact: true })
+      .click();
     const chooser = await picker;
     expect(chooser.isMultiple()).toBe(true);
     await chooser.setFiles([
@@ -451,15 +493,22 @@ for (const loseConfirmation of [false, true]) {
       { name: "right.JPG", mimeType: "image/jpeg", buffer: jpeg },
       { name: "back.png", mimeType: "image/png", buffer: png },
     ]);
-    if (loseConfirmation) {
+    if (failure === "file") {
       await expect(page.getByRole("alert")).toContainText("left.svg");
-      expect(state.rows[1].artifacts).toHaveLength(2);
+      expect(state.rows[1].artifacts).toHaveLength(oldCount);
       await page
         .getByRole("button", { name: "남은 3장 다시 등록", exact: true })
         .click();
     }
+    if (failure === "publish") {
+      await expect(page.getByRole("alert")).toContainText("교체 확정");
+      expect(state.rows[1].artifacts).toHaveLength(4);
+      await page
+        .getByRole("button", { name: "4면도 교체 확정 다시 시도", exact: true })
+        .click();
+    }
     await expect(
-      page.getByRole("status").filter({ hasText: /4면도 [34]장 등록 완료/ })
+      page.getByRole("status").filter({ hasText: "4면도 4장 등록 완료" })
     ).toBeVisible();
     expect(state.uploads.map(file => file.fileName)).toEqual([
       "front.png",
@@ -473,7 +522,7 @@ for (const loseConfirmation of [false, true]) {
       "right.JPG",
       "back.png",
     ]);
-    expect(state.rows[1].version).toBe(8);
+    expect(state.rows[1].version).toBe(9);
     expect(state.rows[1].productionStage).toBe("MODELING");
     expect(state.rows[0].artifacts).toHaveLength(4);
     await expect(
@@ -486,6 +535,27 @@ for (const loseConfirmation of [false, true]) {
       comparison.getByRole("img", { name: "left.png", exact: true })
     ).toBeVisible();
     await expect(comparison.getByRole("img")).toHaveCount(7);
+  });
+}
+
+for (const count of [1, 3, 5]) {
+  test(`전체 4면도는 ${count}장 선택을 거부하고 기존 이미지를 유지한다`, async ({
+    page,
+  }) => {
+    const state = await sample(page);
+    await page.goto("/admin/orders/IMAGE-TEST?petIndex=1");
+    await page
+      .getByLabel("4면도 파일 선택", { exact: true })
+      .setInputFiles(
+        Array.from({ length: count }, (_, i) => ({
+          name: `view-${i}.png`,
+          mimeType: "image/png",
+          buffer: png,
+        }))
+      );
+    await expect(page.getByRole("alert")).toContainText("정확히 4장");
+    expect(state.uploads).toHaveLength(0);
+    expect(state.rows[1].artifacts).toHaveLength(4);
   });
 }
 

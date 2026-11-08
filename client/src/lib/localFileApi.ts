@@ -24,7 +24,7 @@ export async function registerLocalFile(
   target: FileTarget | PrintBatch,
   kind: LocalKind | "PLATE",
   key: string,
-  replacesArtifactId?: string
+  options: { replacesArtifactId?: string; stageMultiview?: boolean } = {}
 ) {
   const login = readAdminToken();
   if (kind === "MULTIVIEW") file = await prepareImageUpload(file);
@@ -50,7 +50,7 @@ export async function registerLocalFile(
       version: target.version,
       fileName: file.name,
       size: file.size,
-      ...(replacesArtifactId ? { replacesArtifactId } : {}),
+      ...options,
       ...(!plate
         ? { kind, contentType: file.type || "application/octet-stream" }
         : {}),
