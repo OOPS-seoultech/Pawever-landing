@@ -467,6 +467,12 @@ for (const [oldCount, failure] of [
     state.loseConfirmationAt = failure === "file" ? 2 : 0;
     state.losePublication = failure === "publish";
     await page.goto("/admin/orders/IMAGE-TEST?petIndex=1");
+    if (oldCount > 4)
+      await expect(
+        page.getByText(`이전 등록 사진이 ${oldCount}장 남아 있습니다.`, {
+          exact: false,
+        })
+      ).toBeVisible();
     const jpeg = Buffer.from(
       await page.evaluate(() => {
         const canvas = document.createElement("canvas");
@@ -523,6 +529,9 @@ for (const [oldCount, failure] of [
       "back.png",
     ]);
     expect(state.rows[1].version).toBe(9);
+    await expect(
+      page.getByText(/이전 등록 사진이 \d+장 남아 있습니다/)
+    ).toHaveCount(0);
     expect(state.rows[1].productionStage).toBe("MODELING");
     expect(state.rows[0].artifacts).toHaveLength(4);
     await expect(
@@ -544,15 +553,13 @@ for (const count of [1, 3, 5]) {
   }) => {
     const state = await sample(page);
     await page.goto("/admin/orders/IMAGE-TEST?petIndex=1");
-    await page
-      .getByLabel("4면도 파일 선택", { exact: true })
-      .setInputFiles(
-        Array.from({ length: count }, (_, i) => ({
-          name: `view-${i}.png`,
-          mimeType: "image/png",
-          buffer: png,
-        }))
-      );
+    await page.getByLabel("4면도 파일 선택", { exact: true }).setInputFiles(
+      Array.from({ length: count }, (_, i) => ({
+        name: `view-${i}.png`,
+        mimeType: "image/png",
+        buffer: png,
+      }))
+    );
     await expect(page.getByRole("alert")).toContainText("정확히 4장");
     expect(state.uploads).toHaveLength(0);
     expect(state.rows[1].artifacts).toHaveLength(4);

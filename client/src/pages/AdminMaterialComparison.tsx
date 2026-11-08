@@ -342,6 +342,12 @@ export function AdminMaterialComparison({
                 정면·좌측·우측·뒷면 4장을 함께 선택해 주세요. 모두 등록되면 기존
                 4면도를 교체합니다.
               </p>
+              {artifacts.length > 4 && (
+                <p className="text-sm text-amber-800">
+                  이전 등록 사진이 {artifacts.length}장 남아 있습니다. 유지할
+                  4장을 다시 등록하면 새 세트만 남습니다.
+                </p>
+              )}
               {uploadStatus && (
                 <p role="status" className="text-sm">
                   {uploadStatus}
