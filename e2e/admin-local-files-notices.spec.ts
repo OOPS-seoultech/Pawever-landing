@@ -294,7 +294,7 @@ for (const os of ["Mac", "Windows"]) {
       const order = await orders.getDirectoryHandle("PE-FILE");
       const pet = await order.getDirectoryHandle("아이2_별이");
       const output = await pet.getDirectoryHandle("03_출력모델");
-      const file = await output.getFileHandle("result.3mf", { create: true });
+      const file = await output.getFileHandle("result.gcode.3mf", { create: true });
       const stream = await file.createWritable();
       const bytes = new Uint8Array(26);
       bytes.set([80, 75, 3, 4, 80, 75, 5, 6]);
@@ -305,7 +305,7 @@ for (const os of ["Mac", "Windows"]) {
     await expect(
       page.getByRole("heading", { name: "연결 폴더: PAW-EVER" })
     ).toBeVisible();
-    await page.getByRole("button", { name: /^result\.3mf/ }).click();
+    await page.getByRole("button", { name: /^result\.gcode\.3mf/ }).click();
     await expect(page.getByLabel("등록할 아이 · 플레이트")).toHaveValue(
       "order:PE-FILE:1"
     );
@@ -320,7 +320,7 @@ for (const os of ["Mac", "Windows"]) {
     expect(state.writes[0]).toMatchObject({
       path: "/api/production/tasks/110/artifacts/upload-requests",
       kind: "PRINT_MODEL",
-      fileName: "result.3mf",
+      fileName: "result.gcode.3mf",
       size: 26,
     });
     expect(state.writes[1]).toMatchObject({
@@ -339,7 +339,7 @@ for (const os of ["Mac", "Windows"]) {
         const order = await orders.getDirectoryHandle("PE-FILE");
         const pet = await order.getDirectoryHandle("아이2_별이");
         const output = await pet.getDirectoryHandle("03_출력모델");
-        return (await (await output.getFileHandle("result.3mf")).getFile())
+        return (await (await output.getFileHandle("result.gcode.3mf")).getFile())
           .size;
       })
     ).toBe(26);
