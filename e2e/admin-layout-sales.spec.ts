@@ -1,3 +1,4 @@
+import { mockOrderDetail } from "./adminFixtures";
 import { test, expect } from "./adminFixtures";
 
 const image =
@@ -51,6 +52,9 @@ test("다수 주문의 카드·사진을 겹치지 않게 표시하고 패널을
   const mutations: string[] = [];
   let saved = false;
   await page.route("**/api/**", route => {
+    const detail = mockOrderDetail(new URL(route.request().url()).pathname);
+    if (detail && route.request().method() === "GET")
+      return route.fulfill({ json: { success: true, data: detail } });
     const request = route.request();
     const path = new URL(request.url()).pathname;
     let data: unknown = [];

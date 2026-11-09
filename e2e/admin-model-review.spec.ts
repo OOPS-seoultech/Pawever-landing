@@ -1,3 +1,4 @@
+import { mockOrderDetail } from "./adminFixtures";
 import { test, expect, type Page } from "./adminFixtures";
 
 const initial = () => ({
@@ -64,6 +65,9 @@ test("검수 체크 후 승인하면 색상 작업 대기로 넘어간다", asyn
   let row = initial();
   const keys: string[] = [];
   await page.route("**/api/**", async route => {
+    const detail = mockOrderDetail(new URL(route.request().url()).pathname);
+    if (detail && route.request().method() === "GET")
+      return route.fulfill({ json: { success: true, data: detail } });
     const path = new URL(route.request().url()).pathname;
     if (
       path.endsWith("/download-link") ||
@@ -142,6 +146,9 @@ test("수정 사유와 메모를 남기면 모델러에게 수정 작업을 돌�
   await session(page);
   let row = initial();
   await page.route("**/api/**", async route => {
+    const detail = mockOrderDetail(new URL(route.request().url()).pathname);
+    if (detail && route.request().method() === "GET")
+      return route.fulfill({ json: { success: true, data: detail } });
     const path = new URL(route.request().url()).pathname;
     if (
       path.endsWith("/download-link") ||
@@ -242,6 +249,9 @@ test("수정 작업은 이전 파일만으로 완료할 수 없고 요청 사유
     ],
   };
   await page.route("**/api/**", route => {
+    const detail = mockOrderDetail(new URL(route.request().url()).pathname);
+    if (detail && route.request().method() === "GET")
+      return route.fulfill({ json: { success: true, data: detail } });
     const path = new URL(route.request().url()).pathname;
     if (
       path.endsWith("/download-link") ||

@@ -1,3 +1,4 @@
+import { mockOrderDetail } from "./adminFixtures";
 import { test, expect, type Page } from "./adminFixtures";
 
 const spool = {
@@ -154,8 +155,16 @@ test("부위별 실제 필라멘트를 저장하고 재시도 후 플레이트 �
   };
   const keys: string[] = [];
   await page.route("**/api/**", async route => {
+    const detail = mockOrderDetail(new URL(route.request().url()).pathname);
+    if (detail && route.request().method() === "GET")
+      return route.fulfill({ json: { success: true, data: detail } });
     const path = new URL(route.request().url()).pathname;
-    if (path.endsWith("/me") || path === "/api/admin/notices/onboarding" || path === "/api/production/file-targets") return route.fallback();
+    if (
+      path.endsWith("/me") ||
+      path === "/api/admin/notices/onboarding" ||
+      path === "/api/production/file-targets"
+    )
+      return route.fallback();
     if (path.endsWith("/filaments"))
       return route.fulfill({
         json: {

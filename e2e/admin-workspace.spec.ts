@@ -1,3 +1,4 @@
+import { mockOrderDetail } from "./adminFixtures";
 import { test, expect } from "./adminFixtures";
 
 test("목록은 독립 스크롤되고 선택한 미배정 작업만 기본 배정한다", async ({
@@ -33,6 +34,9 @@ test("목록은 독립 스크롤되고 선택한 미배정 작업만 기본 배�
   }));
   const assigned: string[] = [];
   await page.route("**/api/**", async route => {
+    const detail = mockOrderDetail(new URL(route.request().url()).pathname);
+    if (detail && route.request().method() === "GET")
+      return route.fulfill({ json: { success: true, data: detail } });
     const path = new URL(route.request().url()).pathname;
     let data: unknown = [];
     if (path.endsWith("/me"))

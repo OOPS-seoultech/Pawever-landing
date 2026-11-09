@@ -1,3 +1,4 @@
+import { mockOrderDetail } from "./adminFixtures";
 import { test, expect, type Page } from "./adminFixtures";
 
 const modelPermissions = [
@@ -83,6 +84,9 @@ test("검수 담당자는 넘어온 고객 사진과 모델 파일을 열람한�
   };
   let downloads = 0;
   await page.route("**/api/**", async route => {
+    const detail = mockOrderDetail(new URL(route.request().url()).pathname);
+    if (detail && route.request().method() === "GET")
+      return route.fulfill({ json: { success: true, data: detail } });
     const path = new URL(route.request().url()).pathname;
     if (
       path.endsWith("/me") ||
@@ -165,6 +169,9 @@ test("담당자 관리에서 작업 역할과 기본 배정을 저장한다", as
     version: 0,
   };
   await page.route("**/api/**", async route => {
+    const detail = mockOrderDetail(new URL(route.request().url()).pathname);
+    if (detail && route.request().method() === "GET")
+      return route.fulfill({ json: { success: true, data: detail } });
     const path = new URL(route.request().url()).pathname;
     if (
       path.endsWith("/me") ||
@@ -230,6 +237,9 @@ test("모델러가 시작하고 필수 파일을 등록하면 검수 인계 결�
   const staged: typeof row.artifacts = [];
   const keys: string[] = [];
   await page.route("**/api/**", async route => {
+    const detail = mockOrderDetail(new URL(route.request().url()).pathname);
+    if (detail && route.request().method() === "GET")
+      return route.fulfill({ json: { success: true, data: detail } });
     const request = route.request(),
       path = new URL(request.url()).pathname;
     if (path === "/api/admin/me" || path.endsWith("/download-link"))
@@ -382,6 +392,9 @@ test("입금 금액 불일치와 동시 수정 오류는 다음 행동을 안내
   };
   let attempt = 0;
   await page.route("**/api/**", async route => {
+    const detail = mockOrderDetail(new URL(route.request().url()).pathname);
+    if (detail && route.request().method() === "GET")
+      return route.fulfill({ json: { success: true, data: detail } });
     const path = new URL(route.request().url()).pathname;
     if (
       path.endsWith("/download-link") ||

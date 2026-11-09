@@ -6,7 +6,7 @@ import {
   useState,
   type MouseEvent,
 } from "react";
-import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import { ChevronLeft, ChevronRight, RefreshCw, X } from "lucide-react";
 import { Button } from "./ui/button";
 import {
   Dialog,
@@ -30,6 +30,7 @@ export function AdminImageGallery({
   gridClassName = "grid grid-cols-2 gap-2",
   canSave = true,
   onReplace,
+  onRemove,
   replacementDisabled = false,
 }: {
   loadImages: () => Promise<AdminImage[]>;
@@ -37,6 +38,7 @@ export function AdminImageGallery({
   gridClassName?: string;
   canSave?: boolean;
   onReplace?: (image: AdminImage) => void;
+  onRemove?: (image: AdminImage) => void;
   replacementDisabled?: boolean;
 }) {
   const [images, setImages] = useState<AdminImage[]>([]);
@@ -218,6 +220,19 @@ export function AdminImageGallery({
                 {item.label}
               </span>
             </a>
+            {onRemove && (
+              <Button
+                variant="secondary"
+                size="icon-sm"
+                className="absolute left-2 top-2 rounded-full"
+                aria-label={`${item.label} 삭제`}
+                title="4면도 이미지 삭제"
+                disabled={replacementDisabled}
+                onClick={() => onRemove(item)}
+              >
+                <X aria-hidden="true" />
+              </Button>
+            )}
             {onReplace && (
               <Button
                 variant="secondary"

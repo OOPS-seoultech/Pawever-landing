@@ -25,3 +25,22 @@ export const test = base.extend({
     await use(page);
   },
 });
+
+export function mockOrderDetail(path: string) {
+  if (!/^\/api\/admin\/orders\/[^/]+$/.test(path)) return;
+  return {
+    orderNumber: decodeURIComponent(path.split("/").at(-1)!),
+    petName: "반려동물",
+    status: "IN_PRODUCTION",
+    submittedAt: "2026-11-09T00:00:00Z",
+    goodsType: "figure",
+    goodsTypeLabel: "3D 피규어",
+    photos: [],
+    shipping: null,
+    payment: null,
+    pricing: null,
+    marketing: null,
+    statusHistory: [],
+    accessLogs: [],
+  };
+}

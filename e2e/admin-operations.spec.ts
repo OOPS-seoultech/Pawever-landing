@@ -1,3 +1,4 @@
+import { mockOrderDetail } from "./adminFixtures";
 import { test, expect, type Page } from "./adminFixtures";
 
 const order = (
@@ -107,6 +108,9 @@ test("새 주문을 자동 조회하고 신청·문자·Telegram 요청은 만�
   const rows = [order("1", "BLOCKED", "PENDING")];
   const mutations: string[] = [];
   await page.route("**/api/**", route => {
+    const detail = mockOrderDetail(new URL(route.request().url()).pathname);
+    if (detail && route.request().method() === "GET")
+      return route.fulfill({ json: { success: true, data: detail } });
     if (route.request().method() !== "GET")
       mutations.push(route.request().url());
     return route.fallback();
@@ -225,9 +229,17 @@ test("데스크톱에서 사진과 현재 회차 4면도를 비교하고 모델 
   const image =
     "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+c3ioAAAAASUVORK5CYII=";
   await page.route("**/api/**", route => {
+    const detail = mockOrderDetail(new URL(route.request().url()).pathname);
+    if (detail && route.request().method() === "GET")
+      return route.fulfill({ json: { success: true, data: detail } });
     const path = new URL(route.request().url()).pathname;
     let data: unknown = [];
-    if (path.endsWith("/me") || path === "/api/admin/notices/onboarding" || path === "/api/production/file-targets") return route.fallback();
+    if (
+      path.endsWith("/me") ||
+      path === "/api/admin/notices/onboarding" ||
+      path === "/api/production/file-targets"
+    )
+      return route.fallback();
     if (path.endsWith("/workflow/orders")) data = [row];
     if (path.endsWith("/workflow")) data = row;
     if (path.endsWith("/photo-links"))
