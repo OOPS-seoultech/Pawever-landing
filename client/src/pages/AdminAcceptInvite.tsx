@@ -4,10 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AdminError } from "@/components/AdminShell";
-import { AdminApiError, adminAcceptInvite } from "@/lib/adminApi";
+import {
+  AdminApiError,
+  adminAcceptInvite,
+  adminInvitationInfo,
+} from "@/lib/adminApi";
 
 /** 서버가 요구하는 길이. 여기서 먼저 걸러 왕복을 줄인다. */
-const MIN_PASSWORD_LENGTH = 12;
+const MIN_PASSWORD_LENGTH = 5;
 
 export default function AdminAcceptInvite() {
   const [, setLocation] = useLocation();
@@ -16,6 +20,10 @@ export default function AdminAcceptInvite() {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [done, setDone] = useState(false);
+  const [invitation, setInvitation] = useState<{
+    email: string;
+    name: string;
+  } | null>(null);
 
   // 초대 값은 주소에 담겨 온다. 상태로 옮겨 두고 주소에서는 지운다.
   const inviteToken = useMemo(() => {
@@ -35,6 +43,24 @@ export default function AdminAcceptInvite() {
     }
     return () => {
       meta.remove();
+    };
+  }, [inviteToken]);
+
+  useEffect(() => {
+    if (!inviteToken) return;
+    let canceled = false;
+    adminInvitationInfo(inviteToken)
+      .then(data => {
+        if (!canceled) setInvitation(data);
+      })
+      .catch(() => {
+        if (!canceled)
+          setError(
+            "초대 링크가 만료됐거나 이미 사용됐습니다. 관리자에게 다시 요청해 주세요."
+          );
+      });
+    return () => {
+      canceled = true;
     };
   }, [inviteToken]);
 
@@ -59,7 +85,9 @@ export default function AdminAcceptInvite() {
     } catch (caught) {
       const failure = caught as AdminApiError;
       setError(
-        failure.status === 400 || failure.status === 404
+        failure.status === 400 ||
+          failure.status === 401 ||
+          failure.status === 404
           ? "초대 링크가 만료됐거나 이미 사용됐습니다. 관리자에게 다시 요청해 주세요."
           : failure.message
       );
@@ -73,8 +101,7 @@ export default function AdminAcceptInvite() {
       <Frame>
         <h1 className="text-lg font-semibold">비밀번호를 정했습니다</h1>
         <p className="text-sm text-muted-foreground">
-          전체 관리자가 권한을 승인하면 로그인할 수 있습니다. 승인 전에는
-          로그인해도 들어갈 수 없습니다.
+          초대받은 이메일과 방금 설정한 비밀번호로 로그인해 주세요.
         </p>
         <Button className="w-full" onClick={() => setLocation("/admin")}>
           로그인하러 가기
@@ -98,8 +125,21 @@ export default function AdminAcceptInvite() {
         <div className="space-y-1">
           <h1 className="text-lg font-semibold">비밀번호 정하기</h1>
           <p className="text-sm text-muted-foreground">
-            {MIN_PASSWORD_LENGTH}자 이상으로 정해 주세요.
+            {MIN_PASSWORD_LENGTH}자 이상이면 됩니다. 대·소문자, 숫자, 특수문자
+            조합은 필요하지 않습니다.
           </p>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="invite-email">로그인 이메일</Label>
+          <Input
+            id="invite-email"
+            type="email"
+            autoComplete="username"
+            readOnly
+            value={invitation?.email ?? ""}
+            placeholder="초대 확인 중..."
+          />
         </div>
 
         <div className="space-y-2">
@@ -108,9 +148,10 @@ export default function AdminAcceptInvite() {
             id="invite-password"
             type="password"
             autoComplete="new-password"
+            minLength={MIN_PASSWORD_LENGTH}
             required
             value={password}
-            onChange={(event) => setPassword(event.target.value)}
+            onChange={event => setPassword(event.target.value)}
           />
         </div>
 
@@ -120,15 +161,24 @@ export default function AdminAcceptInvite() {
             id="invite-confirm"
             type="password"
             autoComplete="new-password"
+            minLength={MIN_PASSWORD_LENGTH}
             required
             value={confirm}
-            onChange={(event) => setConfirm(event.target.value)}
+            onChange={event => setConfirm(event.target.value)}
           />
         </div>
 
         {error ? <AdminError message={error} /> : null}
 
-        <Button type="submit" className="w-full" disabled={pending}>
+        <p className="text-xs text-muted-foreground">
+          비밀번호는 관리자에게 공개되지 않습니다. 10회 연속 로그인에 실패하면
+          담당자 계정이 삭제되어 관리자의 재초대가 필요합니다.
+        </p>
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={pending || !invitation}
+        >
           {pending ? "저장 중..." : "비밀번호 저장"}
         </Button>
       </form>

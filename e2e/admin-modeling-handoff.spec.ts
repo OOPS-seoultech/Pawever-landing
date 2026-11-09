@@ -201,7 +201,10 @@ test("담당자 관리에서 작업 역할과 기본 배정을 저장한다", as
   await page
     .getByRole("combobox", { name: "계정", exact: true })
     .selectOption("3");
-  await page.getByLabel("모델링 결과물 등록", { exact: true }).check();
+  await page
+    .getByRole("group", { name: "작업 역할 지정", exact: true })
+    .getByLabel("모델링 결과물 등록", { exact: true })
+    .check();
   await page.getByLabel("변경 사유").fill("모델링 업무 배정");
   await page.getByRole("button", { name: "작업 역할 저장" }).click();
   await expect(

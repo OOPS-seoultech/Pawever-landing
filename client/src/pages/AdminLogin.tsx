@@ -103,6 +103,11 @@ export default function AdminLogin() {
           />
         </div>
 
+        <p className="text-xs text-muted-foreground">
+          담당자 계정은 비밀번호를 10회 연속 틀리면 삭제됩니다. 로그인에
+          성공하면 실패 횟수가 초기화됩니다. 삭제된 경우 관리자에게 재초대를
+          요청해 주세요.
+        </p>
         {error ? <AdminError message={error} /> : null}
 
         <Button type="submit" className="w-full" disabled={pending}>
