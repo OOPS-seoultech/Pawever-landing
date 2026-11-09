@@ -75,6 +75,7 @@ export function AdminWorkflowPanel({
   const [moveTarget, setMoveTarget] = useState("");
   const [moveReason, setMoveReason] = useState("파일 수정");
   const [moveOpen, setMoveOpen] = useState(false);
+  const [telegramOpen, setTelegramOpen] = useState(false);
   const [zipLoading, setZipLoading] = useState(false);
   const [downloadingFile, setDownloadingFile] = useState("");
   const busy = useRef(false);
@@ -1105,6 +1106,72 @@ export function AdminWorkflowPanel({
           )
         }
       />
+      {staff?.role === "OWNER" && row.productionStage === "MODEL_REVIEW" && (
+        <>
+          <Button
+            variant="outline"
+            disabled={pending}
+            onClick={() => {
+              setError("");
+              setTelegramOpen(true);
+            }}
+          >
+            검수 사진 텔레그램 다시 보내기
+          </Button>
+          {row.telegramNotification && (
+            <p role="status" className="text-sm">
+              {row.telegramNotification.accepted
+                ? `텔레그램에서 사진 ${row.telegramNotification.photoCount}장 발송을 접수했습니다.`
+                : "텔레그램 발송에 실패했습니다. 봇·채팅방 설정을 확인해 주세요."}
+            </p>
+          )}
+          <Dialog
+            open={telegramOpen}
+            onOpenChange={open => {
+              if (!pending) setTelegramOpen(open);
+            }}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>검수 사진을 텔레그램으로 보낼까요?</DialogTitle>
+                <DialogDescription>
+                  {row.petName}의 고객 사진 최대 5장과 현재 4면도 최대 4장을
+                  기존 검수방으로 보냅니다. 제작·검수 상태는 바뀌지 않습니다.
+                </DialogDescription>
+              </DialogHeader>
+              {error && (
+                <p role="alert" className="text-sm text-destructive">
+                  {error}
+                </p>
+              )}
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  disabled={pending}
+                  onClick={() => setTelegramOpen(false)}
+                >
+                  취소
+                </Button>
+                <Button
+                  disabled={pending}
+                  onClick={() =>
+                    void run(async () => {
+                      const next = await command(
+                        `${prefix}/workflow/review-telegram`,
+                        { version: row.version }
+                      );
+                      setTelegramOpen(false);
+                      return next;
+                    }, "텔레그램 발송 결과를 확인했습니다.")
+                  }
+                >
+                  사진 알림 보내기
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </>
+      )}
       <AdminModelReview
         key={`review:${row.taskId}:${row.version}`}
         row={row}

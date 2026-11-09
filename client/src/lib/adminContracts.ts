@@ -37,6 +37,7 @@ export type WorkflowOrder = {
   retirableArtifactIds?: string[];
   allowedStageTargets?: string[];
   stageMoveWarnings?: string[];
+  telegramNotification?: { accepted: boolean; photoCount: number };
   reviews?: ModelReview[];
   filamentMappings?: FilamentMapping[];
   finishingHistory?: {
