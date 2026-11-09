@@ -279,3 +279,59 @@ test("수정 작업은 이전 파일만으로 완료할 수 없고 요청 사유
   await expect(page.getByText("이전 제출 자료", { exact: true })).toBeVisible();
   await expect(page.getByText("2차 모델링", { exact: true })).toBeVisible();
 });
+
+test("문제없음 버튼은 체크박스를 누르지 않고 검수를 완료한다", async ({
+  page,
+}) => {
+  await session(page);
+  let row = initial();
+  let submitted = false;
+  await page.route("**/api/**", async route => {
+    const path = new URL(route.request().url()).pathname;
+    const detail = mockOrderDetail(path);
+    if (detail && route.request().method() === "GET")
+      return route.fulfill({ json: { success: true, data: detail } });
+    if (
+      path.endsWith("/me") ||
+      path.endsWith("/download-link") ||
+      path === "/api/admin/notices/onboarding" ||
+      path === "/api/production/file-targets"
+    )
+      return route.fallback();
+    if (path.endsWith("/review")) {
+      const body = route.request().postDataJSON();
+      expect(body.decision).toBe("APPROVED");
+      expect(body.checks.sort()).toEqual([
+        "BASE_CUT",
+        "FEATURES",
+        "LIKENESS",
+        "PRINTABILITY",
+      ]);
+      submitted = true;
+      row = {
+        ...row,
+        version: 9,
+        productionStage: "COLOR_MAPPING",
+        allowedActions: [],
+      };
+    }
+    const data = path.endsWith("/my-tasks")
+      ? [row]
+      : path.endsWith("/photo-links")
+        ? { photos: [] }
+        : path.endsWith("/timeline")
+          ? []
+          : row;
+    return route.fulfill({ json: { success: true, data } });
+  });
+  await page.goto("/admin/my-work");
+  await page.getByRole("button", { name: /PE-REVIEW001/ }).click();
+  await expect(
+    page.getByRole("button", { name: "검수 승인", exact: true })
+  ).toBeDisabled();
+  await page
+    .getByRole("button", { name: "문제없음 · 검수 완료", exact: true })
+    .click();
+  await expect.poll(() => submitted).toBe(true);
+  await expect(page.getByRole("status")).toContainText("검수를 승인했습니다");
+});

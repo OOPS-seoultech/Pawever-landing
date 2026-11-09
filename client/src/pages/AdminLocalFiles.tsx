@@ -508,9 +508,9 @@ export default function AdminLocalFiles() {
               {pending ? "전송·등록 중…" : "선택 파일 서버에 등록"}
             </Button>
             <p className="text-xs text-muted-foreground">
-              파일당 100MB 이하 · 저장 중 파일 제외 · 업로드 성공 후에만 팀과
-              공유됩니다. 아이별 3MF와 여러 아이를 합친 플레이트 파일의 대상을
-              확인해 주세요.
+              이미지 100MB · 3D 파일 200MB 이하 · 저장 중 파일 제외 · 업로드
+              성공 후에만 팀과 공유됩니다. 아이별 3MF와 여러 아이를 합친
+              플레이트 파일의 대상을 확인해 주세요.
             </p>
             {order && (
               <Link

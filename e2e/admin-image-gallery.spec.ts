@@ -26,6 +26,8 @@ async function sample(page: Page) {
     sessionStorage.setItem("pawever.admin.accessToken", "review-test")
   );
   const state = {
+    staffRole: "OWNER",
+    moves: [] as any[],
     canDownloadPhotos: true,
     canViewPhotos: true,
     serial: 0,
@@ -55,6 +57,10 @@ async function sample(page: Page) {
       modelingTaskId: 101 + petIndex,
       taskStatus: "IN_PROGRESS",
       assignee: { id: 1, name: "제작자" },
+      allowedStageTargets: [] as string[],
+      stageMoveWarnings: [] as string[],
+      retirableArtifactIds: [] as string[],
+      materialTaskIds: [101 + petIndex],
       allowedActions: ["UPLOAD_ARTIFACT"],
       blockingIssues: [],
       reviews: [],
@@ -117,7 +123,7 @@ async function sample(page: Page) {
       data = {
         id: 1,
         name: "대표",
-        role: "OWNER",
+        role: state.staffRole,
         workRoles: ["MODELING"],
         permissions: [
           "VIEW_ORDER_BASIC",
@@ -145,7 +151,22 @@ async function sample(page: Page) {
     else if (path === "/api/admin/notices/onboarding") data = { notice: null };
     else if (path === "/api/production/file-targets")
       data = { orders: [], plates: [] };
-    else if (path.endsWith("/workflow")) data = row;
+    else if (path.endsWith("/workflow/move-stage")) {
+      const body = request.postDataJSON();
+      const target = state.rows[body.petIndex];
+      expect(body.version).toBe(target.version);
+      expect(body.notificationsAcknowledged).toBe(true);
+      expect(request.headers()["idempotency-key"]).toBeTruthy();
+      state.moves.push(body);
+      Object.assign(target, {
+        productionStage: body.stage,
+        taskId: 202,
+        modelingTaskId: 202,
+        materialTaskIds: [102, 202],
+        version: target.version + 1,
+      });
+      data = target;
+    } else if (path.endsWith("/workflow")) data = row;
     else if (path.endsWith("/workflow/orders") || path.endsWith("/my-tasks"))
       data = state.rows;
     else if (path.endsWith("/sale-price")) {
@@ -1096,3 +1117,103 @@ test("운영 현황과 내 작업은 전체 주문과 같은 사진·4면도·�
     ).toBeVisible();
   }
 });
+
+test("3MF 삭제는 확인 후 해당 파일만 제외하고 업로드 버튼은 회색이어도 재사용한다", async ({
+  page,
+}) => {
+  const state = await sample(page);
+  for (const [id, kind, fileName] of [
+    ["source", "MODEL_SOURCE", "원본.3mf"],
+    ["print", "PRINT_MODEL", "출력.gcode.3mf"],
+  ]) {
+    state.rows[1].artifacts.push({
+      id,
+      kind,
+      fileName,
+      taskId: 102,
+      modelingAttempt: 1,
+      size: 100,
+      replacesArtifactId: null,
+    });
+    state.rows[1].retirableArtifactIds.push(id);
+  }
+  await page.goto("/admin/orders/IMAGE-TEST?petIndex=1");
+  const upload = page.getByRole("button", {
+    name: "3mf 파일 업로드하기",
+    exact: true,
+  });
+  await expect(upload).toBeEnabled();
+  await expect(upload).toHaveClass(/bg-secondary/);
+  await expect(
+    page.getByRole("button", { name: "gcode.3mf 파일 업로드하기", exact: true })
+  ).toHaveClass(/bg-secondary/);
+  await page
+    .getByRole("button", { name: "원본.3mf 삭제", exact: true })
+    .click();
+  const dialog = page.getByRole("dialog", { name: "첨부 파일을 삭제할까요?" });
+  await dialog.getByRole("button", { name: "취소", exact: true }).click();
+  expect(state.removed).toEqual([]);
+  await page
+    .getByRole("button", { name: "원본.3mf 삭제", exact: true })
+    .click();
+  await dialog.getByRole("button", { name: "파일 삭제", exact: true }).click();
+  await expect.poll(() => state.removed).toEqual(["source"]);
+  await expect(upload).toHaveClass(/bg-primary/);
+  await expect(
+    page.getByRole("button", { name: "출력.gcode.3mf 삭제", exact: true })
+  ).toBeVisible();
+  expect(state.rows[0].artifacts).toHaveLength(4);
+  await page
+    .getByRole("button", { name: "출력.gcode.3mf 삭제", exact: true })
+    .click();
+  await dialog.getByRole("button", { name: "파일 삭제", exact: true }).click();
+  await expect.poll(() => state.removed).toEqual(["source", "print"]);
+});
+
+for (const role of ["OWNER", "PRODUCTION"])
+  test(`${role} 단계 이동은 접힌 선택 영역과 기존 알림 확인 후 아이별로 처리한다`, async ({
+    page,
+  }) => {
+    const state = await sample(page);
+    state.staffRole = role;
+    state.rows[1].productionStage = "MODEL_REVIEW";
+    state.rows[1].allowedStageTargets =
+      role === "OWNER"
+        ? ["MODELING_QUEUE", "MODELING", "PACKING", "COMPLETE"]
+        : ["MODELING_QUEUE", "MODELING"];
+    state.rows[1].stageMoveWarnings = [
+      "이전에 검수 요청 텔레그램이 발송 요청되었습니다.",
+    ];
+    await page.goto("/admin/orders/IMAGE-TEST?petIndex=1");
+    const select = page.getByLabel("이동할 제작 단계", { exact: true });
+    await expect(select).not.toBeVisible();
+    await page.getByText("제작 단계 이동", { exact: true }).click();
+    await expect(select.locator("option")).toHaveCount(
+      role === "OWNER" ? 5 : 3
+    );
+    await select.selectOption("MODELING");
+    await page
+      .getByRole("button", { name: "선택한 단계로 이동", exact: true })
+      .click();
+    const dialog = page.getByRole("dialog", {
+      name: "제작 단계를 이동할까요?",
+    });
+    await expect(dialog).toContainText("이전에 검수 요청 텔레그램");
+    expect(state.moves).toHaveLength(0);
+    await dialog
+      .getByRole("button", { name: "확인하고 이동", exact: true })
+      .click();
+    await expect.poll(() => state.moves.length).toBe(1);
+    expect(state.moves[0]).toMatchObject({
+      petIndex: 1,
+      stage: "MODELING",
+      reason: "파일 수정",
+      version: 0,
+    });
+    expect(state.rows[0].productionStage).toBe("MODELING");
+    await expect(
+      page
+        .getByRole("region", { name: "고객 사진·4면도 비교" })
+        .getByRole("img", { name: /^(front|left|right|back)\.png$/ })
+    ).toHaveCount(4);
+  });

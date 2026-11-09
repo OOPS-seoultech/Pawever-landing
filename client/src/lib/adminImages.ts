@@ -24,7 +24,9 @@ export function currentMultiviews(row: WorkflowOrder) {
         file.kind === "MULTIVIEW" &&
         !replaced.has(file.id) &&
         (row.modelingTaskId != null
-          ? file.taskId === row.modelingTaskId
+          ? (row.materialTaskIds ?? [row.modelingTaskId]).includes(
+              file.taskId ?? -1
+            )
           : file.modelingAttempt === row.taskAttempt)
     )
     .sort((a, b) => position(a) - position(b));

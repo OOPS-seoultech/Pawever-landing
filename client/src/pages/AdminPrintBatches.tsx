@@ -172,9 +172,9 @@ export default function AdminPrintBatches() {
     if (
       !/\.(3mf|gcode)$/i.test(file.name) ||
       file.size < 1 ||
-      file.size > 100 * 1024 * 1024
+      file.size > 200 * 1024 * 1024
     ) {
-      setError("3MF 또는 G-code 파일을 100MB 이하로 선택해 주세요.");
+      setError("3MF 또는 G-code 파일을 200MB 이하로 선택해 주세요.");
       return;
     }
     await run(async () => {

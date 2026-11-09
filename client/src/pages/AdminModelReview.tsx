@@ -80,6 +80,21 @@ export function AdminModelReview({
       <div className="flex flex-wrap gap-2">
         {approve && (
           <Button
+            disabled={pending}
+            onClick={() =>
+              onReview({
+                decision: "APPROVED",
+                reasonCode: null,
+                note: note.trim(),
+                checks: Object.keys(reviewChecks).sort(),
+              })
+            }
+          >
+            문제없음 · 검수 완료
+          </Button>
+        )}
+        {approve && (
+          <Button
             disabled={
               pending || checks.length !== Object.keys(reviewChecks).length
             }

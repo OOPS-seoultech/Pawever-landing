@@ -66,7 +66,7 @@ export default function AdminThreeMfViewer({
     void (async () => {
       try {
         if (size > previewByteLimit)
-          throw new Error("20MB를 넘는 모델은 내려받아 확인해 주세요.");
+          throw new Error("200MB를 넘는 모델은 내려받아 확인해 주세요.");
         renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
         renderer.setClearColor(0x161616);
@@ -117,7 +117,7 @@ export default function AdminThreeMfViewer({
               (object.geometry.index?.count ??
                 object.geometry.getAttribute("position").count) / 3;
         });
-        if (faces > 1000000)
+        if (faces > 3000000)
           throw new Error(
             "반복 부품이 많은 모델입니다. 내려받아 확인해 주세요."
           );

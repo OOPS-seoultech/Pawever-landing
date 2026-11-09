@@ -1,16 +1,16 @@
 import { unzipSync } from "three/addons/libs/fflate.module.js";
 
-export const previewByteLimit = 20 * 1024 * 1024;
+export const previewByteLimit = 200 * 1024 * 1024;
 export function inspectThreeMf(data: ArrayBuffer) {
   if (data.byteLength > previewByteLimit)
-    throw new Error("20MB를 넘는 모델은 내려받아 확인해 주세요.");
+    throw new Error("200MB를 넘는 모델은 내려받아 확인해 주세요.");
   let expanded = 0,
     count = 0,
     triangles = 0;
   const models = unzipSync(new Uint8Array(data), {
     filter(entry) {
       expanded += entry.originalSize;
-      if (++count > 1000 || expanded > 64 * 1024 * 1024)
+      if (++count > 1000 || expanded > 200 * 1024 * 1024)
         throw new Error(
           "압축 해제 용량이 큰 모델입니다. 내려받아 확인해 주세요."
         );
@@ -27,7 +27,7 @@ export function inspectThreeMf(data: ArrayBuffer) {
       throw new Error("지원하지 않는 3MF 문서입니다.");
     const faces = /<(?:[\w]+:)?triangle(?:\s|>)/g;
     while (faces.exec(xml))
-      if (++triangles > 350000)
+      if (++triangles > 3000000)
         throw new Error("면이 많은 모델입니다. 내려받아 확인해 주세요.");
     const doc = new DOMParser().parseFromString(xml, "application/xml");
     if (doc.querySelector("parsererror"))
@@ -63,7 +63,7 @@ export async function readPreviewFile(response: Response) {
   }
   if (Number(response.headers.get("content-length")) > previewByteLimit) {
     await response.body?.cancel();
-    throw new Error("20MB를 넘는 모델은 내려받아 확인해 주세요.");
+    throw new Error("200MB를 넘는 모델은 내려받아 확인해 주세요.");
   }
   const reader = response.body?.getReader();
   if (!reader) {
@@ -80,7 +80,7 @@ export async function readPreviewFile(response: Response) {
       if (done) break;
       size += value.length;
       if (size > previewByteLimit)
-        throw new Error("20MB를 넘는 모델은 내려받아 확인해 주세요.");
+        throw new Error("200MB를 넘는 모델은 내려받아 확인해 주세요.");
       chunks.push(value);
     }
   } catch (error) {

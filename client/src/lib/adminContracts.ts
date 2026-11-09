@@ -10,6 +10,7 @@ export type Staff = {
 export type StaffAccount = Omit<Staff, "permissions"> & {
   status: string;
   version: number;
+  canReviewModel?: boolean;
 };
 export type WorkflowOrder = {
   orderNumber: string;
@@ -32,6 +33,10 @@ export type WorkflowOrder = {
   taskStatus: string | null;
   taskAttempt?: number | null;
   modelingTaskId?: number | null;
+  materialTaskIds?: number[];
+  retirableArtifactIds?: string[];
+  allowedStageTargets?: string[];
+  stageMoveWarnings?: string[];
   reviews?: ModelReview[];
   filamentMappings?: FilamentMapping[];
   finishingHistory?: {
