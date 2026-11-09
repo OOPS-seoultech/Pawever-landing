@@ -75,6 +75,25 @@ export function AdminFinishing({
               onChange={e => setNote(e.target.value)}
             />
           </label>
+          {qc && (
+            <Button
+              disabled={pending}
+              onClick={() =>
+                onCommand(
+                  "quality-check",
+                  {
+                    version: row.version,
+                    checks: Object.keys(qcChecks),
+                    note: note.trim(),
+                    decision: "PASSED",
+                  },
+                  "검수를 통과해 포장 대기로 이동했습니다."
+                )
+              }
+            >
+              문제없음 · 검수 완료
+            </Button>
+          )}
           <Button
             disabled={
               pending ||

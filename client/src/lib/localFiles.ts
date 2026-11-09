@@ -43,6 +43,7 @@ export type UploadReceipt = {
 };
 export type FolderState = { handle: WorkDirectory; receipts: UploadReceipt[] };
 export const maxFileSize = 100 * 1024 * 1024;
+export const maxModelFileSize = 200 * 1024 * 1024;
 
 export function chromeDesktop(
   nav: Pick<Navigator, "userAgent" | "vendor"> = navigator
@@ -80,8 +81,11 @@ export function acceptedFile(name: string) {
   );
 }
 export async function validateLocalFile(file: File, kind: LocalKind | "PLATE") {
-  if (!file.size || file.size > maxFileSize)
-    throw new Error("파일은 0바이트보다 크고 100MB 이하여야 합니다.");
+  const limit = kind === "MULTIVIEW" ? maxFileSize : maxModelFileSize;
+  if (!file.size || file.size > limit)
+    throw new Error(
+      `파일은 0바이트보다 크고 ${limit / 1024 / 1024}MB 이하여야 합니다.`
+    );
   const sliced = /\.gcode\.3mf$/i.test(file.name);
   if (kind === "PRINT_MODEL" && !sliced)
     throw new Error(

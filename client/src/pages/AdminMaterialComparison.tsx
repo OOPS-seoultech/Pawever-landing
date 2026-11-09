@@ -56,7 +56,10 @@ export function AdminMaterialComparison({
     file =>
       /\.3mf$/i.test(file.fileName) &&
       !/\.gcode\.3mf$/i.test(file.fileName) &&
-      ((file.kind === "MODEL_SOURCE" && file.taskId === modelingTask) ||
+      ((file.kind === "MODEL_SOURCE" &&
+        (row.materialTaskIds ?? [modelingTask]).includes(
+          file.taskId ?? null
+        )) ||
         (file.kind === "COLORED_MODEL" &&
           file.taskId != null &&
           modelingTask != null &&

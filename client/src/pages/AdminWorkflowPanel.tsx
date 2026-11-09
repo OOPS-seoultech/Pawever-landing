@@ -4,6 +4,15 @@ import { useLocation } from "wouter";
 import { createPortal } from "react-dom";
 import { validateLocalFile, type LocalKind } from "@/lib/localFiles";
 import { currentMultiviews } from "@/lib/adminImages";
+import { X } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useStaffSession } from "@/components/AdminSession";
@@ -60,6 +69,12 @@ export function AdminWorkflowPanel({
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [pending, setPending] = useState(false);
+  const [deleteFile, setDeleteFile] = useState<
+    WorkflowOrder["artifacts"][number] | null
+  >(null);
+  const [moveTarget, setMoveTarget] = useState("");
+  const [moveReason, setMoveReason] = useState("파일 수정");
+  const [moveOpen, setMoveOpen] = useState(false);
   const [zipLoading, setZipLoading] = useState(false);
   const [downloadingFile, setDownloadingFile] = useState("");
   const busy = useRef(false);
@@ -191,10 +206,6 @@ export function AdminWorkflowPanel({
   };
   const upload = async (kind: string, file: File) => {
     if (!row) return;
-    if (file.size < 1 || file.size > 100 * 1024 * 1024) {
-      setError("파일은 1바이트 이상, 100MB 이하로 선택해 주세요.");
-      return;
-    }
     try {
       await validateLocalFile(file, kind as LocalKind);
     } catch (e) {
@@ -242,7 +253,9 @@ export function AdminWorkflowPanel({
       ? true
       : a.taskId == null
         ? (row.taskAttempt ?? 1) === 1
-        : a.taskId === (row.modelingTaskId ?? row.taskId)
+        : (row.materialTaskIds ?? [row.modelingTaskId ?? row.taskId]).includes(
+            a.taskId
+          )
   );
   const previousArtifacts = row.artifacts.filter(
     a => !currentArtifacts.includes(a)
@@ -256,17 +269,18 @@ export function AdminWorkflowPanel({
   const eligible = accounts.filter(
     a =>
       a.status === "ACTIVE" &&
-      a.workRoles.includes(
-        ["MODEL_REVIEW", "COLOR_MAPPING", "PLATE_PREPARATION"].includes(
-          row.productionStage
-        )
-          ? "DESIGN_QC"
-          : ["PRINT_QUEUE", "PRINTING", "POST_PROCESSING", "QC"].includes(
-                row.productionStage
-              )
-            ? "PRINT_FINISHING"
-            : "MODELING"
-      )
+      ((row.productionStage === "MODEL_REVIEW" && a.canReviewModel) ||
+        a.workRoles.includes(
+          ["MODEL_REVIEW", "COLOR_MAPPING", "PLATE_PREPARATION"].includes(
+            row.productionStage
+          )
+            ? "DESIGN_QC"
+            : ["PRINT_QUEUE", "PRINTING", "POST_PROCESSING", "QC"].includes(
+                  row.productionStage
+                )
+              ? "PRINT_FINISHING"
+              : "MODELING"
+        ))
   );
   const fileRow = (a: WorkflowOrder["artifacts"][number]) => (
     <div
@@ -300,6 +314,21 @@ export function AdminWorkflowPanel({
         {row.artifacts.some(file => file.replacesArtifactId === a.id) &&
           " · 교체 이전"}
       </span>
+      {row.retirableArtifactIds?.includes(a.id) && (
+        <Button
+          variant="ghost"
+          size="icon"
+          disabled={pending}
+          aria-label={`${a.fileName} 삭제`}
+          title="첨부 파일 삭제"
+          onClick={() => {
+            setError("");
+            setDeleteFile(a);
+          }}
+        >
+          <X />
+        </Button>
+      )}
     </div>
   );
   const salePriceEditor = has("VIEW_PAYMENT") && row.salePriceKrw != null && (
@@ -513,6 +542,178 @@ export function AdminWorkflowPanel({
             </details>
           )}
       </section>
+      {!!row.allowedStageTargets?.length && (
+        <details className="rounded-[15px] border bg-background p-3">
+          <summary className="cursor-pointer font-medium">
+            제작 단계 이동
+          </summary>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {has("OVERRIDE_WORKFLOW") || staff?.role === "ADMIN"
+              ? "관리자는 제작 단계를 선택할 수 있습니다."
+              : "본인이 참여한 아이의 이전 단계로 이동할 수 있습니다."}
+          </p>
+          <div className="mt-3 flex flex-wrap items-end gap-3">
+            <label className="flex flex-col gap-1 text-sm">
+              이동할 제작 단계
+              <select
+                aria-label="이동할 제작 단계"
+                className="rounded border bg-background p-2"
+                value={moveTarget}
+                onChange={event => setMoveTarget(event.target.value)}
+                disabled={pending}
+              >
+                <option value="">단계 선택</option>
+                {row.allowedStageTargets.map(stage => (
+                  <option key={stage} value={stage}>
+                    {stageLabels[stage] ?? stage}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              이동 사유
+              <select
+                aria-label="단계 이동 사유"
+                className="rounded border bg-background p-2"
+                value={moveReason}
+                onChange={event => setMoveReason(event.target.value)}
+                disabled={pending}
+              >
+                {[
+                  "파일 수정",
+                  "검수 보정",
+                  "단계 오등록 수정",
+                  "관리자 진행 상태 정정",
+                ].map(reason => (
+                  <option key={reason}>{reason}</option>
+                ))}
+              </select>
+            </label>
+            <Button
+              variant="outline"
+              disabled={
+                pending || !row.allowedStageTargets.includes(moveTarget)
+              }
+              onClick={() => {
+                setError("");
+                setMoveOpen(true);
+              }}
+            >
+              선택한 단계로 이동
+            </Button>
+          </div>
+        </details>
+      )}
+      <Dialog
+        open={moveOpen}
+        onOpenChange={open => {
+          if (!pending) setMoveOpen(open);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>제작 단계를 이동할까요?</DialogTitle>
+            <DialogDescription>
+              {row.petName} · {stageLabels[row.productionStage]} →{" "}
+              {stageLabels[moveTarget]}. 기존 파일·작업·입금·배송 기록은
+              보존합니다. 고객 알림을 새로 보내지 않습니다.
+            </DialogDescription>
+          </DialogHeader>
+          {!!row.stageMoveWarnings?.length && (
+            <div role="alert" className="flex flex-col gap-2 text-sm">
+              {row.stageMoveWarnings.map(warning => (
+                <p key={warning}>{warning}</p>
+              ))}
+            </div>
+          )}
+          {row.printBatch &&
+            ["CONFIRMED", "PRINTING"].includes(row.printBatch.status) && (
+              <p className="text-sm text-destructive">
+                먼저 연결된 플레이트에서 출력 취소 또는 출력 결과를 기록해
+                주세요.
+              </p>
+            )}
+          {error && (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              disabled={pending}
+              onClick={() => setMoveOpen(false)}
+            >
+              취소
+            </Button>
+            <Button
+              disabled={pending}
+              onClick={() =>
+                void run(async () => {
+                  const next = await command(`${prefix}/workflow/move-stage`, {
+                    version: row.version,
+                    stage: moveTarget,
+                    reason: moveReason,
+                    notificationsAcknowledged: true,
+                  });
+                  setMoveOpen(false);
+                  setMoveTarget("");
+                  return next;
+                }, "제작 단계를 이동했습니다.")
+              }
+            >
+              확인하고 이동
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={deleteFile !== null}
+        onOpenChange={open => {
+          if (!open && !pending) setDeleteFile(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>첨부 파일을 삭제할까요?</DialogTitle>
+            <DialogDescription>
+              {deleteFile?.fileName}을 현재 자료에서 제외합니다. 원본과 작업
+              이력은 보존됩니다.
+            </DialogDescription>
+          </DialogHeader>
+          {error && (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              disabled={pending}
+              onClick={() => setDeleteFile(null)}
+            >
+              취소
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={pending}
+              onClick={() => {
+                if (deleteFile)
+                  void run(async () => {
+                    const next = await command(
+                      `/api/production/artifacts/${deleteFile.id}/retire`,
+                      { version: row.version }
+                    );
+                    setDeleteFile(null);
+                    return next;
+                  }, "첨부 파일을 삭제했습니다.");
+              }}
+            >
+              파일 삭제
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {row.artifacts.some(file => file.kind === "COLORED_MODEL") && (
         <section
           className="flex flex-col gap-2 rounded border p-3"
@@ -808,6 +1009,11 @@ export function AdminWorkflowPanel({
                     can("UPLOAD_PRINT_FILE"))) && (
                   <div>
                     <Button
+                      variant={
+                        currentArtifacts.some(file => file.kind === item.kind)
+                          ? "secondary"
+                          : "default"
+                      }
                       disabled={pending}
                       onClick={() => uploadInputs.current[item.kind]?.click()}
                     >
@@ -858,8 +1064,8 @@ export function AdminWorkflowPanel({
           )}
           {can("UPLOAD_ARTIFACT") && (
             <p className="text-xs text-muted-foreground">
-              파일당 최대 100MB. 모델 원본은 일반 .3mf, 출력 파일은 .gcode.3mf로
-              등록해 주세요.
+              이미지 최대 100MB · 3D 파일 최대 200MB. 모델 원본은 일반 .3mf,
+              출력 파일은 .gcode.3mf로 등록해 주세요.
             </p>
           )}
         </div>

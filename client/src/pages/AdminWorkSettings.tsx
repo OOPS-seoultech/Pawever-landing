@@ -231,7 +231,11 @@ export function AdminWorkSettings() {
                 <option value="">미설정 — 새 작업이 미배정으로 남습니다</option>
                 {accounts
                   .filter(
-                    a => a.status === "ACTIVE" && a.workRoles.includes(workRole)
+                    a =>
+                      a.status === "ACTIVE" &&
+                      (field === "review"
+                        ? (a.canReviewModel ?? a.workRoles.includes(workRole))
+                        : a.workRoles.includes(workRole))
                   )
                   .map(a => (
                     <option key={a.id} value={a.id}>
@@ -240,7 +244,11 @@ export function AdminWorkSettings() {
                   ))}
               </select>
               {!accounts.some(
-                a => a.status === "ACTIVE" && a.workRoles.includes(workRole)
+                a =>
+                  a.status === "ACTIVE" &&
+                  (field === "review"
+                    ? (a.canReviewModel ?? a.workRoles.includes(workRole))
+                    : a.workRoles.includes(workRole))
               ) && (
                 <span className="mt-1 block text-amber-800">
                   선택 가능한 직원이 없습니다. 직원의 가입과 역할 지정 승인을

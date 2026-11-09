@@ -7,7 +7,7 @@ import {
 } from "./threeMfPreview";
 it("bounds preview file size, expanded ZIP size and requires model geometry", async () => {
   expect(() => inspectThreeMf(new ArrayBuffer(previewByteLimit + 1))).toThrow(
-    "20MB"
+    "200MB"
   );
   expect(() =>
     inspectThreeMf(
@@ -18,7 +18,7 @@ it("bounds preview file size, expanded ZIP size and requires model geometry", as
   const view = new DataView(zip.buffer);
   for (let i = 0; i < zip.length - 4; i++)
     if (view.getUint32(i, true) === 0x02014b50)
-      view.setUint32(i + 24, 65 * 1024 * 1024, true);
+      view.setUint32(i + 24, 201 * 1024 * 1024, true);
   expect(() => inspectThreeMf(zip.buffer as ArrayBuffer)).toThrow(
     "압축 해제 용량"
   );
@@ -28,11 +28,18 @@ it("bounds preview file size, expanded ZIP size and requires model geometry", as
         headers: { "content-length": String(previewByteLimit + 1) },
       })
     )
-  ).rejects.toThrow("20MB");
+  ).rejects.toThrow("200MB");
   await expect(
     readPreviewFile(new Response("no", { status: 403 }))
   ).rejects.toThrow("다시 시도");
   expect(
     new TextDecoder().decode(await readPreviewFile(new Response("model")))
   ).toBe("model");
+});
+
+it("accepts streams larger than the old 20MB limit", async () => {
+  const bytes = new Uint8Array(21 * 1024 * 1024);
+  expect((await readPreviewFile(new Response(bytes))).byteLength).toBe(
+    bytes.length
+  );
 });
