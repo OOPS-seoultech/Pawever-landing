@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 import { AdminShell, useAdminGuard } from "@/components/AdminShell";
 import { useStaffSession } from "@/components/AdminSession";
 import { Button } from "@/components/ui/button";
@@ -292,6 +292,14 @@ export default function AdminShipments() {
                         </span>
                       </span>
                     </label>
+                    {staff?.permissions.includes("VIEW_ORDER_BASIC") && (
+                      <Link
+                        className="text-sm text-primary underline"
+                        href={`/admin/orders/${encodeURIComponent(o.orderNumber)}`}
+                      >
+                        사진·제작 자료 보기
+                      </Link>
+                    )}
                     <p>
                       {o.phone} · {o.postalCode}
                     </p>
@@ -359,6 +367,14 @@ export default function AdminShipments() {
                         </span>
                       </span>
                     </label>
+                    {staff?.permissions.includes("VIEW_ORDER_BASIC") && (
+                      <Link
+                        className="text-sm text-primary underline"
+                        href={`/admin/orders/${encodeURIComponent(o.orderNumber)}`}
+                      >
+                        사진·제작 자료 보기
+                      </Link>
+                    )}
                     {o.blockingIssues.map(problem => (
                       <p key={problem} className="text-red-700">
                         {problem}

@@ -1,3 +1,4 @@
+import { Link } from "wouter";
 import { useCallback, useEffect, useState } from "react";
 import { AdminShell, useAdminGuard } from "@/components/AdminShell";
 import { useStaffSession } from "@/components/AdminSession";
@@ -213,7 +214,16 @@ export default function AdminCompletedOrders() {
               key={order.orderNumber}
               className="flex flex-wrap items-center gap-2 rounded border p-3 text-sm"
             >
-              <span className="font-medium">{order.orderNumber}</span>
+              {staff?.permissions.includes("VIEW_ORDER_BASIC") ? (
+                <Link
+                  className="font-medium text-primary underline"
+                  href={`/admin/orders/${encodeURIComponent(order.orderNumber)}`}
+                >
+                  {order.orderNumber}
+                </Link>
+              ) : (
+                <span className="font-medium">{order.orderNumber}</span>
+              )}
               {order.administrativelyCompleted && (
                 <span>관리자 완료 · 기존 기록 보존</span>
               )}

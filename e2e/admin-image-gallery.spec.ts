@@ -134,11 +134,20 @@ async function sample(page: Page) {
           "VIEW_PAYMENT",
         ],
       };
+    else if (path.endsWith("/sales-summary"))
+      data = {
+        totalKrw: 0,
+        monthKrw: 0,
+        currentMonth: "2026-11",
+        paidOrderCount: 0,
+        months: [],
+      };
     else if (path === "/api/admin/notices/onboarding") data = { notice: null };
     else if (path === "/api/production/file-targets")
       data = { orders: [], plates: [] };
     else if (path.endsWith("/workflow")) data = row;
-    else if (path.endsWith("/workflow/orders")) data = state.rows;
+    else if (path.endsWith("/workflow/orders") || path.endsWith("/my-tasks"))
+      data = state.rows;
     else if (path.endsWith("/sale-price")) {
       const body = request.postDataJSON();
       const target = state.rows[body.petIndex];
@@ -1060,4 +1069,30 @@ test("파일 업로드 버튼은 파일 선택을 열고 출력 파일은 gcode.
   });
   await expect.poll(() => state.uploads.length).toBe(2);
   expect(state.uploads[1].kind).toBe("PRINT_MODEL");
+});
+
+test("운영 현황과 내 작업은 전체 주문과 같은 사진·4면도·업로드 상세를 사용한다", async ({
+  page,
+}) => {
+  await sample(page);
+  for (const path of ["/admin/operations", "/admin/my-work"]) {
+    await page.goto(path);
+    await page.getByRole("button", { name: /보리/ }).first().click();
+    const compare = page.getByRole("region", { name: "고객 사진·4면도 비교" });
+    await expect(compare.getByRole("img", { name: /고객 사진/ })).toHaveCount(
+      3
+    );
+    await expect(compare.getByRole("button", { name: / 삭제$/ })).toHaveCount(
+      4
+    );
+    await expect(
+      page.getByRole("button", { name: "3mf 파일 업로드하기", exact: true })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", {
+        name: "gcode.3mf 파일 업로드하기",
+        exact: true,
+      })
+    ).toBeVisible();
+  }
 });
