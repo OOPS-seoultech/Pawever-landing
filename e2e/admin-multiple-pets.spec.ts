@@ -1,3 +1,4 @@
+import { mockOrderDetail } from "./adminFixtures";
 import { test, expect } from "./adminFixtures";
 
 const image =
@@ -42,6 +43,9 @@ test("한 주문의 두 아이를 구별하고 개별 사진·단계와 주문 �
   const requestedPets: string[] = [];
   const starts: number[] = [];
   await page.route("**/api/**", async route => {
+    const detail = mockOrderDetail(new URL(route.request().url()).pathname);
+    if (detail && route.request().method() === "GET")
+      return route.fulfill({ json: { success: true, data: detail } });
     const request = route.request(),
       url = new URL(request.url()),
       path = url.pathname;

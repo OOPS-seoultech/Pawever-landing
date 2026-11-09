@@ -18,6 +18,7 @@ import {
 } from "@/lib/adminApi";
 import { formatDateTime, formatKrw } from "@/lib/adminFormat";
 import { accessActionLabel } from "@/lib/adminHistory";
+import type { WorkflowOrder } from "@/lib/adminContracts";
 import { AdminWorkflowPanel } from "./AdminWorkflowPanel";
 import {
   canCancel,
@@ -43,11 +44,13 @@ export function AdminOrderPanel({
   petIndex = 0,
   role,
   onChanged,
+  onSelectPet,
 }: {
   orderNumber: string;
   petIndex?: number;
   role: AdminRole | null;
-  onChanged?: () => void;
+  onChanged?: (row?: WorkflowOrder) => void;
+  onSelectPet?: (index: number) => void;
 }) {
   const [, setLocation] = useLocation();
   const { staff } = useStaffSession();
@@ -146,12 +149,15 @@ export function AdminOrderPanel({
           key={`${orderNumber}:${activePetIndex}`}
           orderNumber={orderNumber}
           petIndex={activePetIndex}
-          onSelectPet={setActivePetIndex}
+          onSelectPet={index => {
+            setActivePetIndex(index);
+            onSelectPet?.(index);
+          }}
           showPhotos
           salePriceTarget={salePriceTarget}
-          onChanged={() => {
+          onChanged={row => {
             void load();
-            onChanged?.();
+            onChanged?.(row);
           }}
         />
       </div>
@@ -531,19 +537,24 @@ export function AdminOrderPanel({
         </Section>
 
         {order.accessLogs.length > 0 ? (
-          <Section title="열람 이력">
-            <ul className="space-y-1 text-sm">
-              {order.accessLogs.map((log, index) => (
-                <li key={index} className="flex items-center gap-2">
-                  <span>{accessActionLabel(log.action)}</span>
-                  <span className="ml-auto text-xs text-muted-foreground">
-                    담당자 #{log.adminAccountId} ·{" "}
-                    {formatDateTime(log.accessedAt)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </Section>
+          <details className="rounded-[15px] border bg-muted p-4">
+            <summary className="cursor-pointer text-sm font-semibold">
+              열람 이력
+            </summary>
+            <div className="mt-3 rounded-[15px] border bg-background p-3">
+              <ul className="space-y-1 text-sm">
+                {order.accessLogs.map((log, index) => (
+                  <li key={index} className="flex items-center gap-2">
+                    <span>{accessActionLabel(log.action)}</span>
+                    <span className="ml-auto text-xs text-muted-foreground">
+                      담당자 #{log.adminAccountId} ·{" "}
+                      {formatDateTime(log.accessedAt)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </details>
         ) : null}
       </div>
     </>

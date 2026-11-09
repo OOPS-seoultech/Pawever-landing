@@ -1,3 +1,4 @@
+import { mockOrderDetail } from "./adminFixtures";
 import { test, expect, type Page } from "./adminFixtures";
 const desktop =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36";
@@ -64,6 +65,9 @@ async function setup(
     blockingIssues: [],
   };
   await page.route("**/api/**", async route => {
+    const detail = mockOrderDetail(new URL(route.request().url()).pathname);
+    if (detail && route.request().method() === "GET")
+      return route.fulfill({ json: { success: true, data: detail } });
     const request = route.request(),
       path = new URL(request.url()).pathname,
       method = request.method();
@@ -294,7 +298,9 @@ for (const os of ["Mac", "Windows"]) {
       const order = await orders.getDirectoryHandle("PE-FILE");
       const pet = await order.getDirectoryHandle("아이2_별이");
       const output = await pet.getDirectoryHandle("03_출력모델");
-      const file = await output.getFileHandle("result.gcode.3mf", { create: true });
+      const file = await output.getFileHandle("result.gcode.3mf", {
+        create: true,
+      });
       const stream = await file.createWritable();
       const bytes = new Uint8Array(26);
       bytes.set([80, 75, 3, 4, 80, 75, 5, 6]);
@@ -339,8 +345,9 @@ for (const os of ["Mac", "Windows"]) {
         const order = await orders.getDirectoryHandle("PE-FILE");
         const pet = await order.getDirectoryHandle("아이2_별이");
         const output = await pet.getDirectoryHandle("03_출력모델");
-        return (await (await output.getFileHandle("result.gcode.3mf")).getFile())
-          .size;
+        return (
+          await (await output.getFileHandle("result.gcode.3mf")).getFile()
+        ).size;
       })
     ).toBe(26);
     await page.screenshot({

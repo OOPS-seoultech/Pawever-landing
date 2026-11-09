@@ -85,6 +85,7 @@ export function AdminMaterialComparison({
     [sources, row.petName, row.guardianName]
   );
   const [replacement, setReplacement] = useState<AdminImage | null>(null);
+  const [removal, setRemoval] = useState<AdminImage | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [currentPreview, setCurrentPreview] = useState("");
   const [nextPreview, setNextPreview] = useState("");
@@ -265,6 +266,41 @@ export function AdminMaterialComparison({
     }
   };
   if (!canPhotos && !canFiles) return null;
+  const removeImage = async () => {
+    if (!removal || uploading.current) return;
+    const fingerprint = `remove:${removal.id}`;
+    uploading.current = true;
+    setPending(true);
+    setError("");
+    try {
+      const fresh = await getWorkflow(row.orderNumber, row.petIndex);
+      const job = jobs.current.get(fingerprint) ?? {
+        key: crypto.randomUUID(),
+        row: fresh,
+      };
+      jobs.current.set(fingerprint, job);
+      const updated = await workflowCommand<WorkflowOrder>(
+        `/api/production/artifacts/${encodeURIComponent(removal.id)}/retire`,
+        { version: job.row.version },
+        job.key
+      );
+      jobs.current.delete(fingerprint);
+      if (mounted.current) {
+        onChanged?.(updated);
+        setRemoval(null);
+      }
+    } catch (e) {
+      if (e instanceof AdminApiError && e.status >= 400 && e.status < 500)
+        jobs.current.delete(fingerprint);
+      if (mounted.current)
+        setError(
+          e instanceof Error ? e.message : "이미지를 삭제하지 못했습니다."
+        );
+    } finally {
+      uploading.current = false;
+      if (mounted.current) setPending(false);
+    }
+  };
   return (
     <>
       <section
@@ -344,8 +380,8 @@ export function AdminMaterialComparison({
               </p>
               {artifacts.length > 4 && (
                 <p className="text-sm text-amber-800">
-                  이전 등록 사진이 {artifacts.length}장 남아 있습니다. 유지할
-                  4장을 다시 등록하면 새 세트만 남습니다.
+                  이전 등록 사진이 {artifacts.length}장 남아 있습니다. 불필요한
+                  사진은 왼쪽 위 X로 삭제해 최대 4장으로 정리해 주세요.
                 </p>
               )}
               {uploadStatus && (
@@ -376,6 +412,14 @@ export function AdminMaterialComparison({
                     : undefined
                 }
                 replacementDisabled={pending}
+                onRemove={
+                  onChanged && row.allowedActions.includes("UPLOAD_ARTIFACT")
+                    ? image => {
+                        setError("");
+                        setRemoval(image);
+                      }
+                    : undefined
+                }
               />
               {error && !replacement && (
                 <p
@@ -392,6 +436,43 @@ export function AdminMaterialComparison({
             </div>
           )}
         </div>
+        <Dialog
+          open={removal !== null}
+          onOpenChange={open => {
+            if (!open && !pending) setRemoval(null);
+          }}
+        >
+          <DialogContent showCloseButton={!pending}>
+            <DialogHeader>
+              <DialogTitle>4면도 이미지 삭제</DialogTitle>
+              <DialogDescription>
+                {row.petName} · {removal?.label}. 현재 4면도와 ZIP에서
+                제외합니다. 원본 파일과 작업 기록은 보존됩니다.
+              </DialogDescription>
+            </DialogHeader>
+            {error && (
+              <p role="alert" className="text-sm text-destructive">
+                {error}
+              </p>
+            )}
+            <DialogFooter>
+              <Button
+                variant="outline"
+                disabled={pending}
+                onClick={() => setRemoval(null)}
+              >
+                취소
+              </Button>
+              <Button
+                variant="destructive"
+                disabled={pending}
+                onClick={() => void removeImage()}
+              >
+                {pending ? "삭제 중…" : "삭제하기"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         <Dialog
           open={replacement !== null}
           onOpenChange={open => {

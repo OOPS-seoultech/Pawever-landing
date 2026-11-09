@@ -1,3 +1,4 @@
+import { mockOrderDetail } from "./adminFixtures";
 import { test, expect, type Page } from "./adminFixtures";
 
 test("구성을 바꾸면 이전 파일로 확정할 수 없고 임시 구성을 취소할 수 있다", async ({
@@ -166,9 +167,17 @@ test("주문을 묶고 슬롯·파일을 확인한 후 한 번에 출력 대기�
   let plate: any = null;
   const keys: string[] = [];
   await page.route("**/api/**", async route => {
+    const detail = mockOrderDetail(new URL(route.request().url()).pathname);
+    if (detail && route.request().method() === "GET")
+      return route.fulfill({ json: { success: true, data: detail } });
     const request = route.request(),
       path = new URL(request.url()).pathname;
-    if (path.endsWith("/me") || path === "/api/admin/notices/onboarding" || path === "/api/production/file-targets") return route.fallback();
+    if (
+      path.endsWith("/me") ||
+      path === "/api/admin/notices/onboarding" ||
+      path === "/api/production/file-targets"
+    )
+      return route.fallback();
     let data: unknown = null;
     if (path.endsWith("/candidates")) data = plate ? [] : orders;
     else if (path.endsWith("/staff"))
@@ -442,6 +451,9 @@ test("후가공 확인과 품질 검수 통과 후 포장 대기로 이동한다
     finishingHistory: [],
   };
   await page.route("**/api/**", route => {
+    const detail = mockOrderDetail(new URL(route.request().url()).pathname);
+    if (detail && route.request().method() === "GET")
+      return route.fulfill({ json: { success: true, data: detail } });
     const path = new URL(route.request().url()).pathname;
     if (path.endsWith("/me"))
       return route.fulfill({
@@ -527,6 +539,9 @@ test("정산 설정은 명시적으로 켜고 유급 담당자를 지정하며 �
     amountKrw: 3000,
   };
   await page.route("**/api/**", async route => {
+    const detail = mockOrderDetail(new URL(route.request().url()).pathname);
+    if (detail && route.request().method() === "GET")
+      return route.fulfill({ json: { success: true, data: detail } });
     const path = new URL(route.request().url()).pathname;
     let data: any = [];
     if (path.endsWith("/me"))
@@ -595,8 +610,16 @@ test("검수 불합격에는 사유와 보정 경로와 메모가 필요하다",
     allowedActions: ["COMPLETE_QUALITY_CHECK"],
   };
   await page.route("**/api/**", route => {
+    const detail = mockOrderDetail(new URL(route.request().url()).pathname);
+    if (detail && route.request().method() === "GET")
+      return route.fulfill({ json: { success: true, data: detail } });
     const path = new URL(route.request().url()).pathname;
-    if (path.endsWith("/me") || path === "/api/admin/notices/onboarding" || path === "/api/production/file-targets") return route.fallback();
+    if (
+      path.endsWith("/me") ||
+      path === "/api/admin/notices/onboarding" ||
+      path === "/api/production/file-targets"
+    )
+      return route.fallback();
     let data: any = row;
     if (path.endsWith("/my-tasks")) data = [row];
     else if (path.endsWith("/timeline")) data = [];

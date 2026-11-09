@@ -32,6 +32,8 @@ async function sample(page: Page) {
     expiredThrough: 0,
     failOnce: false,
     uploads: [] as any[],
+    accessLogs: [] as any[],
+    removed: [] as string[],
     loseConfirmationAt: 0,
     losePublication: false,
     modelRequests: 0,
@@ -132,11 +134,20 @@ async function sample(page: Page) {
           "VIEW_PAYMENT",
         ],
       };
+    else if (path.endsWith("/sales-summary"))
+      data = {
+        totalKrw: 0,
+        monthKrw: 0,
+        currentMonth: "2026-11",
+        paidOrderCount: 0,
+        months: [],
+      };
     else if (path === "/api/admin/notices/onboarding") data = { notice: null };
     else if (path === "/api/production/file-targets")
       data = { orders: [], plates: [] };
     else if (path.endsWith("/workflow")) data = row;
-    else if (path.endsWith("/workflow/orders")) data = state.rows;
+    else if (path.endsWith("/workflow/orders") || path.endsWith("/my-tasks"))
+      data = state.rows;
     else if (path.endsWith("/sale-price")) {
       const body = request.postDataJSON();
       const target = state.rows[body.petIndex];
@@ -168,7 +179,16 @@ async function sample(page: Page) {
         contentType: "application/zip",
         body: Buffer.from("UEsFBgAAAAAAAAAAAAAAAAAAAAAAAA==", "base64"),
       });
-    else if (path.endsWith("/upload-requests")) {
+    else if (path.endsWith("/retire")) {
+      const id = path.split("/").at(-2)!;
+      const target = state.rows.find(r => r.artifacts.some(a => a.id === id))!;
+      expect(request.postDataJSON().version).toBe(target.version);
+      expect(request.headers()["idempotency-key"]).toBeTruthy();
+      target.artifacts = target.artifacts.filter(a => a.id !== id);
+      target.version++;
+      state.removed.push(id);
+      data = target;
+    } else if (path.endsWith("/upload-requests")) {
       const key = request.headers()["idempotency-key"];
       let job = uploadJobs.get(key);
       if (!job) {
@@ -201,7 +221,7 @@ async function sample(page: Page) {
         expect(request.postDataJSON().version).toBe(target.version);
         const file = {
           id,
-          kind: "MULTIVIEW",
+          kind: body.kind,
           fileName: body.fileName,
           taskId: target.taskId,
           modelingAttempt: 1,
@@ -255,7 +275,7 @@ async function sample(page: Page) {
         pricing: null,
         marketing: null,
         statusHistory: [],
-        accessLogs: [],
+        accessLogs: state.accessLogs,
         pets: state.rows.map(r => ({
           index: r.petIndex,
           petName: r.petName,
@@ -947,4 +967,132 @@ test("비교 버튼은 사진 영역 아래 전체 너비이며 모델이 없으
   await expect(
     comparison.getByRole("button", { name: "4면도와 3D 비교하기" })
   ).toHaveCount(0);
+});
+
+test("4면도 X는 확인 후 현재 사진만 삭제하고 다른 아이와 고객 사진은 유지한다", async ({
+  page,
+}) => {
+  const state = await sample(page);
+  for (let i = 0; i < 3; i++)
+    state.rows[0].artifacts.push({
+      ...state.rows[0].artifacts[i],
+      id: `duplicate-${i}`,
+      fileName: `duplicate-${i}.png`,
+    });
+  await page.goto("/admin/orders/IMAGE-TEST");
+  const compare = page.getByRole("region", { name: "고객 사진·4면도 비교" });
+  await expect(compare.getByRole("button", { name: / 삭제$/ })).toHaveCount(7);
+  await expect(
+    compare.getByRole("button", { name: /고객 사진.*삭제/ })
+  ).toHaveCount(0);
+  for (let i = 0; i < 3; i++) {
+    await compare
+      .getByRole("button", { name: `duplicate-${i}.png 삭제`, exact: true })
+      .click();
+    const modal = page.getByRole("dialog", { name: "4면도 이미지 삭제" });
+    await expect(modal).toContainText("원본 파일과 작업 기록은 보존");
+    if (i === 0) {
+      await modal.getByRole("button", { name: "취소", exact: true }).click();
+      expect(state.removed).toHaveLength(0);
+      await compare
+        .getByRole("button", { name: `duplicate-${i}.png 삭제`, exact: true })
+        .click();
+    }
+    await modal.getByRole("button", { name: "삭제하기", exact: true }).click();
+    await expect(modal).toHaveCount(0);
+  }
+  await expect(compare.getByRole("button", { name: / 삭제$/ })).toHaveCount(4);
+  expect(state.rows[1].artifacts).toHaveLength(4);
+  await expect(compare.getByRole("img", { name: /고객 사진/ })).toHaveCount(3);
+  expect(state.rows[0].productionStage).toBe("MODELING");
+});
+
+test("열람 이력은 기본 닫힘이며 버튼으로 펼치고 다시 접는다", async ({
+  page,
+}) => {
+  const state = await sample(page);
+  state.accessLogs.push({
+    action: "ADDRESS_VIEW",
+    adminAccountId: 42,
+    accessedAt: "2026-11-09T10:00:00Z",
+  });
+  await page.goto("/admin/orders/IMAGE-TEST");
+  const history = page
+    .locator("details")
+    .filter({ has: page.locator("summary").filter({ hasText: "열람 이력" }) });
+  await expect(history).not.toHaveAttribute("open", "");
+  await expect(history.getByText(/담당자 #42/)).not.toBeVisible();
+  await history.locator("summary").click();
+  await expect(history.getByText(/담당자 #42/)).toBeVisible();
+  await history.locator("summary").click();
+  await expect(history.getByText(/담당자 #42/)).not.toBeVisible();
+});
+
+test("파일 업로드 버튼은 파일 선택을 열고 출력 파일은 gcode.3mf만 허용한다", async ({
+  page,
+}) => {
+  const state = await sample(page);
+  await page.goto("/admin/orders/IMAGE-TEST");
+  const sourceChooser = page.waitForEvent("filechooser");
+  await page
+    .getByRole("button", { name: "3mf 파일 업로드하기", exact: true })
+    .click();
+  await (
+    await sourceChooser
+  ).setFiles({
+    name: "model.3mf",
+    mimeType: "application/octet-stream",
+    buffer: preview3mf,
+  });
+  await expect.poll(() => state.uploads.length).toBe(1);
+  expect(state.uploads[0].kind).toBe("MODEL_SOURCE");
+  await expect(
+    page.getByRole("button", { name: "gcode.3mf 파일 업로드하기", exact: true })
+  ).toBeEnabled();
+  await page.getByLabel("출력 파일 파일 선택", { exact: true }).setInputFiles({
+    name: "wrong.3mf",
+    mimeType: "application/octet-stream",
+    buffer: preview3mf,
+  });
+  await expect(page.getByRole("alert")).toContainText("출력 파일은 .gcode.3mf");
+  expect(state.uploads).toHaveLength(1);
+  const printChooser = page.waitForEvent("filechooser");
+  await page
+    .getByRole("button", { name: "gcode.3mf 파일 업로드하기", exact: true })
+    .click();
+  await (
+    await printChooser
+  ).setFiles({
+    name: "ready.gcode.3mf",
+    mimeType: "application/octet-stream",
+    buffer: preview3mf,
+  });
+  await expect.poll(() => state.uploads.length).toBe(2);
+  expect(state.uploads[1].kind).toBe("PRINT_MODEL");
+});
+
+test("운영 현황과 내 작업은 전체 주문과 같은 사진·4면도·업로드 상세를 사용한다", async ({
+  page,
+}) => {
+  await sample(page);
+  for (const path of ["/admin/operations", "/admin/my-work"]) {
+    await page.goto(path);
+    await page.getByRole("button", { name: /보리/ }).first().click();
+    const compare = page.getByRole("region", { name: "고객 사진·4면도 비교" });
+    await expect(compare.getByRole("img", { name: /고객 사진/ })).toHaveCount(
+      3
+    );
+    await expect(compare.getByRole("button", { name: / 삭제$/ })).toHaveCount(
+      4
+    );
+    await expect(
+      page.getByRole("button", { name: "3mf 파일 업로드하기", exact: true })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", {
+        name: "gcode.3mf 파일 업로드하기",
+        exact: true,
+      })
+    ).toBeVisible();
+  }
 });

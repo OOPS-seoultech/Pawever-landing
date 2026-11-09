@@ -22,8 +22,7 @@ import {
   operationQueues,
   type OperationQueue,
 } from "@/lib/adminOperations";
-import { AdminWorkflowPanel } from "./AdminWorkflowPanel";
-import { AdminMaterialComparison } from "./AdminMaterialComparison";
+import { AdminOrderPanel } from "./AdminOrderPanel";
 import { AdminAdministrativeCompletion } from "./AdminAdministrativeCompletion";
 
 const AdminSalesSummary = lazy(() => import("./AdminSalesSummary"));
@@ -422,13 +421,9 @@ export default function AdminOperations() {
                     >
                       사진·상세 패널 닫기
                     </Button>
-                    <AdminMaterialComparison
-                      key={`comparison:${workKey(current)}:${permissionsKey}`}
-                      row={current}
-                      onChanged={changed}
-                    />
-                    <AdminWorkflowPanel
+                    <AdminOrderPanel
                       key={`workflow:${workKey(current)}:${permissionsKey}`}
+                      role={role}
                       orderNumber={current.orderNumber}
                       petIndex={current.petIndex}
                       onSelectPet={index =>
@@ -439,8 +434,13 @@ export default function AdminOperations() {
                           })
                         )
                       }
-                      showPhotos={false}
-                      onChanged={changed}
+                      onChanged={row => {
+                        if (row) changed(row);
+                        else {
+                          setSalesRevision(value => value + 1);
+                          setRevision(value => value + 1);
+                        }
+                      }}
                     />
                   </>
                 ) : (

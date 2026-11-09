@@ -12,7 +12,7 @@ import {
   getWorkflow,
   type WorkflowOrder,
 } from "@/lib/adminContracts";
-import { AdminWorkflowPanel } from "./AdminWorkflowPanel";
+import { AdminOrderPanel } from "./AdminOrderPanel";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -431,8 +431,9 @@ export default function AdminMyWork({ all = false }: { all?: boolean }) {
                 </Button>
               )}
               {selected ? (
-                <AdminWorkflowPanel
+                <AdminOrderPanel
                   key={`${workKey(selected)}:${detailRevision}`}
+                  role={role}
                   orderNumber={selected.orderNumber}
                   petIndex={selected.petIndex}
                   onSelectPet={index =>
@@ -447,7 +448,7 @@ export default function AdminMyWork({ all = false }: { all?: boolean }) {
                       )
                   }
                   onChanged={row => {
-                    setSelected(row);
+                    if (row) setSelected(row);
                     void load();
                   }}
                 />

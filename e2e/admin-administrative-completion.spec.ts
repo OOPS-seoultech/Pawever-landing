@@ -1,3 +1,4 @@
+import { mockOrderDetail } from "./adminFixtures";
 import { expect, test } from "./adminFixtures";
 
 const row = (number: string, pending = false) => ({
@@ -35,6 +36,9 @@ test("명시한 기존 주문만 관리자 완료하고 새 주문과 알림은 
   const mutations: string[] = [];
   let called = 0;
   await page.route("**/api/**", async route => {
+    const detail = mockOrderDetail(new URL(route.request().url()).pathname);
+    if (detail && route.request().method() === "GET")
+      return route.fulfill({ json: { success: true, data: detail } });
     const request = route.request(),
       path = new URL(request.url()).pathname;
     let data: unknown = [];
@@ -104,6 +108,9 @@ test("제작 담당자에게 관리자 완료를 노출하지 않는다", async 
     sessionStorage.setItem("pawever.admin.accessToken", "test-token")
   );
   await page.route("**/api/**", route => {
+    const detail = mockOrderDetail(new URL(route.request().url()).pathname);
+    if (detail && route.request().method() === "GET")
+      return route.fulfill({ json: { success: true, data: detail } });
     const me = new URL(route.request().url()).pathname.endsWith("/me");
     return route.fulfill({
       json: {

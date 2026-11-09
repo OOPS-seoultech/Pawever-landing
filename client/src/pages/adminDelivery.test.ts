@@ -100,7 +100,8 @@ describe("관리자 화면의 수령 방법", () => {
 
   it("상세의 사진·4면도는 공통 비교 영역을 사용한다", () => {
     expect(detail).toContain("showPhotos");
-    expect(detail).toContain("onSelectPet={setActivePetIndex}");
+    expect(detail).toContain("setActivePetIndex(index)");
+    expect(detail).toContain("onSelectPet?.(index)");
     expect(detail).not.toContain("누르면 원본이 새 탭에 열립니다");
   });
 

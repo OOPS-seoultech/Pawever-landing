@@ -63,6 +63,7 @@ export function AdminWorkflowPanel({
   const [zipLoading, setZipLoading] = useState(false);
   const [downloadingFile, setDownloadingFile] = useState("");
   const busy = useRef(false);
+  const uploadInputs = useRef<Record<string, HTMLInputElement | null>>({});
   const keys = useRef(new Map<string, string>());
   const [amount, setAmount] = useState("");
   const [memo, setMemo] = useState("");
@@ -805,12 +806,25 @@ export function AdminWorkflowPanel({
                 (can("UPLOAD_ARTIFACT") ||
                   (item.kind === "PRINT_MODEL" &&
                     can("UPLOAD_PRINT_FILE"))) && (
-                  <label className="block text-xs text-muted-foreground">
-                    {item.label} 파일 선택
+                  <div>
+                    <Button
+                      disabled={pending}
+                      onClick={() => uploadInputs.current[item.kind]?.click()}
+                    >
+                      {item.kind === "MODEL_SOURCE"
+                        ? "3mf 파일 업로드하기"
+                        : "gcode.3mf 파일 업로드하기"}
+                    </Button>
                     <input
-                      className="mt-2 block w-full min-w-0 max-w-full text-sm"
+                      ref={element => {
+                        uploadInputs.current[item.kind] = element;
+                      }}
+                      className="hidden"
                       type="file"
-                      accept={item.accept}
+                      aria-label={`${item.label} 파일 선택`}
+                      accept={
+                        item.kind === "MODEL_SOURCE" ? ".3mf" : item.accept
+                      }
                       disabled={pending}
                       onChange={e => {
                         const file = e.target.files?.[0];
@@ -818,7 +832,7 @@ export function AdminWorkflowPanel({
                         if (file) void upload(item.kind, file);
                       }}
                     />
-                  </label>
+                  </div>
                 )}
             </div>
           ))}
