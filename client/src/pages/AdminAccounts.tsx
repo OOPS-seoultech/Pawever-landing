@@ -160,13 +160,10 @@ export default function AdminAccounts() {
             maxLength={50}
           />
           <p className="text-sm text-muted-foreground">
-            초대할 사람이 맡을 작업 역할을 아래에서 선택해 주세요.
+            초대할 사람이 맡을 작업 역할을 선택해 주세요. 선택하지 않으면 제작
+            권한 없이 가입합니다.
           </p>
-          <Button
-            type="submit"
-            size="sm"
-            disabled={pending || !inviteRoles.length}
-          >
+          <Button type="submit" size="sm" disabled={pending}>
             초대
           </Button>
         </div>

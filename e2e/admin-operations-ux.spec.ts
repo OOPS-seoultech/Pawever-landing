@@ -198,7 +198,7 @@ test("초대 역할을 선택하면 링크 노출 없이 이메일 발송을 안
   await page.getByPlaceholder("이름", { exact: true }).fill("직원");
   await expect(
     page.getByRole("button", { name: "초대", exact: true })
-  ).toBeDisabled();
+  ).toBeEnabled();
   await page
     .getByRole("group", { name: "초대할 담당자의 작업 역할" })
     .getByLabel("모델링 결과물 등록", { exact: true })
