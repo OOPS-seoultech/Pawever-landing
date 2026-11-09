@@ -334,6 +334,16 @@ export const adminSignIn = async (email: string, password: string) => {
   return data.accessToken;
 };
 
+export const adminInvitationInfo = (inviteToken: string) =>
+  adminRequest<{ email: string; name: string }>(
+    "/api/admin/auth/invitation-info",
+    {
+      method: "POST",
+      auth: false,
+      body: JSON.stringify({ inviteToken }),
+    }
+  );
+
 export const adminAcceptInvite = (inviteToken: string, password: string) =>
   adminRequest<void>("/api/admin/auth/accept-invite", {
     method: "POST",
@@ -551,18 +561,18 @@ export const listAdminAccounts = () =>
 export const inviteAdminAccount = (
   email: string,
   name: string,
-  role: AdminRole
+  role: AdminRole,
+  workRoles: string[]
 ) =>
-  adminRequest<{ inviteToken: string }>("/api/admin/accounts", {
+  adminRequest<void>("/api/admin/accounts", {
     method: "POST",
-    body: JSON.stringify({ email, name, role }),
+    body: JSON.stringify({ email, name, role, workRoles }),
   });
 
 export const reinviteAdminAccount = (accountId: number) =>
-  adminRequest<{ inviteToken: string }>(
-    `/api/admin/accounts/${accountId}/reinvite`,
-    { method: "POST" }
-  );
+  adminRequest<void>(`/api/admin/accounts/${accountId}/reinvite`, {
+    method: "POST",
+  });
 
 /**
  * 소유자가 작업 역할을 지정하면서 가입을 승인한다.

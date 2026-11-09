@@ -1,5 +1,15 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useLocation } from "wouter";
+import { X } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AdminError, AdminShell, useAdminGuard } from "@/components/AdminShell";
@@ -54,13 +64,9 @@ export default function AdminAccounts() {
 
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
-  /**
-   * 초대 링크는 지금 한 번만 볼 수 있다.
-   *
-   * 서버는 해시만 남긴다. 이 화면을 벗어나면 다시 볼 방법이 없고, 다시
-   * 초대하는 수밖에 없다.
-   */
-  const [inviteLink, setInviteLink] = useState<string | null>(null);
+  const [inviteRoles, setInviteRoles] = useState<string[]>([]);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<AdminAccount | null>(null);
 
   const handle = useCallback(
     (caught: unknown) => {
@@ -91,23 +97,24 @@ export default function AdminAccounts() {
     if (role) void load();
   }, [role, load]);
 
-  const linkFor = (token: string) =>
-    `${window.location.origin}/admin/accept-invite?token=${encodeURIComponent(token)}`;
-
   const invite = async (event: FormEvent) => {
     event.preventDefault();
     if (pending) return;
     setPending(true);
     setError(null);
     try {
-      const { inviteToken } = await inviteAdminAccount(
+      await inviteAdminAccount(
         email.trim(),
         name.trim(),
-        "PRODUCTION"
+        "PRODUCTION",
+        inviteRoles
       );
-      setInviteLink(linkFor(inviteToken));
+      setNotice(
+        "초대 메일을 발송했습니다. 받은 사람이 비밀번호를 설정하면 로그인할 수 있습니다."
+      );
       setEmail("");
       setName("");
+      setInviteRoles([]);
       await load();
     } catch (caught) {
       handle(caught);
@@ -119,11 +126,16 @@ export default function AdminAccounts() {
   return (
     <AdminShell title="담당자" role={role} backTo="/admin/orders">
       <p className="mb-4 text-sm text-muted-foreground">
-        초대 링크 전달 → 직원이 비밀번호 설정 → 작업 역할을 지정하고 승인 → 기본
-        담당자 설정 순서로 진행해 주세요.
+        작업 역할 선택 → 초대 메일 발송 → 본인이 비밀번호 설정 → 로그인
+        순서입니다. 비밀번호는 관리자에게 공개되지 않습니다.
       </p>
       <AdminWorkSettings key={settingsRevision} />
       {error ? <AdminError message={error} /> : null}
+      {notice ? (
+        <p role="status" className="mb-4 text-sm">
+          {notice}
+        </p>
+      ) : null}
 
       <form
         onSubmit={invite}
@@ -148,25 +160,36 @@ export default function AdminAccounts() {
             maxLength={50}
           />
           <p className="text-sm text-muted-foreground">
-            작업자 계정으로 초대합니다. 가입 후 승인할 때 작업 역할을
-            지정합니다.
+            초대할 사람이 맡을 작업 역할을 아래에서 선택해 주세요.
           </p>
-          <Button type="submit" size="sm" disabled={pending}>
+          <Button
+            type="submit"
+            size="sm"
+            disabled={pending || !inviteRoles.length}
+          >
             초대
           </Button>
         </div>
 
-        {inviteLink ? (
-          <div className="mt-3 rounded-md border border-amber-300 bg-amber-50 p-3">
-            <p className="text-xs text-amber-900">
-              아래 링크를 본인에게 직접 전달해 주세요.{" "}
-              <strong>이 화면을 벗어나면 다시 볼 수 없습니다.</strong>
-            </p>
-            <code className="mt-2 block break-all rounded bg-background px-2 py-1 text-xs">
-              {inviteLink}
-            </code>
-          </div>
-        ) : null}
+        <fieldset className="mt-3 flex flex-wrap gap-4" disabled={pending}>
+          <legend className="mb-2 text-sm">초대할 담당자의 작업 역할</legend>
+          {WORK_ROLES.map(([value, label]) => (
+            <label key={value} className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={inviteRoles.includes(value)}
+                onChange={event =>
+                  setInviteRoles(current =>
+                    event.target.checked
+                      ? [...current, value]
+                      : current.filter(role => role !== value)
+                  )
+                }
+              />
+              {label}
+            </label>
+          ))}
+        </fieldset>
       </form>
 
       <div className="overflow-x-auto rounded-lg border bg-background">
@@ -285,10 +308,10 @@ export default function AdminAccounts() {
                             return;
                           setPending(true);
                           try {
-                            const { inviteToken } = await reinviteAdminAccount(
-                              account.id
+                            await reinviteAdminAccount(account.id);
+                            setNotice(
+                              `${account.email}로 초대 메일을 다시 보냈습니다.`
                             );
-                            setInviteLink(linkFor(inviteToken));
                           } catch (caught) {
                             handle(caught);
                           } finally {
@@ -299,31 +322,16 @@ export default function AdminAccounts() {
                         재초대
                       </Button>
                     ) : null}
-                    {account.status !== "DISABLED" &&
-                    account.id !== staff?.id ? (
+                    {account.role !== "OWNER" && account.id !== staff?.id ? (
                       <Button
                         variant="ghost"
-                        size="sm"
+                        size="icon"
                         disabled={pending}
-                        onClick={async () => {
-                          if (
-                            !window.confirm(
-                              `${account.name} (${account.email}) 계정의 사용을 정지할까요? 이후 로그인과 작업을 할 수 없습니다.`
-                            )
-                          )
-                            return;
-                          setPending(true);
-                          try {
-                            await disableAdminAccount(account.id);
-                            await load();
-                          } catch (caught) {
-                            handle(caught);
-                          } finally {
-                            setPending(false);
-                          }
-                        }}
+                        aria-label={`${account.name} 계정 삭제`}
+                        title="계정 삭제 및 모든 권한 회수"
+                        onClick={() => setDeleteTarget(account)}
                       >
-                        사용 정지
+                        <X />
                       </Button>
                     ) : null}
                   </div>
@@ -343,6 +351,48 @@ export default function AdminAccounts() {
           </tbody>
         </table>
       </div>
+      <AlertDialog
+        open={deleteTarget !== null}
+        onOpenChange={open => {
+          if (!open && !pending) setDeleteTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>담당자 계정을 삭제할까요?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget?.name} ({deleteTarget?.email})의 모든 접근 권한과
+              로그인 정보가 삭제됩니다. 이미 로그인한 기기에서도 더는 사용할 수
+              없습니다. 과거 작업·정산 기록은 보존됩니다. 다시 사용하려면
+              관리자가 새로 초대해야 합니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={pending}>취소</AlertDialogCancel>
+            <Button
+              variant="destructive"
+              disabled={pending}
+              onClick={async () => {
+                if (!deleteTarget) return;
+                setPending(true);
+                try {
+                  await disableAdminAccount(deleteTarget.id);
+                  setDeleteTarget(null);
+                  setNotice("계정을 삭제하고 모든 접근 권한을 회수했습니다.");
+                  await load();
+                  setSettingsRevision(value => value + 1);
+                } catch (caught) {
+                  handle(caught);
+                } finally {
+                  setPending(false);
+                }
+              }}
+            >
+              {pending ? "삭제 중..." : "계정 삭제"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminShell>
   );
 }
