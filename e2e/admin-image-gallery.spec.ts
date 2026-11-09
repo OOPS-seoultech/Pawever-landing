@@ -28,6 +28,7 @@ async function sample(page: Page) {
   const state = {
     staffRole: "OWNER",
     moves: [] as any[],
+    telegramSends: [] as any[],
     canDownloadPhotos: true,
     canViewPhotos: true,
     serial: 0,
@@ -55,6 +56,9 @@ async function sample(page: Page) {
       taskId: 101 + petIndex,
       taskAttempt: 1,
       modelingTaskId: 101 + petIndex,
+      telegramNotification: undefined as
+        | undefined
+        | { accepted: boolean; photoCount: number },
       taskStatus: "IN_PROGRESS",
       assignee: { id: 1, name: "제작자" },
       allowedStageTargets: [] as string[],
@@ -151,7 +155,14 @@ async function sample(page: Page) {
     else if (path === "/api/admin/notices/onboarding") data = { notice: null };
     else if (path === "/api/production/file-targets")
       data = { orders: [], plates: [] };
-    else if (path.endsWith("/workflow/move-stage")) {
+    else if (path.endsWith("/workflow/review-telegram")) {
+      const body = request.postDataJSON();
+      const target = state.rows[body.petIndex];
+      expect(body.version).toBe(target.version);
+      state.telegramSends.push(body);
+      target.telegramNotification = { accepted: true, photoCount: 9 };
+      data = target;
+    } else if (path.endsWith("/workflow/move-stage")) {
       const body = request.postDataJSON();
       const target = state.rows[body.petIndex];
       expect(body.version).toBe(target.version);
@@ -1217,3 +1228,33 @@ for (const role of ["OWNER", "PRODUCTION"])
         .getByRole("img", { name: /^(front|left|right|back)\.png$/ })
     ).toHaveCount(4);
   });
+
+test("대표는 상태 변경 없이 선택한 아이의 검수 사진 알림을 한 번 다시 보낸다", async ({
+  page,
+}) => {
+  const state = await sample(page);
+  state.rows[0].productionStage = "MODEL_REVIEW";
+  await page.goto("/admin/orders/IMAGE-TEST");
+  await page
+    .getByRole("button", {
+      name: "검수 사진 텔레그램 다시 보내기",
+      exact: true,
+    })
+    .click();
+  const dialog = page.getByRole("dialog", {
+    name: "검수 사진을 텔레그램으로 보낼까요?",
+  });
+  await expect(dialog).toContainText("보리의 고객 사진 최대 5장");
+  expect(state.telegramSends).toHaveLength(0);
+  await dialog
+    .getByRole("button", { name: "사진 알림 보내기", exact: true })
+    .click();
+  await expect(
+    page.getByText("텔레그램에서 사진 9장 발송을 접수했습니다.", {
+      exact: true,
+    })
+  ).toBeVisible();
+  expect(state.telegramSends).toEqual([{ version: 0, petIndex: 0 }]);
+  expect(state.rows[0].productionStage).toBe("MODEL_REVIEW");
+  expect(state.rows[0].version).toBe(0);
+});
