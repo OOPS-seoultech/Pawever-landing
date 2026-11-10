@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
+import { adminLoginPath } from "@/lib/adminImageGeneration";
 import { useStaffSession } from "./AdminSession";
 import {
   clearAdminToken,
@@ -33,7 +34,7 @@ export const useAdminGuard = () => {
 
   useEffect(() => {
     if (!token) {
-      setLocation("/admin", { replace: true });
+      setLocation(adminLoginPath(), { replace: true });
     }
   }, [token, setLocation]);
 
@@ -140,6 +141,9 @@ export function AdminShell({
                 {ROLE_LABELS[role]}
               </span>
             ) : null}
+            {staff && (
+              <AdminNavLink href="/admin/telegram">텔레그램 연결</AdminNavLink>
+            )}
             {staff && (
               <AdminNavLink href="/admin/notices">공지사항</AdminNavLink>
             )}

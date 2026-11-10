@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AdminError } from "@/components/AdminShell";
 import { AdminApiError, adminSignIn, readAdminToken } from "@/lib/adminApi";
+import { adminReturnPath } from "@/lib/adminImageGeneration";
 import { getStaff } from "@/lib/adminContracts";
 
 export default function AdminLogin() {
@@ -20,9 +21,10 @@ export default function AdminLogin() {
       void getStaff()
         .then(staff =>
           setLocation(
-            staff.permissions.includes("VIEW_ORDER_BASIC")
-              ? "/admin/operations"
-              : "/admin/my-work",
+            adminReturnPath() ??
+              (staff.permissions.includes("VIEW_ORDER_BASIC")
+                ? "/admin/operations"
+                : "/admin/my-work"),
             { replace: true }
           )
         )
@@ -47,9 +49,10 @@ export default function AdminLogin() {
       await adminSignIn(email.trim(), password);
       const staff = await getStaff();
       setLocation(
-        staff.permissions.includes("VIEW_ORDER_BASIC")
-          ? "/admin/operations"
-          : "/admin/my-work",
+        adminReturnPath() ??
+          (staff.permissions.includes("VIEW_ORDER_BASIC")
+            ? "/admin/operations"
+            : "/admin/my-work"),
         { replace: true }
       );
     } catch (caught) {
