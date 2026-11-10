@@ -35,9 +35,13 @@ export function AdminImageGeneration({
   useEffect(() => {
     setJobs([]);
     void refresh();
+  }, [refresh]);
+  const waiting = ["QUEUED", "RUNNING"].includes(jobs.at(-1)?.status ?? "");
+  useEffect(() => {
+    if (!waiting) return;
     const timer = setInterval(() => void refresh(), 10_000);
     return () => clearInterval(timer);
-  }, [refresh]);
+  }, [refresh, waiting]);
   if (!visible || (!jobs.length && !error)) return null;
   const latest = jobs.at(-1);
   return (

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import { AdminShell, useAdminGuard, AdminError } from "@/components/AdminShell";
+import { useStaffSession } from "@/components/AdminSession";
 import { AdminCustomerPhotos } from "@/components/AdminCustomerPhotos";
 import { AdminImageGallery } from "@/components/AdminImageGallery";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ export default function AdminImageReview({
   params: { jobId: string };
 }) {
   const role = useAdminGuard();
+  const { staff } = useStaffSession();
   const [job, setJob] = useState<ImageJob | null>(null);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
@@ -158,6 +160,9 @@ export default function AdminImageReview({
               </h3>
               <AdminImageGallery
                 key={`${job.id}:${job.status}`}
+                canSave={staff?.permissions.includes(
+                  "DOWNLOAD_PRODUCTION_FILES"
+                )}
                 loadImages={images}
                 emptyText="생성된 4면도가 아직 없습니다."
               />
