@@ -7,6 +7,7 @@ import {
 } from "react";
 import { useLocation } from "wouter";
 import { getStaff, type Staff } from "@/lib/adminContracts";
+import { adminLoginPath } from "@/lib/adminImageGeneration";
 import { AdminLocalFolderProvider } from "./AdminLocalFolder";
 import { AdminFirstVisit } from "./AdminFirstVisit";
 import { readAdminToken, AdminApiError } from "@/lib/adminApi";
@@ -37,7 +38,7 @@ export function AdminSessionProvider({ children }: { children: ReactNode }) {
     let live = true;
     const refresh = async () => {
       if (!readAdminToken()) {
-        navigate("/admin", { replace: true });
+        navigate(adminLoginPath(), { replace: true });
         return;
       }
       try {
@@ -53,7 +54,7 @@ export function AdminSessionProvider({ children }: { children: ReactNode }) {
           e instanceof Error ? e.message : "계정 정보를 확인하지 못했습니다."
         );
         if (e instanceof AdminApiError && e.needsSignIn)
-          navigate("/admin", { replace: true });
+          navigate(adminLoginPath(), { replace: true });
       }
     };
     void refresh();

@@ -17,6 +17,7 @@ export type WorkflowOrder = {
   petName: string;
   petIndex: number;
   petCount: number;
+  imageGenerationJobId?: string | null;
   pets: { petIndex: number; petName: string; productionStage: string }[];
   guardianName?: string | null;
   customGoods?: string | null;

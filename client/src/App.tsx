@@ -31,6 +31,8 @@ import AdminCompletedOrders from "./pages/AdminCompletedOrders";
 import AdminLocalFiles from "./pages/AdminLocalFiles";
 import AdminNotices from "./pages/AdminNotices";
 import AdminAsAssets from "./pages/AdminAsAssets";
+import AdminImageReview from "./pages/AdminImageReview";
+import AdminTelegram from "./pages/AdminTelegram";
 import { AdminSessionProvider } from "./components/AdminSession";
 import { useEffect } from "react";
 import { initializeAnalytics } from "./lib/analytics/analytics";
@@ -61,6 +63,8 @@ function Router() {
       {/* 안내 메일의 수신거부 링크가 닿는 자리. */}
       <Route path="/unsubscribe" component={Unsubscribe} />
       {/* 관리자 화면. 더 긴 주소를 먼저 둔다 — /admin 이 앞에 오면 뒤가 안 잡힌다. */}
+      <Route path="/admin/image-review/:jobId" component={AdminImageReview} />
+      <Route path="/admin/telegram" component={AdminTelegram} />
       <Route path="/admin/accept-invite" component={AdminAcceptInvite} />
       <Route path="/admin/local-files" component={AdminLocalFiles} />
       <Route path="/admin/notices" component={AdminNotices} />

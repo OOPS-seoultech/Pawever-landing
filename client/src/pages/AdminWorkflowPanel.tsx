@@ -40,6 +40,7 @@ import { AdminModelReview, ModelReviewHistory } from "./AdminModelReview";
 import { AdminFinishing } from "./AdminFinishing";
 import { AdminMaterialComparison } from "./AdminMaterialComparison";
 import { AdminSalePrice } from "./AdminSalePrice";
+import { AdminImageGeneration } from "@/components/AdminImageGeneration";
 import { AdminFilamentMapping } from "./AdminFilamentMapping";
 
 export function AdminWorkflowPanel({
@@ -942,6 +943,13 @@ export function AdminWorkflowPanel({
             </p>
           )}
         </div>
+      )}
+      {row.imageGenerationJobId && (
+        <AdminImageGeneration
+          key={`image-jobs:${row.orderNumber}:${row.petIndex}`}
+          orderNumber={row.orderNumber}
+          petIndex={row.petIndex}
+        />
       )}
       {showPhotos && (
         <AdminMaterialComparison
