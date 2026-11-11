@@ -177,3 +177,86 @@ test("텔레그램 계정 연결은 개인용 만료 링크를 발급한다", as
     page.getByRole("link", { name: "텔레그램에서 연결하기" })
   ).toHaveAttribute("href", "https://t.me/example_bot?start=one-use");
 });
+
+test("소유자는 기존 두 방의 이름을 확인하고 주문 변경 없는 테스트를 각각 보낸다", async ({
+  page,
+}) => {
+  await session(page);
+  await page.route("**/api/admin/me", r =>
+    r.fulfill({
+      json: {
+        success: true,
+        data: {
+          id: 1,
+          name: "대표",
+          role: "OWNER",
+          workRoles: [],
+          permissions: ["VIEW_ORDER_BASIC", "MANAGE_OPERATION_SETTINGS"],
+        },
+      },
+    })
+  );
+  await page.route("**/api/admin/telegram/link", r =>
+    r.fulfill({ json: { success: true, data: { connected: false } } })
+  );
+  await page.route("**/api/admin/image-generation/status*", r =>
+    r.fulfill({
+      json: {
+        success: true,
+        data: {
+          enabled: true,
+          keyConfigured: true,
+          model: "test",
+          connection: false,
+          webhooks: { payment: "CONNECTED", review: "CONNECTED" },
+        },
+      },
+    })
+  );
+  await page.route("**/api/admin/telegram/test-rooms", r =>
+    r.fulfill({
+      json: {
+        success: true,
+        data: [
+          { kind: "payment", title: "PAWEVER", type: "group" },
+          { kind: "review", title: "PAWEVER 제작 검수", type: "group" },
+        ],
+      },
+    })
+  );
+  const sent: string[] = [];
+  await page.route("**/api/admin/telegram/tests/*", r => {
+    expect(r.request().method()).toBe("POST");
+    expect(r.request().headers()["idempotency-key"]).toBeTruthy();
+    const kind = r.request().url().split("/").at(-1)!;
+    sent.push(kind);
+    return r.fulfill({
+      json: {
+        success: true,
+        data: {
+          kind,
+          title: kind === "payment" ? "PAWEVER" : "PAWEVER 제작 검수",
+          messageId: 10 + sent.length,
+          accepted: true,
+        },
+      },
+    });
+  });
+  await page.goto("/admin/telegram");
+  await expect(
+    page.getByText("입금방: PAWEVER", { exact: true })
+  ).toBeVisible();
+  await page.getByRole("button", { name: "입금방 테스트 보내기" }).click();
+  await expect(
+    page
+      .getByRole("status")
+      .filter({ hasText: "PAWEVER · 테스트 메시지 발송 접수 완료" })
+  ).toBeVisible();
+  await page.getByRole("button", { name: "검수방 테스트 보내기" }).click();
+  await expect(
+    page
+      .getByRole("status")
+      .filter({ hasText: "PAWEVER 제작 검수 · 테스트 메시지 발송 접수 완료" })
+  ).toBeVisible();
+  expect(sent).toEqual(["payment", "review"]);
+});
