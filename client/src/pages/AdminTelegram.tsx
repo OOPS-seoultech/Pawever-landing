@@ -1,8 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AdminShell, useAdminGuard, AdminError } from "@/components/AdminShell";
 import { useStaffSession } from "@/components/AdminSession";
 import { Button } from "@/components/ui/button";
 import { adminRequest } from "@/lib/adminApi";
+type Room = { kind: "payment" | "review"; title: string; type: string };
+type Receipt = {
+  kind: string;
+  title: string;
+  messageId: number;
+  accepted: boolean;
+};
 type Status = {
   enabled: boolean;
   keyConfigured: boolean;
@@ -17,6 +24,9 @@ export default function AdminTelegram() {
   const [link, setLink] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [receipts, setReceipts] = useState<Record<string, Receipt>>({});
+  const testKeys = useRef<Record<string, string>>({});
   const [status, setStatus] = useState<Status | null>(null);
   const owner = staff?.permissions.includes("MANAGE_OPERATION_SETTINGS");
   useEffect(() => {
@@ -38,6 +48,32 @@ export default function AdminTelegram() {
         .then(setStatus)
         .catch(e => setError(e.message));
   }, [owner]);
+  useEffect(() => {
+    if (owner)
+      void adminRequest<Room[]>("/api/admin/telegram/test-rooms")
+        .then(setRooms)
+        .catch(e => setError(e.message));
+  }, [owner]);
+  const sendTest = async (kind: string) => {
+    if (pending) return;
+    setPending(true);
+    setError("");
+    const key = (testKeys.current[kind] ??= crypto.randomUUID());
+    try {
+      const receipt = await adminRequest<Receipt>(
+        `/api/admin/telegram/tests/${kind}`,
+        { method: "POST", headers: { "Idempotency-Key": key }, body: "{}" }
+      );
+      setReceipts(current => ({ ...current, [kind]: receipt }));
+      delete testKeys.current[kind];
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "테스트 메시지를 보내지 못했습니다."
+      );
+    } finally {
+      setPending(false);
+    }
+  };
   const connect = async () => {
     setPending(true);
     setError("");
@@ -59,6 +95,13 @@ export default function AdminTelegram() {
     <AdminShell title="텔레그램 연결" role={role}>
       <div className="max-w-2xl space-y-5">
         {error && <AdminError message={error} />}
+        {new URLSearchParams(window.location.search).get("test") ===
+          "review" && (
+          <p role="status" className="rounded-md border bg-muted p-3">
+            수정 요청 버튼의 화면 이동 테스트입니다. 실제 이미지 재생성은
+            요청하지 않았습니다.
+          </p>
+        )}
         <section className="space-y-4 rounded-[15px] border bg-muted p-5">
           <h2 className="font-semibold">내 관리자 계정 ↔ 내 텔레그램 계정</h2>
           <p>
@@ -110,6 +153,50 @@ export default function AdminTelegram() {
             </Button>
           )}
         </section>
+        {owner && (
+          <section
+            className="space-y-4 rounded-[15px] border bg-muted p-5"
+            aria-label="텔레그램 버튼 테스트"
+          >
+            <h2 className="font-semibold">기존 두 방으로 버튼 테스트</h2>
+            <p className="text-sm">
+              각 메시지에 버튼 2개를 보냅니다. 첫 버튼은 연결·권한만 확인하고,
+              두 번째 버튼은 관리자 화면을 엽니다. 실제 주문 변경·고객 문자·유료
+              이미지 생성은 없습니다.
+            </p>
+            {rooms.map(room => (
+              <div
+                key={room.kind}
+                className="space-y-2 rounded-md border bg-background p-3"
+              >
+                <p className="font-medium">
+                  {room.kind === "payment" ? "입금방" : "검수방"}: {room.title}
+                </p>
+                <Button
+                  disabled={pending}
+                  onClick={() => void sendTest(room.kind)}
+                >
+                  {room.kind === "payment"
+                    ? "입금방 테스트 보내기"
+                    : "검수방 테스트 보내기"}
+                </Button>
+                {receipts[room.kind] && (
+                  <p role="status" className="text-sm">
+                    {receipts[room.kind].title} · 테스트 메시지 발송 접수 완료
+                    (#{receipts[room.kind].messageId})
+                  </p>
+                )}
+              </div>
+            ))}
+            {!rooms.length && (
+              <p className="text-sm">기존 방 정보를 확인하는 중입니다.</p>
+            )}
+            <p className="text-sm text-muted-foreground">
+              텔레그램에서 첫 버튼을 사용하려면 위 개인 계정 연결과 해당 업무
+              권한이 필요합니다.
+            </p>
+          </section>
+        )}
         {owner && status && (
           <section className="space-y-3 rounded-[15px] border bg-muted p-5">
             <h2 className="font-semibold">이미지 API · 웹훅 설정</h2>
